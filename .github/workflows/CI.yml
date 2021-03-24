@@ -1,0 +1,25 @@
+name: CI
+
+# Trigger the workflow on a push event or manually from the Actions tab
+on: [push, workflow_dispatch]
+
+jobs:
+  # This workflow has one job
+  # First we build the docker container, then we run CI tests
+  build:
+    runs-on: ubuntu-latest
+    env: 
+      DOCKER_IMAGE: fstalign
+
+    steps:
+      # Checks out the repo under $GITHUB_WORKSPACE so the job can access it
+      - uses: actions/checkout@v2
+
+      - name: Checkout submodules
+        uses: textbook/git-checkout-submodule-action@2.1.1
+
+      - name: Build the docker container
+        run: docker build . -f Dockerfile -t ${DOCKER_IMAGE}
+
+      - name: Run CI tests
+        run: docker run --rm -t ${DOCKER_IMAGE} bash -c '(cd build && make test)'

@@ -1,0 +1,11 @@
+token|speaker|ts|endTs|punctuation|case|tags
+a|1||||CA|[]
+b|1||||LC|[]
+c|1||||LC|[]
+d|1|||,|LC|[]
+i|1||||LC|[]
+will|1||||LC|['0:NAME']
+shakespeare|1||||LC|['0:NAME']
+j|1||||LC|[]
+k|1||||LC|[]
+l|1||||LC|[]

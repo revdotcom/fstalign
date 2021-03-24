@@ -1,0 +1,5 @@
+token|speaker|ts|endTs|punctuation|case|tags
+It|1|0.06999999999999999||,|UC|[]
+costs|1||||LC|[]
+$10|1||||LC|['0:MONEY']
+billions|1||||LC|['0:MONEY']

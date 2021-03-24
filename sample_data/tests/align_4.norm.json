@@ -1,0 +1,15 @@
+{
+    "0": {
+        "candidates": [
+            {
+                "probability": 1.0,
+                "verbalization": [
+                    "nineteen",
+                    "eighty",
+                    "eight"
+                ]
+            }
+        ],
+        "class": "CARDINAL"
+    }
+}

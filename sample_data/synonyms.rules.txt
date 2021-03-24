@@ -1,0 +1,105 @@
+# format : LHS<pipe>RHS
+# where:
+# LHS : space-delimited words to match in the original reference text
+# RHS : semi-colon-delimited list of space-delimited words to consider as equivalent expressions to the LHS
+#
+# This is non-recursive and single-pass only.
+# By default, there won't be an automatic symetry:
+# if you want a->b and b->a, you need to specify both
+#
+# Empty lines or lines starting with '#' are ignored
+
+# To Be contractions - present
+i am     | i'm
+i'm      | i am
+you are  | you're
+you're   | you are
+he is    | he's
+he's     | he is
+she is   | she's
+she's    | she is
+it is    | it's
+it's     | it is
+we're    | we are
+we are   | we're
+they are | they're
+
+# To Be contractions - future
+i will    |i'll
+i'll      |i will
+you will  |you'll
+you'll    |you will
+he will   |he'll
+he'll     |he will
+she will  |she'll
+she'll    |she will
+it will   |it'll
+it'll     |it will
+we will   |we'll
+we'll     |we will
+they will |they'll
+they'll   |they will
+
+
+okay    | ok
+ok      | okay
+
+i'd     |i had ; i would
+
+# TODO: can't -> cannot ?
+# TODO: To Have ?
+# TODO: which other contractions?
+
+'cause | cause ; because
+because | 'cause ; cause
+gonna | going to
+going to | gonna
+wanna | want to
+want to | wanna
+kinda | kind of
+kind of | kinda
+gotta | got to
+got to | gotta
+'em | them
+them | 'em
+would've | would have
+would have | would've
+
+# handling comments/annotations in the nlp files
+# note: anything after a : is ignored for now
+# how to mimig deletions... ε or <del>?
+# both options cause problems right now, so we'll avoid that for now
+<barking>                  |  <del> ; <unk>  
+<cheer>                    |  <del> ; <unk>          
+<clap>                     |  <del> ; <unk>         
+<clear_throat>             |  <del> ; <unk>                 
+<cough>                    |  <del> ; <unk>          
+<crosstalk>                |  <del> ; <unk>              
+<cry>                      |  <del> ; <unk>        
+<finger_snap>              |  <del> ; <unk>                
+<foreign>                  |  <del> ; <unk>            
+# <foreign:{note}>           |  <del> ; <unk>                     
+<groan>                    |  <del> ; <unk>          
+<grunt>                    |  <del> ; <unk>          
+<inaudible>                |  <del> ; <unk> 
+<laugh>                    |  <del> ; <unk>          
+# <laugh:chuckle>            |  <del> ; <unk>                    
+# <laugh:{note}>             |  <del> ; <unk>                   
+<mumble>                   |  <del> ; <unk>           
+<murmur>                   |  <del> ; <unk>           
+<phonetic>                 |  <del> ; <unk>             
+<scream>                   |  <del> ; <unk>           
+<sigh>                     |  <del> ; <unk>         
+<silence>                  |  <del> ; <unk>            
+# <silence:blank_audio>      |  <del> ; <unk>                          
+# <silence:pause>            |  <del> ; <unk>                    
+# <silence:pause>            |  <del> ; <unk>                    
+<sing>                     |  <del> ; <unk>         
+<siren>                    |  <del> ; <unk>          
+<unk>                      |  <del> ; <unk>        
+<visual>                   |  <del> ; <unk>           
+# <visual:{note}>            |  <del> ; <unk>                    
+<yawn>                     |  <del> ; <unk>         
+
+# anything not explicitly handled will be ignored from the graph
+#<{note}> | <del>

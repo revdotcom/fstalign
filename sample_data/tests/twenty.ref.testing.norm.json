@@ -1,0 +1,93 @@
+{
+  "0": {
+    "candidates": [
+      {
+        "probability": 0.8699402786994028,
+        "verbalization": [
+          "twenty",
+          "twenty"
+        ]
+      },
+      {
+        "probability": 0.032183145321831454,
+        "verbalization": [
+          "two",
+          "thousand",
+          "and",
+          "twenty"
+        ]
+      },
+      {
+        "probability": 0.09787657597876576,
+        "verbalization": [
+          "two",
+          "thousand",
+          "twenty"
+        ]
+      }
+    ],
+    "class": "YEAR"
+  },
+  "1": {
+    "candidates": [
+      {
+        "probability": 1.0,
+        "verbalization": [
+          "twenty"
+        ]
+      }
+    ],
+    "class": "CARDINAL"
+  },
+  "3": {
+    "candidates": [
+      {
+        "probability": 0.06962025316455696,
+        "verbalization": [
+          "a",
+          "hundred",
+          "and",
+          "twenty",
+          "three"
+        ]
+      },
+      {
+        "probability": 0.09177215189873418,
+        "verbalization": [
+          "a",
+          "hundred",
+          "twenty",
+          "three"
+        ]
+      },
+      {
+        "probability": 0.012658227848101266,
+        "verbalization": [
+          "one",
+          "hundred",
+          "and",
+          "twenty",
+          "three"
+        ]
+      },
+      {
+        "probability": 0.0189873417721519,
+        "verbalization": [
+          "one",
+          "hundred",
+          "twenty",
+          "three"
+        ]
+      },
+      {
+        "probability": 0.8069620253164557,
+        "verbalization": [
+          "one",
+          "twenty",
+          "three"
+        ]
+      }
+    ],
+    "class": "CARDINAL"
+  }
+}

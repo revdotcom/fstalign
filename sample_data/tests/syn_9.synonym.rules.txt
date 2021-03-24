@@ -1,0 +1,14 @@
+# format : LHS<pipe>RHS
+# where:
+# LHS : space-delimited words to match in the original reference text
+# RHS : semi-colon-delimited list of space-delimited words to consider as equivalent expressions to the LHS
+#
+# This is non-recursive and single-pass only.
+# By default, there won't be an automatic symetry:
+# if you want a-> and b->a, you need to specify both
+#
+# Empty lines or lines starting with '#' are ignored
+
+
+## FOR TESTING ONLY
+she-     | he

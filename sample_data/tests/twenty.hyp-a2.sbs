@@ -1,0 +1,34 @@
+           ref_token	hyp_token           	IsErr	Class
+                  20	<del>               	ERR	___1_CARDINAL___
+                  in	in                  		
+              twenty	twenty              		___2_YEAR___
+              twenty	thirty              	ERR	___2_YEAR___
+                  is	is                  		
+                 one	one                 		___3_CARDINAL___
+              twenty	twenty              		___3_CARDINAL___
+               <ins>	two                 	ERR	___3_CARDINAL___
+               three	three               		___3_CARDINAL___
+------------------------------------------------------------
+                Line	Group               
+                   2	20 <-> ***
+                   5	twenty <-> thirty
+                   9	*** <-> two
+------------------------------------------------------------
+             Unigram	Prec.     	Recall    
+                  20	0/0 (0.0 %)	0/1 (0.0 %)
+                 two	0/1 (0.0 %)	0/0 (0.0 %)
+              twenty	2/3 (66.7 %)	2/3 (66.7 %)
+                  in	1/1 (100.0 %)	1/1 (100.0 %)
+                  is	1/1 (100.0 %)	1/1 (100.0 %)
+                 one	1/1 (100.0 %)	1/1 (100.0 %)
+               three	1/1 (100.0 %)	1/1 (100.0 %)
+------------------------------------------------------------
+              Bigram	Precision           	Recall              
+               20 in	0/0 (0.0 %)	0/1 (0.0 %)
+           twenty is	0/1 (0.0 %)	0/1 (0.0 %)
+       twenty twenty	0/1 (0.0 %)	0/1 (0.0 %)
+          twenty two	0/1 (0.0 %)	0/0 (0.0 %)
+           two three	0/1 (0.0 %)	0/0 (0.0 %)
+           in twenty	1/1 (100.0 %)	1/1 (100.0 %)
+              is one	1/1 (100.0 %)	1/1 (100.0 %)
+          one twenty	1/1 (100.0 %)	1/1 (100.0 %)

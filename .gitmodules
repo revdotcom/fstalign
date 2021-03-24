@@ -1,0 +1,24 @@
+[submodule "third-party/openfst"]
+	path = third-party/openfst
+	url = https://github.com/mjansche/openfst.git
+[submodule "third-party/CLI11"]
+	path = third-party/CLI11
+	url = https://github.com/CLIUtils/CLI11.git
+[submodule "third-party/strtk"]
+	path = third-party/strtk
+	url = https://github.com/ArashPartow/strtk.git
+[submodule "third-party/jsoncpp"]
+	path = third-party/jsoncpp
+	url = https://github.com/open-source-parsers/jsoncpp.git
+[submodule "third-party/csv"]
+	path = third-party/csv
+	url = https://github.com/ben-strasser/fast-cpp-csv-parser.git
+[submodule "third-party/catch2"]
+	path = third-party/catch2
+	url = https://github.com/catchorg/Catch2.git
+[submodule "third-party/spdlog"]
+	path = third-party/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "third-party/inih"]
+	path = third-party/inih
+	url = https://github.com/benhoyt/inih.git

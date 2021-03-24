@@ -1,0 +1,38 @@
+{
+    "0": {
+        "candidates": [
+            {
+                "probability": 0.33,
+                "verbalization": [
+                    "ten",
+                    "billions"
+                ]
+            },
+            {
+                "probability": 0.33,
+                "verbalization": [
+                    "ten",
+                    "billions",
+                    "dollars"
+                ]
+            },
+            {
+                "probability": 0.33,
+                "verbalization": [
+                ]
+            }
+        ],
+        "class": "MONEY"
+    },
+    "1": {
+        "candidates": [
+            {
+                "probability": 1.0,
+                "verbalization": [
+                    "second"
+                ]
+            }
+        ],
+        "class": "ORDINAL"
+    }
+}

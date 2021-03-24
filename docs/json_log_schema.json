@@ -1,0 +1,94 @@
+{
+    "definitions": {
+        "transcript_wer": {
+            "title": "Transcript WER",
+            "type": "object",
+            "properties": {
+                "wer": {
+                    "title": "WER",
+                    "type": "object",
+                    "properties": {
+                        "bestWER": "#/definitions/wer_result",
+                        "classWER": {
+                            <class_id>: "#/definitions/wer_result"
+                        },
+                        "speakerWER": {
+                            <speaker_id>: "#/definitions/wer_result"
+                        },
+                        "speakerSwitchWER": "#/definitions/wer_result",
+                        "unigrams": {
+                            <unigram_text>: "#/definitions/pr_result"
+                        },
+                        "bigrams": {
+                            <bigram_text>: "#/definitions/pr_result"
+                        }
+                    }
+                }
+            }
+        },
+        "wer_result": {
+            "title": "WER Result",
+            "type": "object",
+            "properties": {
+                "insertions": {
+                    "title": "Insertions",
+                    "type": "integer"
+                },
+                "deletions": {
+                    "title": "Deletions",
+                    "type": "integer"
+                },
+                "substitutions": {
+                    "title": "Substitutions",
+                    "type": "integer"
+                },
+                "numErrors": {
+                    "title": "Number of errors",
+                    "type": "integer"
+                },
+                "numWordsInReference": {
+                    "title": "Number of words in reference",
+                    "type": "integer"
+                },
+                "wer": {
+                    "title": "WER",
+                    "type": "float"
+                },
+                "meta": {
+                    "title": "Metadata",
+                    "type": "object"
+                },
+            },
+        },
+        "pr_result": {
+            "title": "Precision Recall Result",
+            "type": "object",
+            "properties": {
+                "insertions": {
+                    "title": "Insertions",
+                    "type": "integer"
+                },
+                "deletions": {
+                    "title": "Deletions",
+                    "type": "integer"
+                },
+                "substitutions": {
+                    "title": "Substitutions",
+                    "type": "integer"
+                },
+                "correct": {
+                    "title": "Correct",
+                    "type": "integer"
+                },
+                "precision": {
+                    "title": "Precision",
+                    "type": "float"
+                },
+                "recall": {
+                    "title": "Recall",
+                    "type": "float"
+                }
+            }
+        }
+    }
+}

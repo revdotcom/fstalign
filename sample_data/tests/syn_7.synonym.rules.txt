@@ -1,0 +1,51 @@
+# format : LHS<pipe>RHS
+# where:
+# LHS : space-delimited words to match in the original reference text
+# RHS : semi-colon-delimited list of space-delimited words to consider as equivalent expressions to the LHS
+#
+# This is non-recursive and single-pass only.
+# By default, there won't be an automatic symetry:
+# if you want a-> and b->a, you need to specify both
+#
+# Empty lines or lines starting with '#' are ignored
+
+
+## FOR TESTING ONLY
+ten billions     | ten bricks of bricks
+
+# To Be contractions - present
+i am     | i'm
+i'm      | i am
+you are  | you're
+you're   | you are
+he is    | he's
+he's     | he is
+she is   | she's
+she's    | she is
+it is    | it's
+it's     | it is
+we're    | we are
+we are   | we're
+they are | they're
+
+# To Be contractions - future
+i will    |i'll
+i'll      |i will
+you will  |you'll
+you'll    |you will
+he will   |he'll
+he'll     |he will
+she will  |she'll
+she'll    |she will
+it will   |it'll
+it'll     |it will
+we will   |we'll
+we'll     |we will
+they will |they'll
+they'll   |they will
+
+i'd     |i had ; i would
+
+# TODO: can't -> cannot ?
+# TODO: To Have ?
+# TODO: which other contractions?

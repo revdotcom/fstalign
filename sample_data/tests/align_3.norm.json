@@ -1,0 +1,13 @@
+{
+    "0": {
+        "candidates": [
+            {
+                "probability": 1.0,
+                "verbalization": [
+                    "dont use"
+                ]
+            }
+        ],
+        "class": "FALLBACK"
+    }
+}

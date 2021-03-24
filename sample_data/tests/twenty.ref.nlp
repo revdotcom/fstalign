@@ -1,0 +1,6 @@
+token|speaker|ts|endTs|punctuation|case|tags|oldTs|oldEndTs|ali_comment
+20|2|84.6600|85.0600||CA|['1:CARDINAL']|||,push_last 
+in|2|89.1600|89.2800||LC|[]||| 
+2020|2|89.7400|89.9900||CA|['2:YEAR']|||,push_last
+is|2|89.1600|89.2800||LC|[]||| 
+123|2|89.7400|89.9900||CA|['3:CARDINAL']|||,push_last

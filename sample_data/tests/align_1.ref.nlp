@@ -1,0 +1,13 @@
+token|speaker|ts|endTs|punctuation|case|tags
+a|1||||CA|[]
+b|1||||LC|[]
+c|1||||LC|[]
+d|1|||,|LC|[]
+<laugh>|1|||.|LC|['0:FALLBACK']
+e|1||||LC|[]
+f|1||||LC|[]
+g|1||||LC|[]
+h|1||||LC|[]
+<foreign>|1|||,|LC|[]
+i|1||||LC|[]
+j|1||||LC|[]

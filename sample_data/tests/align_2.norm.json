@@ -1,0 +1,19 @@
+{
+    "0": {
+        "candidates": [
+            {
+                "probability": 0.5,
+                "verbalization": [
+                    "William Shakespeare"
+                ]
+            },
+            {
+                "probability": 0.5,
+                "verbalization": [
+                    "Will Shakespeare"
+                ]
+            }
+        ],
+        "class": "NAME"
+    }
+}
