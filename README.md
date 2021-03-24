@@ -63,12 +63,12 @@ make test
 
 The fstalign docker image is hosted on Github packages and can be pulled through:
 ```
-docker pull docker.pkg.github.com/revdotcom/fstalign:release-fstalign-1.0.0
+docker pull docker.pkg.github.com/revdotcom/fstalign/fstalign:1.0.0
 ```
 
 This docker image contains the source code, built dependencies, and the built binary. A container can be started using:
 ```
-docker run --rm -it docker.pkg.github.com/revdotcom/fstalign:release-fstalign-1.0.0
+docker run --rm -it docker.pkg.github.com/revdotcom/fstalign/fstalign:1.0.0
 ```
 
 Additionally, if you desire to run the tool on local files you can mount local directories with the `-v` flag of the `docker run` command. Once the container is running, the binary is located at `/fstalign/build/fstalign`.
