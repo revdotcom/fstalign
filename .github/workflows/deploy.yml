@@ -19,5 +19,5 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: docker.pkg.github.com
-          repository: revdotcom/fstalign
+          repository: revdotcom/fstalign/fstalign
           tag_with_ref: true
