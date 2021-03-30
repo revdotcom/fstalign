@@ -157,7 +157,7 @@ Usage of the `align` subcommand is almost identical to the `wer` subcommand. The
 
 ## Inputs
 ### CTM
-Time-marked conversations (CTM) are typical outputs for ASR systems. The format of CTMs that fstalign assumes is that reach token is on a new line separated by spaces with the following fields.
+Time-marked conversations (CTM) are typical outputs for ASR systems. The format of CTMs that fstalign assumes is that each token is on a new line separated by spaces with the following fields.
 ```
 <recording_id> <channel_id> <token_start_ts> <token_end_ts> <token_value>
 ```
