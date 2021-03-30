@@ -16,7 +16,7 @@
 ## Overview
 `fstalign` is a tool for creating alignment between two sequences of tokens (here out referred to as “reference” and “hypothesis”). It has two key functions: computing word error rate (WER) and aligning [NLP-formatted](https://github.com/revdotcom/fstalign/blob/develop/docs/NLP-Format.md) references with CTM hypotheses.
 
-Due to its use of OpenFST and lazy algorithms for text-based edit-distance alignment, `fstalign` is one of the fastest and most efficient tools for calculating WER. Furthermore, the tools offers additional features to augment error analysis, which will be covered more in depth below.
+Due to its use of OpenFST and lazy algorithms for text-based edit-distance alignment, `fstalign` is one of the fastest and most efficient tools for calculating WER. Furthermore, the tool offers additional features to augment error analysis, which will be covered more in depth below.
 
 ## Installation
 
