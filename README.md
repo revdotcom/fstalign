@@ -16,7 +16,7 @@
 ## Overview
 `fstalign` is a tool for creating alignment between two sequences of tokens (here out referred to as “reference” and “hypothesis”). It has two key functions: computing word error rate (WER) and aligning [NLP-formatted](https://github.com/revdotcom/fstalign/blob/develop/docs/NLP-Format.md) references with CTM hypotheses.
 
-Due to its use of OpenFST and lazy algorithms for text-based edit-distance alignment, `fstalign` is one of the fastest and most efficient tools for calculating WER. Furthermore, the tools offers additional features to augment error analysis, which will be covered more in depth below.
+Due to its use of OpenFST and lazy algorithms for text-based edit-distance alignment, `fstalign` is one of the fastest and most efficient tools for calculating WER. Furthermore, the tool offers additional features to augment error analysis, which will be covered more in depth below.
 
 ## Installation
 
@@ -157,7 +157,7 @@ Usage of the `align` subcommand is almost identical to the `wer` subcommand. The
 
 ## Inputs
 ### CTM
-Time-marked conversations (CTM) are typical outputs for ASR systems. The format of CTMs that fstalign assumes is that reach token is on a new line separated by spaces with the following fields.
+Time-marked conversations (CTM) are typical outputs for ASR systems. The format of CTMs that fstalign assumes is that each token is on a new line separated by spaces with the following fields.
 ```
 <recording_id> <channel_id> <token_start_ts> <token_end_ts> <token_value>
 ```
