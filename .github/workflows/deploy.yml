@@ -46,4 +46,6 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ steps.prep.outputs.tags }}
+          tags: |
+            revdotcom/fstalign:latest
+            ${{ steps.prep.outputs.tags }}
