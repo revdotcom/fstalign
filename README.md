@@ -58,28 +58,22 @@ make test
 
 ### Docker
 
-The fstalign docker image is hosted on Docker Hub and can be easily pulled:
+The fstalign docker image is hosted on Docker Hub and can be easily pulled and run:
 ```
 docker pull revdotcom/fstalign
+docker run --rm -it revdotcom/fstalign
 ```
 
-See https://hub.docker.com/r/revdotcom/fstalign/tags for the available versions/tags to pull. This docker image contains the source code, built dependencies, and the built binary. A container can be started using:
-```
-docker run --rm -it revdotcom/fstalign:1.0.0
-```
-
-Additionally, if you desire to run the tool on local files you can mount local directories with the `-v` flag of the `docker run` command. Once the container is running, the binary is located at `/fstalign/build/fstalign`.
+See https://hub.docker.com/r/revdotcom/fstalign/tags for the available versions/tags to pull. This docker image contains the source code, built dependencies, and the built binary (`/fstalign/build/fstalign`). If you desire to run the tool on local files you can mount local directories with the `-v` flag of the `docker run` command.
 
 For development you can also build the docker image locally using:
 ```
 docker build . -t fstalign-dev
 ```
 
-from the repository root. From there you can start a container from `fstalign-dev` using the procedure above.
-
 ## Quickstart
 ```
-Rev FST Aligner
+Rev FST Align
 Usage: ./fstalign [OPTIONS] [SUBCOMMAND]
 
 Options:
@@ -132,7 +126,7 @@ Much of the advanced usage and features for fstalign come from providing [NLP fi
 [+++] [22:36:50] [approach1] class YEAR         WER: 0/8 = 0.0000
 ```
 
-  - Another useful feature here is normalization, which allows tokens with entity labels to have multiple normalizations accepted as correct by fstalign. This functionality is enabled when the tool is invoked with `--ref-json <path_to_norm_sidecar>`. This enables something like `2020` to be treated equivalent to `twenty twenty`. More details on the specification for this file are specified in the [Inputs](#Inputs) section below. Note that only reference-side normalization is currently supported.
+  - Another useful feature here is normalization, which allows tokens with entity labels to have multiple normalizations accepted as correct by fstalign. This functionality is enabled when the tool is invoked with `--ref-json <path_to_norm_sidecar>` (passed in addition to the `--ref`). This enables something like `2020` to be treated equivalent to `twenty twenty`. More details on the specification for this file are specified in the [Inputs](#Inputs) section below. Note that only reference-side normalization is currently supported.
 
 - Speaker-wise WER: since the NLP file contains a speaker column, fstalign logs and output will provide a breakdown of WER by speaker ID if non-null
 
@@ -170,17 +164,7 @@ test.wav 1 15.0 1.0 g
 OpenFST FST files can only be passed to the `--hyp` parameter. fstalign will directly use this FST as the hypothesis during alignment. This is useful for something like oracle lattice analysis, where the reference is aligned to the most accurate path present in a lattice.
 
 ### Synonyms
-Synonyms allow for reference words to be equivalent to similar forms (determined by the user) for error counting. They are accepted for any input formats and passed into the tool via the `--syn <path_to_synonym_file>` flag. The file structure is a simple text file where each line is a synonym and each synonym is separated by a pipe where the left hand side is the reference version of the term and the right hand side is the accepted hypothesis alternative. Note that there is no built in symmetry, so synonyms must be doubly specified for symmetrical equivalence (example below illustrates this).
-
-Example:
-```
-i am     | i'm
-i'm      | i am
-okay     | ok
-ok       | okay
-```
-
-A standard set of synonyms we use at Rev.ai is available in the repository under `sample_data/synonyms.rules.txt`.
+Synonyms allow for reference words to be equivalent to similar forms (determined by the user) for error counting. They are accepted for any input formats and passed into the tool via the `--syn <path_to_synonym_file>` flag. For details see [Synonyms Format](https://github.com/revdotcom/fstalign/blob/develop/docs/Synonyms-Format.md). A standard set of synonyms we use at Rev.ai is available in the repository under `sample_data/synonyms.rules.txt`.
 
 ### Normalizations
 Normalizations are a similar concept to synonyms. They allow a token or group of tokens to be represented by alternatives when calculating the WER alignment. Unlike synonyms, they are only accepted for NLP file inputs where the tokens are tagged with a unique ID. The normalizations are specified in a JSON format, with the unique ID as keys. Example to illustrate the schema:
