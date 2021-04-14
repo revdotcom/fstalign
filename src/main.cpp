@@ -2,7 +2,6 @@
 #include <fstream>
 
 #include "FstFileLoader.h"
-#include "KaldiArchiveFstLoader.h"
 #include "OneBestFstLoader.h"
 #include "fstalign.h"
 #include "json_logging.h"

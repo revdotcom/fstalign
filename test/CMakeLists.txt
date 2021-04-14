@@ -5,14 +5,14 @@ find_package(Threads REQUIRED)
 include_directories(
   ${CMAKE_INSTALL_PREFIX}/include
   ${FSTALIGN_INCLUDES}
-  ${FST_KALDI_INCLUDES}
+  ${OPENFST_INCLUDES}
   ${PROJECT_SOURCE_DIR}/test
   ${PROJECT_SOURCE_DIR}
   ${CMAKE_DL_LIBS}
 )
 
 link_libraries(
-  ${FST_KALDI_LIBRARIES}
+  ${OPENFST_LIBRARIES}
   fstaligner-common
 )
 

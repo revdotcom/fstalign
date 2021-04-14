@@ -3,7 +3,6 @@
  */
 #include "FstFileLoader.h"
 
-// empty constructor
 FstFileLoader::FstFileLoader(std::string filename) : FstLoader(), filename_(filename) {}
 
 void FstFileLoader::addToSymbolTable(fst::SymbolTable& symbol) const { return; }

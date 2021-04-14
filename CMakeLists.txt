@@ -14,10 +14,10 @@ enable_testing()
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-if(DEFINED ENV{KALDI_ROOT})
-  set(FST_KALDI_ROOT $ENV{KALDI_ROOT} CACHE STRING "Path to Kaldi")
+if(DEFINED ENV{OPENFST_ROOT})
+  set(OPENFST_ROOT $ENV{OPENFST_ROOT} CACHE STRING "Path to OpenFST")
 endif()
-message(STATUS "Kaldi root: ${FST_KALDI_ROOT}")
+message(STATUS "OpenFST root: ${OPENFST_ROOT}")
 
 set(FSTALIGN_INCLUDES
   ${PROJECT_SOURCE_DIR}/third-party/spdlog/include
@@ -35,31 +35,17 @@ set(FSTALIGN_LIBRARIES
   ${PROJECT_SOURCE_DIR}/third-party/inih/ini.c
 )
 
-set(FST_KALDI_INCLUDES
-  ${FST_KALDI_ROOT}/tools/OpenBLAS/install/include
-  ${FST_KALDI_ROOT}/src
-  ${FST_KALDI_ROOT}/tools/openfst/include
+set(OPENFST_INCLUDES
+  ${OPENFST_ROOT}/include
 )
 
-if(DYNAMIC_KALDI)
-  set(FST_KALDI_LIBRARIES
-    ${FST_KALDI_ROOT}/src/fstext/libkaldi-fstext.so
-    ${FST_KALDI_ROOT}/src/util/libkaldi-util.so
-    ${FST_KALDI_ROOT}/src/matrix/libkaldi-matrix.so
-    ${FST_KALDI_ROOT}/src/base/libkaldi-base.so
-
-    ${FST_KALDI_ROOT}/tools/openfst/lib/libfst.so
+if(DYNAMIC_OPENFST)
+  set(OPENFST_LIBRARIES
+    ${OPENFST_ROOT}/lib/libfst.so
   )
 else()
-  set(FST_KALDI_LIBRARIES
-    ${FST_KALDI_ROOT}/src/fstext/kaldi-fstext.a
-    ${FST_KALDI_ROOT}/src/util/kaldi-util.a
-    ${FST_KALDI_ROOT}/src/matrix/kaldi-matrix.a
-    ${FST_KALDI_ROOT}/src/base/kaldi-base.a
-
-    ${FST_KALDI_ROOT}/tools/openfst/lib/libfst.a
-
-    ${FST_KALDI_ROOT}/tools/OpenBLAS/install/lib/libopenblas.a -lgfortran -ldl
+  set(OPENFST_LIBRARIES
+    ${OPENFST_ROOT}/lib/libfst.a
   )
 endif()
 
@@ -71,7 +57,6 @@ add_library(fstaligner-common
   src/AlignmentTraversor.cpp
   src/Ctm.cpp
   src/FstLoader.cpp
-  src/KaldiArchiveFstLoader.cpp
   src/FstFileLoader.cpp
   src/logging.cpp
   src/Nlp.cpp
@@ -96,14 +81,14 @@ add_executable(fstalign src/main.cpp)
 
 include_directories(fstalign 
   ${FSTALIGN_INCLUDES}
-  ${FST_KALDI_INCLUDES}
+  ${OPENFST_INCLUDES}
 )
 
 target_link_libraries(fstalign
   fstaligner-common
   ${CMAKE_DL_LIBS}
   ${FSTALIGN_LIBRARIES}
-  ${FST_KALDI_LIBRARIES}
+  ${OPENFST_LIBRARIES}
 )
 
 add_subdirectory(test)
