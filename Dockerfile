@@ -1,4 +1,4 @@
-# Using kaldi image for pre-built OpenFST
+# Using kaldi image for pre-built OpenFST, version is 1.6.7
 FROM kaldiasr/kaldi:2020-09 as kaldi-base
 
 FROM debian:9.8
