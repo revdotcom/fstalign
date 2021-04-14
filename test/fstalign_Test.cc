@@ -373,7 +373,7 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-approach1()") {
   SECTION("oracle_1") {
     const auto result = exec(
         "./fstalign wer --ref ../sample_data/tests/oracle_1.ref.txt "
-        "--hyp ark:../sample_data/tests/oracle_1.hyp.fst "
+        "--hyp ../sample_data/tests/oracle_1.hyp.fst "
         "--symbols ../sample_data/tests/oracle_1.symbols.txt "
         "--output-sbs " +
         sbs_output);
@@ -741,7 +741,7 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-approach2()") {
   SECTION("oracle_1") {
     const auto result = exec(
         "./fstalign wer --ref ../sample_data/tests/oracle_1.ref.txt "
-        "--hyp ark:../sample_data/tests/oracle_1.hyp.fst "
+        "--hyp ../sample_data/tests/oracle_1.hyp.fst "
         "--symbols ../sample_data/tests/oracle_1.symbols.txt "
         "--output-sbs " +
         sbs_output);
