@@ -72,6 +72,7 @@ add_library(fstaligner-common
   src/Ctm.cpp
   src/FstLoader.cpp
   src/KaldiArchiveFstLoader.cpp
+  src/FstFileLoader.cpp
   src/logging.cpp
   src/Nlp.cpp
   src/OneBestFstLoader.cpp

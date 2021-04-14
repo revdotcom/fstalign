@@ -1,6 +1,7 @@
 #include <CLI/CLI.hpp>
 #include <fstream>
 
+#include "FstFileLoader.h"
 #include "KaldiArchiveFstLoader.h"
 #include "OneBestFstLoader.h"
 #include "fstalign.h"
@@ -205,12 +206,11 @@ int main(int argc, char **argv) {
     CtmFstLoader *ctmFst = new CtmFstLoader(vect);
     hyp = ctmFst;
   } else if (EndsWithCaseInsensitive(hyp_filename, string(".fst"))) {
-    console->error("reading from FST is currently disabled");
     if (symbols_filename.empty()) {
-      console->error("a symbols file must be specified if reading an FST archive.");
+      console->error("a symbols file must be specified if reading an FST.");
     }
     console->info("reading hypothesis fst from {}", hyp_filename);
-    KaldiArchiveFstLoader *archive_fst = new KaldiArchiveFstLoader(hyp_filename);
+    FstFileLoader *archive_fst = new FstFileLoader(hyp_filename);
     hyp = archive_fst;
   } else {
     console->info("reading hypothesis plain text from {}", hyp_filename);
