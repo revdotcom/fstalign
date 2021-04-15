@@ -64,7 +64,12 @@ docker pull revdotcom/fstalign
 docker run --rm -it revdotcom/fstalign
 ```
 
-See https://hub.docker.com/r/revdotcom/fstalign/tags for the available versions/tags to pull. This docker image contains the source code, built dependencies, and the built binary (`/fstalign/build/fstalign`). If you desire to run the tool on local files you can mount local directories with the `-v` flag of the `docker run` command.
+See https://hub.docker.com/r/revdotcom/fstalign/tags for the available versions/tags to pull. If you desire to run the tool on local files you can mount local directories with the `-v` flag of the `docker run` command.
+
+From inside the container:
+```
+/fstalign/build/fstalign --help
+```
 
 For development you can also build the docker image locally using:
 ```
