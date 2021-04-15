@@ -35,11 +35,8 @@ This will pull the current dependencies:
 - jsoncpp - for JSON output construction
 - strtk - for various string utilities
 
-Additionally, we have dependencies outside of the third-party submodules.
-- OpenFST - currently provided to the build system via the $KALDI_ROOT ($KALDI_ROOT/tools/openfst)
-- Kaldi - used for kaldi-io archive processing
-
-These are passed into the CMake command using `-DFST_KALDI_ROOT`.
+Additionally, we have dependencies outside of the third-party submodules:
+- OpenFST - currently provided to the build system by settings the $OPENFST_ROOT environment variable or during the CMake command via `-DOPENFST_ROOT`.
 
 ### Build
 
@@ -48,11 +45,11 @@ The current build framework is CMake. Install CMake following the instructions h
 To build fstalign, run:
 ```
     mkdir build && cd build
-    cmake .. -DFST_KALDI_ROOT=<path to kaldi> -DDYNAMIC_KALDI=ON
+    cmake .. -DOPENFST_ROOT="<path to OpenFST>" -DDYNAMIC_OPENFST=ON
     make
 ```
 
-Note: `-DDYNAMIC_KALDI=ON` is important if the `KALDI_ROOT` specified is compiled into shared libraries. Otherwise static libraries are assumed.
+Note: `-DDYNAMIC_OPENFST=ON` is needed if OpenFST at `OPENFST_ROOT` is compiled as shared libraries. Otherwise static libraries are assumed.
 
 Finally, tests can be run using:
 ```
@@ -61,28 +58,27 @@ make test
 
 ### Docker
 
-The fstalign docker image is hosted on Docker Hub and can be easily pulled:
+The fstalign docker image is hosted on Docker Hub and can be easily pulled and run:
 ```
 docker pull revdotcom/fstalign
+docker run --rm -it revdotcom/fstalign
 ```
 
-See https://hub.docker.com/r/revdotcom/fstalign/tags for the available versions/tags to pull. This docker image contains the source code, built dependencies, and the built binary. A container can be started using:
-```
-docker run --rm -it revdotcom/fstalign:1.0.0
-```
+See https://hub.docker.com/r/revdotcom/fstalign/tags for the available versions/tags to pull. If you desire to run the tool on local files you can mount local directories with the `-v` flag of the `docker run` command.
 
-Additionally, if you desire to run the tool on local files you can mount local directories with the `-v` flag of the `docker run` command. Once the container is running, the binary is located at `/fstalign/build/fstalign`.
+From inside the container:
+```
+/fstalign/build/fstalign --help
+```
 
 For development you can also build the docker image locally using:
 ```
 docker build . -t fstalign-dev
 ```
 
-from the repository root. From there you can start a container from `fstalign-dev` using the procedure above.
-
 ## Quickstart
 ```
-Rev FST Aligner
+Rev FST Align
 Usage: ./fstalign [OPTIONS] [SUBCOMMAND]
 
 Options:
@@ -119,19 +115,10 @@ this is a test sentence
 
 When run, fstalign will dump a log to STDOUT with summary WER information at the bottom. For the above example:
 ```
-[+++] [20:37:10] [approach1] performing lazy composition
-[+++] [20:37:10] [walker] starting a walk in the park
-[+++] [20:37:10] [walker] we reached a final node with a wer of 0.4
-[+++] [20:37:10] [walker] we reached a final node with a wer of 0.6
-[+++] [20:37:10] [walker] we have 2 candidates after 39 loops
-[+++] [20:37:10] [walker] getting details for candidate 0
-[+++] [20:37:10] [walker] approx WER was 0.4, real WER is 0.4
-[+++] [20:37:10] [walker] getting details for candidate 1
-[+++] [20:37:10] [walker] approx WER was 0.6, real WER is 0.4
-[+++] [20:37:10] [approach1] done walking the graph
-[+++] [20:37:10] [approach1] best WER: 2/5 = 0.4000 (Total words in reference: 5)
-[+++] [20:37:10] [approach1] best WER: INS:0 DEL:0 SUB:2
-[+++] [20:37:10] [approach1] best WER: Precision:0.600000 Recall:0.600000
+[+++] [20:37:10] [fstalign] done walking the graph
+[+++] [20:37:10] [wer] best WER: 2/5 = 0.4000 (Total words in reference: 5)
+[+++] [20:37:10] [wer] best WER: INS:0 DEL:0 SUB:2
+[+++] [20:37:10] [wer] best WER: Precision:0.600000 Recall:0.600000
 [+++] [20:37:10] [console] done
 ```
 
@@ -144,7 +131,7 @@ Much of the advanced usage and features for fstalign come from providing [NLP fi
 [+++] [22:36:50] [approach1] class YEAR         WER: 0/8 = 0.0000
 ```
 
-  - Another useful feature here is normalization, which allows tokens with entity labels to have multiple normalizations accepted as correct by fstalign. This functionality is enabled when the tool is invoked with `--ref-json <path_to_norm_sidecar>`. This enables something like `2020` to be treated equivalent to `twenty twenty`. More details on the specification for this file are specified in the [Inputs](#Inputs) section below. Note that only reference-side normalization is currently supported.
+  - Another useful feature here is normalization, which allows tokens with entity labels to have multiple normalizations accepted as correct by fstalign. This functionality is enabled when the tool is invoked with `--ref-json <path_to_norm_sidecar>` (passed in addition to the `--ref`). This enables something like `2020` to be treated equivalent to `twenty twenty`. More details on the specification for this file are specified in the [Inputs](#Inputs) section below. Note that only reference-side normalization is currently supported.
 
 - Speaker-wise WER: since the NLP file contains a speaker column, fstalign logs and output will provide a breakdown of WER by speaker ID if non-null
 
@@ -173,34 +160,18 @@ test.wav 1 9.0 1.0 <unk>
 test.wav 1 11.0 1.0 e
 test.wav 1 13.0 1.0 f
 test.wav 1 15.0 1.0 g
-test.wav 1 17.0 1.0 h
-test.wav 1 21.0 1.0 i
-test.wav 1 23.0 1.0 j
 ```
 
 ### NLP
 [NLP Format](https://github.com/revdotcom/fstalign/blob/develop/docs/NLP-Format.md)
 
 ### FST
-FST archive files can only be passed to the `--hyp` parameter, and are formatted as a Kaldi archive of utterance FSTs. For more details see https://kaldi-asr.org/doc/io.html. fstalign will read in each FST in the archive and, in sorted order by archive key, concatenate each FST until a single FST is created for the entire hypothesis.
-
-This is useful for something like oracle lattice analysis, where the reference is aligned to the most accurate path present in a lattice.
+OpenFST FST files can only be passed to the `--hyp` parameter. fstalign will directly use this FST as the hypothesis during alignment. This is useful for something like oracle lattice analysis, where the reference is aligned to the most accurate path present in a lattice.
 
 ### Synonyms
-Synonyms allow for reference words to be equivalent to similar forms (determined by the user) for error counting. They are accepted for any input formats and passed into the tool via the `--syn <path_to_synonym_file>` flag. The file structure is a simple text file where each line is a synonym and each synonym is separated by a pipe where the left hand side is the reference version of the term and the right hand side is the accepted hypothesis alternative. Note that there is no built in symmetry, so synonyms must be doubly specified for symmetrical equivalence (example below illustrates this).
-
-Example:
-```
-i am     | i'm
-i'm      | i am
-okay     | ok
-ok       | okay
-```
-
-A standard set of synonyms we use at Rev.ai is available in the repository under `sample_data/synonyms.rules.txt`.
+Synonyms allow for reference words to be equivalent to similar forms (determined by the user) for error counting. They are accepted for any input formats and passed into the tool via the `--syn <path_to_synonym_file>` flag. For details see [Synonyms Format](https://github.com/revdotcom/fstalign/blob/develop/docs/Synonyms-Format.md). A standard set of synonyms we use at Rev.ai is available in the repository under `sample_data/synonyms.rules.txt`.
 
 ### Normalizations
-
 Normalizations are a similar concept to synonyms. They allow a token or group of tokens to be represented by alternatives when calculating the WER alignment. Unlike synonyms, they are only accepted for NLP file inputs where the tokens are tagged with a unique ID. The normalizations are specified in a JSON format, with the unique ID as keys. Example to illustrate the schema:
 ```
 {

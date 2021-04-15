@@ -139,7 +139,6 @@ vector<int> seek_forward(SynKey &lhs, int lhsPos, StdVectorFst &fst, int startin
 }
 
 void SynonymEngine::apply_to_fst(StdVectorFst &fst, SymbolTable &symbol) {
-  // because the openfst version we have in rev-kaldi
   int kNoSymbol = -1;
 
   if (!disable_cutoffs) {

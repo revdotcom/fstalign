@@ -1,5 +1,10 @@
-FROM kaldiasr/kaldi:2020-09
-ENV KALDI_ROOT /opt/kaldi
+# Using kaldi image for pre-built OpenFST, version is 1.6.7
+FROM kaldiasr/kaldi:2020-09 as kaldi-base
+
+FROM debian:9.8
+
+COPY --from=kaldi-base /opt/kaldi/tools/openfst /opt/openfst
+ENV OPENFST_ROOT /opt/openfst
 
 ARG JOBS=4
 
@@ -20,7 +25,7 @@ WORKDIR /fstalign
 RUN mkdir -p /fstalign/build && \
     cd /fstalign/build && \
     rm -rf * && \
-    cmake .. -DFST_KALDI_ROOT="${KALDI_ROOT}" -DDYNAMIC_KALDI=ON && \
+    cmake .. -DOPENFST_ROOT="${OPENFST_ROOT}" -DDYNAMIC_OPENFST=ON && \
     make -j${JOBS} VERBOSE=1 && \
     mkdir -p /fstalign/bin && \
     cp /fstalign/build/fstalign /fstalign/bin && \
