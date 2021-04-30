@@ -45,7 +45,7 @@ if(DYNAMIC_OPENFST)
   )
 else()
   set(OPENFST_LIBRARIES
-    ${OPENFST_ROOT}/lib/libfst.a
+    ${OPENFST_ROOT}/lib/libfst.a -ldl
   )
 endif()
 
