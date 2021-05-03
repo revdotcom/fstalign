@@ -20,7 +20,8 @@ void OneBestFstLoader::BuildFromString(const std::string content) {
             std::back_inserter(mToken));
 }
 
-void OneBestFstLoader::LoadTextFile(const std::string filename) {
+void OneBestFstLoader::LoadTextFile(const std::string filename, bool useCase) {
+  mUseCase = useCase;
   std::ifstream stream(filename);
 
   if (!stream.is_open()) throw std::runtime_error("Cannot open input file");
@@ -34,8 +35,9 @@ void OneBestFstLoader::LoadTextFile(const std::string filename) {
 void OneBestFstLoader::addToSymbolTable(fst::SymbolTable &symbol) const {
   for (TokenType::const_iterator i = mToken.begin(); i != mToken.end(); ++i) {
     std::string token = *i;
-    // putting everything to lowercase
-    std::transform(token.begin(), token.end(), token.begin(), ::tolower);
+    if (!mUseCase) {
+        std::transform(token.begin(), token.end(), token.begin(), ::tolower);
+    }
     // fst::kNoSymbol
     if (symbol.Find(token) == -1) {
       symbol.AddSymbol(token);
@@ -60,7 +62,9 @@ fst::StdVectorFst OneBestFstLoader::convertToFst(const fst::SymbolTable &symbol)
   for (TokenType::const_iterator i = mToken.begin(); i != mToken.end(); ++i) {
     wc++;
     std::string token = *i;
-    std::transform(token.begin(), token.end(), token.begin(), ::tolower);
+    if (!mUseCase) {
+        std::transform(token.begin(), token.end(), token.begin(), ::tolower);
+    }
     transducer.AddState();
 
     int tk_idx = symbol.Find(token);

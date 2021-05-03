@@ -13,7 +13,7 @@ class OneBestFstLoader : public FstLoader {
  public:
   OneBestFstLoader();
   virtual ~OneBestFstLoader();
-  void LoadTextFile(const std::string filename);
+  void LoadTextFile(const std::string filename, bool useCase = false);
   void BuildFromString(const std::string content);
 
   virtual void addToSymbolTable(fst::SymbolTable &symbol) const;

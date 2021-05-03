@@ -15,12 +15,13 @@
    NLP FstLoader class start
  ************************************/
 NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value normalization)
-    : NlpFstLoader(records, normalization, true) {}
+    : NlpFstLoader(records, normalization, true, false) {}
 
-NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value normalization, bool processLabels)
+NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value normalization, bool processLabels, bool useCase)
     : FstLoader() {
   mNlpRows = records;
   mJsonNorm = normalization;
+  mUseCase = useCase;
   std::string last_label;
   bool firstTk = true;
 
@@ -42,7 +43,7 @@ NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value norma
         // mToken.push_back("___" + curr_label_id + "___");
         // mToken.push_back("___" + curr_label + "___");
         //
-        if (&mJsonNorm != NULL && mJsonNorm != Json::nullValue) {
+        if (mJsonNorm != NULL && mJsonNorm != Json::nullValue) {
           // todo: add a new "candidate" where this token and the following (if
           // from the same label id) will also be available in the norm
           // candidates.  Right now, if we have 10$ marked as MONEY, the '10$' itself
@@ -64,8 +65,9 @@ NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value norma
         mJsonNorm[curr_label_id]["candidates"][last_idx]["verbalization"].append(curr_tk);
       }
     } else {
-      // TODO: make the LC thing optional
-      std::transform(curr_tk.begin(), curr_tk.end(), curr_tk.begin(), ::tolower);
+      if (!useCase) {
+          std::transform(curr_tk.begin(), curr_tk.end(), curr_tk.begin(), ::tolower);
+      }
       mToken.push_back(curr_tk);
       mSpeakers.push_back(speaker);
     }
@@ -86,7 +88,7 @@ void NlpFstLoader::addToSymbolTable(fst::SymbolTable &symbol) const {
       AddSymbolIfNeeded(symbol, tk);
       std::string label_id = getLabelIdFromToken(tk);
 
-      if (&mJsonNorm != NULL && mJsonNorm != Json::nullValue) {
+      if (mJsonNorm != NULL && mJsonNorm != Json::nullValue) {
         auto candidates = mJsonNorm[label_id]["candidates"];
         logger->trace("for tk [{}] we have label_id [{}] and {} candidates", tk, label_id, candidates.size());
         for (Json::Value::ArrayIndex i = 0; i != candidates.size(); i++) {
@@ -196,7 +198,9 @@ so we add 2 states
         auto candidate = candidates[i]["verbalization"];
         for (auto tk_itr : candidate) {
           std::string ltoken = std::string(tk_itr.asString());
-          std::transform(ltoken.begin(), ltoken.end(), ltoken.begin(), ::tolower);
+          if (!mUseCase) {
+              std::transform(ltoken.begin(), ltoken.end(), ltoken.begin(), ::tolower);
+          }
           transducer.AddState();
           nextState++;
 

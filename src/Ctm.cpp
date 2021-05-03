@@ -17,12 +17,15 @@ using namespace fst;
 /***************************************
     CTM FST Loader Class Start
  ***************************************/
-CtmFstLoader::CtmFstLoader(vector<RawCtmRecord> &records) : FstLoader() {
+CtmFstLoader::CtmFstLoader(vector<RawCtmRecord> &records, bool useCase) : FstLoader() {
   {
+    mUseCase = useCase;
     mCtmRows = records;
     for (auto &row : mCtmRows) {
       string token = string(row.word);
-      std::transform(token.begin(), token.end(), token.begin(), ::tolower);
+      if (!mUseCase) {
+          std::transform(token.begin(), token.end(), token.begin(), ::tolower);
+      }
       mToken.push_back(token);
     }
   }
@@ -50,7 +53,9 @@ StdVectorFst CtmFstLoader::convertToFst(const SymbolTable &symbol) const {
   int nextState = 1;
   for (TokenType::const_iterator i = mToken.begin(); i != mToken.end(); ++i) {
     std::string token = *i;
-    std::transform(token.begin(), token.end(), token.begin(), ::tolower);
+    if (!mUseCase) {
+        std::transform(token.begin(), token.end(), token.begin(), ::tolower);
+    }
     transducer.AddState();
 
     transducer.AddArc(prevState, StdArc(symbol.Find(token), symbol.Find(token), 0.0f, nextState));
