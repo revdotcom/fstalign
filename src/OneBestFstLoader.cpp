@@ -20,8 +20,8 @@ void OneBestFstLoader::BuildFromString(const std::string content) {
             std::back_inserter(mToken));
 }
 
-void OneBestFstLoader::LoadTextFile(const std::string filename, bool useCase) {
-  mUseCase = useCase;
+void OneBestFstLoader::LoadTextFile(const std::string filename, bool keep_case) {
+  keep_case_ = keep_case;
   std::ifstream stream(filename);
 
   if (!stream.is_open()) throw std::runtime_error("Cannot open input file");
@@ -35,7 +35,7 @@ void OneBestFstLoader::LoadTextFile(const std::string filename, bool useCase) {
 void OneBestFstLoader::addToSymbolTable(fst::SymbolTable &symbol) const {
   for (TokenType::const_iterator i = mToken.begin(); i != mToken.end(); ++i) {
     std::string token = *i;
-    if (!mUseCase) {
+    if (!keep_case_) {
         std::transform(token.begin(), token.end(), token.begin(), ::tolower);
     }
     // fst::kNoSymbol
@@ -62,7 +62,7 @@ fst::StdVectorFst OneBestFstLoader::convertToFst(const fst::SymbolTable &symbol)
   for (TokenType::const_iterator i = mToken.begin(); i != mToken.end(); ++i) {
     wc++;
     std::string token = *i;
-    if (!mUseCase) {
+    if (!keep_case_) {
         std::transform(token.begin(), token.end(), token.begin(), ::tolower);
     }
     transducer.AddState();

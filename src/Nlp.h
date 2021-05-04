@@ -41,7 +41,7 @@ class NlpReader {
 
 class NlpFstLoader : public FstLoader {
  public:
-  NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value normalization, bool processLabels, bool useCase);
+  NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value normalization, bool processLabels, bool keep_case);
   NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value normalization);
   virtual ~NlpFstLoader();
   virtual void addToSymbolTable(fst::SymbolTable &symbol) const;
