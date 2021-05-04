@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
                             }\n\
                         }");
 
-  get_wer->add_flag("--use-case", keep_case, "Keep casing information, default is to only compare lowercase tokens");
+  get_wer->add_flag("--keep-case", keep_case, "Keep casing information, default is to only compare lowercase tokens");
 
   // CLI11_PARSE(app, argc, argv);
   try {
