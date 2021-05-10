@@ -14,7 +14,6 @@ class FstLoader {
  protected:
   typedef std::vector<std::string> TokenType;
   TokenType mToken;
-  bool keep_case_ = false;
 
  public:
   FstLoader();

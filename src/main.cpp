@@ -177,18 +177,18 @@ int main(int argc, char **argv) {
     NlpReader nlpReader = NlpReader();
     console->info("reading reference nlp from {}", ref_filename);
     auto vec = nlpReader.read_from_disk(ref_filename);
-    NlpFstLoader *nlpFst = new NlpFstLoader(vec, obj, true, keep_case);
+    NlpFstLoader *nlpFst = new NlpFstLoader(vec, obj, true);
     ref = nlpFst;
   } else if (EndsWithCaseInsensitive(ref_filename, string(".ctm"))) {
     console->info("reading reference ctm from {}", ref_filename);
     CtmReader ctmReader = CtmReader();
     auto vect = ctmReader.read_from_disk(ref_filename);
-    CtmFstLoader *ctmFst = new CtmFstLoader(vect, keep_case);
+    CtmFstLoader *ctmFst = new CtmFstLoader(vect);
     ref = ctmFst;
   } else {
     console->info("reading reference plain text from {}", ref_filename);
     auto *oneBestFst = new OneBestFstLoader();
-    oneBestFst->LoadTextFile(ref_filename, keep_case);
+    oneBestFst->LoadTextFile(ref_filename);
     ref = oneBestFst;
   }
 
@@ -199,13 +199,13 @@ int main(int argc, char **argv) {
     auto vec = nlpReader.read_from_disk(hyp_filename);
     // for now, nlp files passed as hypothesis won't have their labels handled as such
     // this also mean that json normalization will be ignored
-    NlpFstLoader *nlpFst = new NlpFstLoader(vec, hyp_json_obj, false, keep_case);
+    NlpFstLoader *nlpFst = new NlpFstLoader(vec, hyp_json_obj, false);
     hyp = nlpFst;
   } else if (EndsWithCaseInsensitive(hyp_filename, string(".ctm"))) {
     console->info("reading hypothesis ctm from {}", hyp_filename);
     CtmReader ctmReader = CtmReader();
     auto vect = ctmReader.read_from_disk(hyp_filename);
-    CtmFstLoader *ctmFst = new CtmFstLoader(vect, keep_case);
+    CtmFstLoader *ctmFst = new CtmFstLoader(vect);
     hyp = ctmFst;
   } else if (EndsWithCaseInsensitive(hyp_filename, string(".fst"))) {
     if (symbols_filename.empty()) {
@@ -217,7 +217,7 @@ int main(int argc, char **argv) {
   } else {
     console->info("reading hypothesis plain text from {}", hyp_filename);
     auto *hypOneBest = new OneBestFstLoader();
-    hypOneBest->LoadTextFile(hyp_filename, keep_case);
+    hypOneBest->LoadTextFile(hyp_filename);
     hyp = hypOneBest;
   }
 
@@ -230,10 +230,10 @@ int main(int argc, char **argv) {
   if (command == "wer") {
     if (do_adapted_composition) {
       HandleWer(ref, hyp, engine, output_sbs, output_nlp, speaker_switch_context_size, numBests, pr_threshold,
-                symbols_filename, "adapted");
+                symbols_filename, "adapted", keep_case);
     } else {
       HandleWer(ref, hyp, engine, output_sbs, output_nlp, speaker_switch_context_size, numBests, pr_threshold,
-                symbols_filename, "standard");
+                symbols_filename, "standard", keep_case);
     }
   } else if (command == "align") {
     if (output_nlp.empty()) {

@@ -15,13 +15,12 @@
    NLP FstLoader class start
  ************************************/
 NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value normalization)
-    : NlpFstLoader(records, normalization, true, false) {}
+    : NlpFstLoader(records, normalization, true) {}
 
-NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value normalization, bool processLabels, bool keep_case)
+NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value normalization, bool processLabels)
     : FstLoader() {
   mNlpRows = records;
   mJsonNorm = normalization;
-  keep_case_ = keep_case;
   std::string last_label;
   bool firstTk = true;
 
@@ -65,9 +64,7 @@ NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value norma
         mJsonNorm[curr_label_id]["candidates"][last_idx]["verbalization"].append(curr_tk);
       }
     } else {
-      if (!keep_case_) {
-          std::transform(curr_tk.begin(), curr_tk.end(), curr_tk.begin(), ::tolower);
-      }
+      std::transform(curr_tk.begin(), curr_tk.end(), curr_tk.begin(), ::tolower);
       mToken.push_back(curr_tk);
       mSpeakers.push_back(speaker);
     }
@@ -198,9 +195,7 @@ so we add 2 states
         auto candidate = candidates[i]["verbalization"];
         for (auto tk_itr : candidate) {
           std::string ltoken = std::string(tk_itr.asString());
-          if (!keep_case_) {
-              std::transform(ltoken.begin(), ltoken.end(), ltoken.begin(), ::tolower);
-          }
+          std::transform(ltoken.begin(), ltoken.end(), ltoken.begin(), ::tolower);
           transducer.AddState();
           nextState++;
 

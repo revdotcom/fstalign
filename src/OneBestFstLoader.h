@@ -13,12 +13,13 @@ class OneBestFstLoader : public FstLoader {
  public:
   OneBestFstLoader();
   virtual ~OneBestFstLoader();
-  void LoadTextFile(const std::string filename, bool keep_case = false);
+  void LoadTextFile(const std::string filename);
   void BuildFromString(const std::string content);
 
   virtual void addToSymbolTable(fst::SymbolTable &symbol) const;
   virtual fst::StdVectorFst convertToFst(const fst::SymbolTable &symbol) const;
   virtual const std::string &getToken(int index) const { return mToken.at(index); }
+  int TokensSize() { return mToken.size(); }
 };
 
 #endif /* ONEBESTFSTLOADER_H_ */

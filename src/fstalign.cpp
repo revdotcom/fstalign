@@ -12,6 +12,7 @@ fstalign.cpp
 #include <spdlog/fmt/fmt.h>
 
 #include "AdaptedComposition.h"
+#include "OneBestFstLoader.h"
 #include "StandardComposition.h"
 #include "Walker.h"
 #include "json_logging.h"
@@ -103,8 +104,47 @@ spWERA Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engin
   throw std::runtime_error("no alignment produced");
 }
 
+void RecordCaseWER(vector<shared_ptr<Stitching>> aligned_stitches) {
+  auto logger = logger::GetOrCreateLogger("wer");
+  logger->set_level(spdlog::level::info);
+  int true_positive = 0;  // h is upper and r is upper
+  int false_positive = 0;  // h is upper and r is lower
+  int false_negative = 0;  // h is lower and r is upper
+  int sub_tp(0), sub_fp(0), sub_fn(0);
+
+  for (auto &&stitch : aligned_stitches) {
+    string hyp = stitch->hyp_orig;
+    string ref = stitch->nlpRow.token;
+    string reftk = stitch->reftk;
+    string hyptk = stitch->hyptk;
+
+    if (hyptk == DEL || reftk == INS) {
+      continue;
+    }
+
+    if (reftk == hyptk) {
+      if (isupper(ref[0]) && isupper(hyp[0])) true_positive++;
+      else if (isupper(ref[0]) && islower(hyp[0])) false_negative++;
+      else if (islower(ref[0]) && isupper(hyp[0])) false_positive++;
+    } else {
+      // substitutions
+      if (isupper(ref[0]) && isupper(hyp[0])) sub_tp++;
+      else if (isupper(ref[0]) && islower(hyp[0])) sub_fn++;
+      else if (islower(ref[0]) && isupper(hyp[0])) sub_fp++;
+    }
+  }
+
+  float base_precision = float(true_positive) / float(true_positive + false_positive);
+  float base_recall = float(true_positive) / float(true_positive + false_negative);
+  float precision_with_sub = float(true_positive + sub_tp) / float(true_positive + sub_tp + false_positive + sub_fp);
+  float recall_with_sub = float(true_positive + sub_tp) / float(true_positive + sub_tp + false_negative + sub_fn);
+
+  logger->info("case WER, (matching words only): Precision:{:01.6f} Recall:{:01.6f}", base_precision, base_recall);
+  logger->info("case WER, (including substitutions): Precision:{:01.6f} Recall:{:01.6f}", precision_with_sub, recall_with_sub);
+}
+
 vector<shared_ptr<Stitching>> make_stitches(spWERA alignment, vector<RawCtmRecord> hyp_ctm_rows = {},
-                                            vector<RawNlpRecord> hyp_nlp_rows = {}) {
+                                            vector<RawNlpRecord> hyp_nlp_rows = {}, vector<string> one_best_tokens = {}) {
   auto logger = logger::GetOrCreateLogger("fstalign");
 
   // Go through top alignment and create stitches
@@ -171,6 +211,7 @@ vector<shared_ptr<Stitching>> make_stitches(spWERA alignment, vector<RawCtmRecor
       part->end_ts = ctmPart.start_time_secs + ctmPart.duration_secs;
       part->confidence = ctmPart.confidence;
 
+      part->hyp_orig = ctmPart.word;
       // sanity check
       std::string ctmCopy = ctmPart.word;
       std::transform(ctmCopy.begin(), ctmCopy.end(), ctmCopy.begin(), ::tolower);
@@ -184,6 +225,7 @@ vector<shared_ptr<Stitching>> make_stitches(spWERA alignment, vector<RawCtmRecor
 
     if (!hyp_nlp_rows.empty()) {
       auto hypNlpPart = hyp_nlp_rows[hypRowIndex];
+      part->hyp_orig = hypNlpPart.token;
       if (!hypNlpPart.ts.empty() && !hypNlpPart.endTs.empty()) {
         float ts = stof(hypNlpPart.ts);
         float endTs = stof(hypNlpPart.endTs);
@@ -203,6 +245,21 @@ vector<shared_ptr<Stitching>> make_stitches(spWERA alignment, vector<RawCtmRecor
         part->start_ts = endTs;
         part->end_ts = endTs;
         part->duration = 0.0;
+      }
+    }
+
+    if (!one_best_tokens.empty()) {
+      auto token = one_best_tokens[hypRowIndex];
+      part->hyp_orig = token;
+
+      // sanity check
+      std::string token_copy = token;
+      std::transform(token_copy.begin(), token_copy.end(), token_copy.begin(), ::tolower);
+      if (hyp_tk != token_copy) {
+        logger->warn(
+            "hum, looks like the text and the alignment got out of sync? [{}] vs "
+            "[{}]",
+            hyp_tk, token_copy);
       }
     }
 
@@ -340,7 +397,7 @@ void align_stitches_to_nlp(NlpFstLoader *refLoader, vector<shared_ptr<Stitching>
     }
 
     // only one nlp row for many words :
-    // Miguel's suggestion: put punt/case info on the last word
+    // Miguel's suggestion: put punct/case info on the last word
     // Revision: put case info on the 1st word and punct info on the last word
     if (classLabelRowsInNlp == 1) {
       RawNlpRecord *newRecord = new RawNlpRecord();
@@ -495,12 +552,12 @@ void write_stitches_to_nlp(vector<shared_ptr<Stitching>> stitches, ofstream &out
 
 void HandleWer(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engine, string output_sbs, string output_nlp,
                int speaker_switch_context_size, int numBests, int pr_threshold, string symbols_filename,
-               string composition_approach) {
-  auto topAlignment = Fstalign(refLoader, hypLoader, engine, numBests, symbols_filename, composition_approach);
-  CalculatePrecisionRecall(topAlignment, pr_threshold);
-
+               string composition_approach, bool keep_case) {
   auto logger = logger::GetOrCreateLogger("fstalign");
   logger->set_level(spdlog::level::info);
+
+  spWERA topAlignment = Fstalign(refLoader, hypLoader, engine, numBests, symbols_filename, composition_approach);
+  CalculatePrecisionRecall(topAlignment, pr_threshold);
 
   RecordWer(topAlignment);
   if (!output_sbs.empty()) {
@@ -514,10 +571,19 @@ void HandleWer(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engine
     vector<shared_ptr<Stitching>> stitches;
     CtmFstLoader *ctm_hyp_loader = dynamic_cast<CtmFstLoader *>(hypLoader);
     NlpFstLoader *nlp_hyp_loader = dynamic_cast<NlpFstLoader *>(hypLoader);
+    OneBestFstLoader *best_loader = dynamic_cast<OneBestFstLoader *>(hypLoader);
     if (ctm_hyp_loader) {
       stitches = make_stitches(topAlignment, ctm_hyp_loader->mCtmRows, {});
     } else if (nlp_hyp_loader) {
       stitches = make_stitches(topAlignment, {}, nlp_hyp_loader->mNlpRows);
+    } else if (best_loader) {
+      vector<string> tokens;
+      tokens.reserve(best_loader->TokensSize());
+      for (int i = 0; i < best_loader->TokensSize(); i++ ) {
+        string token = best_loader->getToken(i);
+        tokens.push_back(token);
+      }
+      stitches = make_stitches(topAlignment, {}, {}, tokens);
     } else {
       stitches = make_stitches(topAlignment);
     }
@@ -527,6 +593,10 @@ void HandleWer(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engine
       align_stitches_to_nlp(nlp_ref_loader, &stitches);
     } catch (const std::bad_alloc &) {
       logger->error("Speaker switch diagnostics failed from memory error, likely due to overlapping class labels.");
+    }
+
+    if (keep_case) {
+      RecordCaseWER(stitches);
     }
 
     // Calculate and record speaker switch WER if context size is provided
