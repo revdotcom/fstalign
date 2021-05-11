@@ -104,45 +104,6 @@ spWERA Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engin
   throw std::runtime_error("no alignment produced");
 }
 
-void RecordCaseWER(vector<shared_ptr<Stitching>> aligned_stitches) {
-  auto logger = logger::GetOrCreateLogger("wer");
-  logger->set_level(spdlog::level::info);
-  int true_positive = 0;  // h is upper and r is upper
-  int false_positive = 0;  // h is upper and r is lower
-  int false_negative = 0;  // h is lower and r is upper
-  int sub_tp(0), sub_fp(0), sub_fn(0);
-
-  for (auto &&stitch : aligned_stitches) {
-    string hyp = stitch->hyp_orig;
-    string ref = stitch->nlpRow.token;
-    string reftk = stitch->reftk;
-    string hyptk = stitch->hyptk;
-
-    if (hyptk == DEL || reftk == INS) {
-      continue;
-    }
-
-    if (reftk == hyptk) {
-      if (isupper(ref[0]) && isupper(hyp[0])) true_positive++;
-      else if (isupper(ref[0]) && islower(hyp[0])) false_negative++;
-      else if (islower(ref[0]) && isupper(hyp[0])) false_positive++;
-    } else {
-      // substitutions
-      if (isupper(ref[0]) && isupper(hyp[0])) sub_tp++;
-      else if (isupper(ref[0]) && islower(hyp[0])) sub_fn++;
-      else if (islower(ref[0]) && isupper(hyp[0])) sub_fp++;
-    }
-  }
-
-  float base_precision = float(true_positive) / float(true_positive + false_positive);
-  float base_recall = float(true_positive) / float(true_positive + false_negative);
-  float precision_with_sub = float(true_positive + sub_tp) / float(true_positive + sub_tp + false_positive + sub_fp);
-  float recall_with_sub = float(true_positive + sub_tp) / float(true_positive + sub_tp + false_negative + sub_fn);
-
-  logger->info("case WER, (matching words only): Precision:{:01.6f} Recall:{:01.6f}", base_precision, base_recall);
-  logger->info("case WER, (including substitutions): Precision:{:01.6f} Recall:{:01.6f}", precision_with_sub, recall_with_sub);
-}
-
 vector<shared_ptr<Stitching>> make_stitches(spWERA alignment, vector<RawCtmRecord> hyp_ctm_rows = {},
                                             vector<RawNlpRecord> hyp_nlp_rows = {}, vector<string> one_best_tokens = {}) {
   auto logger = logger::GetOrCreateLogger("fstalign");
@@ -596,7 +557,7 @@ void HandleWer(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engine
     }
 
     if (keep_case) {
-      RecordCaseWER(stitches);
+      RecordCaseWer(stitches);
     }
 
     // Calculate and record speaker switch WER if context size is provided

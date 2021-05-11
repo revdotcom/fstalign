@@ -228,6 +228,67 @@ void RecordSpeakerSwitchWer(vector<shared_ptr<Stitching>> stitches, int speaker_
       speaker_switch_context_size;
 }
 
+void RecordCaseWer(vector<shared_ptr<Stitching>> aligned_stitches) {
+  auto logger = logger::GetOrCreateLogger("wer");
+  logger->set_level(spdlog::level::info);
+  int true_positive = 0;  // h is upper and r is upper
+  int false_positive = 0;  // h is upper and r is lower
+  int false_negative = 0;  // h is lower and r is upper
+  int sub_tp(0), sub_fp(0), sub_fn(0);
+
+  for (auto &&stitch : aligned_stitches) {
+    string hyp = stitch->hyp_orig;
+    string ref = stitch->nlpRow.token;
+    string reftk = stitch->reftk;
+    string hyptk = stitch->hyptk;
+    string ref_casing = stitch->nlpRow.casing;
+
+    if (hyptk == DEL || reftk == INS) {
+      continue;
+    }
+
+    if (reftk == hyptk) {
+      for (int i = 0; i < ref.size(); i++) {
+        if (isupper(ref[i]) && isupper(hyp[i])) true_positive++;
+        else if (isupper(ref[i]) && islower(hyp[i])) false_negative++;
+        else if (islower(ref[i]) && isupper(hyp[i])) false_positive++;
+      }
+    } else {
+      if (ref_casing == "MC") {
+        // Don't care if the casing is aligned, just that they have same number of Upper Case
+        int ref_upper = 0;
+        for (int i = 0; i < ref.size(); i++) {
+          if (isupper(ref[i])) ref_upper++;
+        }
+        int hyp_upper = 0;
+        for (int i = 0; i < hyp.size(); i++) {
+          if (isupper(hyp[i])) hyp_upper++;
+        }
+        sub_tp += min(ref_upper, hyp_upper);
+        sub_fp += max(0, hyp_upper - ref_upper);
+        sub_fn += max(0, ref_upper - hyp_upper);
+      } else {
+        if (isupper(ref[0]) && isupper(hyp[0])) sub_tp++;
+        else if (isupper(ref[0]) && islower(hyp[0])) sub_fn++;
+        else if (islower(ref[0]) && isupper(hyp[0])) sub_fp++;
+      }
+    }
+  }
+
+  float base_precision = float(true_positive) / float(true_positive + false_positive);
+  float base_recall = float(true_positive) / float(true_positive + false_negative);
+  float precision_with_sub = float(true_positive + sub_tp) / float(true_positive + sub_tp + false_positive + sub_fp);
+  float recall_with_sub = float(true_positive + sub_tp) / float(true_positive + sub_tp + false_negative + sub_fn);
+
+  logger->info("case WER, (matching words only): Precision:{:01.6f} Recall:{:01.6f}", base_precision, base_recall);
+  logger->info("case WER, (including substitutions): Precision:{:01.6f} Recall:{:01.6f}", precision_with_sub, recall_with_sub);
+
+  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["precision"] = base_precision;
+  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["recall"] = base_recall;
+  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["substitutions"]["precision"] = precision_with_sub;
+  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["substitutions"]["recall"] = recall_with_sub;
+}
+
 void RecordTagWer(vector<shared_ptr<Stitching>> stitches) {
   // Record per wer_tag ID stats
   auto logger = logger::GetOrCreateLogger("wer");
