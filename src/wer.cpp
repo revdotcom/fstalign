@@ -247,15 +247,20 @@ void RecordCaseWer(vector<shared_ptr<Stitching>> aligned_stitches) {
       continue;
     }
 
+    // Calculate false_positive/true_positive/false_negative at token level instead of character level
+    // This is to keep it more consistent with WER, which is also at token level
+    // A false positive is where there are more uppercase in the hypothesis than the ref
+    // A false negative is the opposite
+    // A true positive matches
     if (reftk == hyptk) {
-      for (int i = 0; i < ref.size(); i++) {
-        if (isupper(ref[i]) && isupper(hyp[i])) true_positive++;
-        else if (isupper(ref[i]) && islower(hyp[i])) false_negative++;
-        else if (islower(ref[i]) && isupper(hyp[i])) false_positive++;
-      }
-    } else {
-      if (ref_casing == "MC") {
-        // Don't care if the casing is aligned, just that they have same number of Upper Case
+      if (ref_casing == "LC") {
+        for (auto &&c : hyp) {
+          if (isupper(c)) {
+            false_positive++;
+            break;
+          }
+        }
+      } else {
         int ref_upper = 0;
         for (int i = 0; i < ref.size(); i++) {
           if (isupper(ref[i])) ref_upper++;
@@ -264,13 +269,30 @@ void RecordCaseWer(vector<shared_ptr<Stitching>> aligned_stitches) {
         for (int i = 0; i < hyp.size(); i++) {
           if (isupper(hyp[i])) hyp_upper++;
         }
-        sub_tp += min(ref_upper, hyp_upper);
-        sub_fp += max(0, hyp_upper - ref_upper);
-        sub_fn += max(0, ref_upper - hyp_upper);
+        if (ref_upper == hyp_upper) true_positive++;
+        else if (ref_upper > hyp_upper) false_negative++;
+        else if (ref_upper < hyp_upper) false_positive++;
+      }
+    } else {
+      if (ref_casing == "LC") {
+        for (auto &&c : hyp) {
+          if (isupper(c)) {
+            sub_fp++;
+            break;
+          }
+        }
       } else {
-        if (isupper(ref[0]) && isupper(hyp[0])) sub_tp++;
-        else if (isupper(ref[0]) && islower(hyp[0])) sub_fn++;
-        else if (islower(ref[0]) && isupper(hyp[0])) sub_fp++;
+        int ref_upper = 0;
+        for (int i = 0; i < ref.size(); i++) {
+          if (isupper(ref[i])) ref_upper++;
+        }
+        int hyp_upper = 0;
+        for (int i = 0; i < hyp.size(); i++) {
+          if (isupper(hyp[i])) hyp_upper++;
+        }
+        if (ref_upper == hyp_upper) sub_tp++;
+        else if (ref_upper > hyp_upper) sub_fn++;
+        else if (ref_upper < hyp_upper) sub_fp++;
       }
     }
   }
@@ -281,12 +303,19 @@ void RecordCaseWer(vector<shared_ptr<Stitching>> aligned_stitches) {
   float recall_with_sub = float(true_positive + sub_tp) / float(true_positive + sub_tp + false_negative + sub_fn);
 
   logger->info("case WER, (matching words only): Precision:{:01.6f} Recall:{:01.6f}", base_precision, base_recall);
-  logger->info("case WER, (including substitutions): Precision:{:01.6f} Recall:{:01.6f}", precision_with_sub, recall_with_sub);
+  logger->info("case WER, (all including substitutions): Precision:{:01.6f} Recall:{:01.6f}", precision_with_sub, recall_with_sub);
 
-  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["precision"] = base_precision;
-  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["recall"] = base_recall;
-  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["substitutions"]["precision"] = precision_with_sub;
-  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["substitutions"]["recall"] = recall_with_sub;
+  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["matching"]["precision"] = base_precision;
+  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["matching"]["recall"] = base_recall;
+  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["matching"]["true_positive"] = true_positive;
+  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["matching"]["false_positive"] = false_positive;
+  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["matching"]["false_negative"] = false_negative;
+
+  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["all"]["precision"] = precision_with_sub;
+  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["all"]["recall"] = recall_with_sub;
+  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["all"]["true_positive"] = sub_tp + true_positive;
+  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["all"]["false_positive"] = sub_fp + false_positive;
+  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["all"]["false_negative"] = sub_fn + false_negative;
 }
 
 void RecordTagWer(vector<shared_ptr<Stitching>> stitches) {
