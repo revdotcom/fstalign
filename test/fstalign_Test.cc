@@ -24,13 +24,13 @@ TEST_CASE("STATIC_REQUIRE showcase", "[traits]") {
   STATIC_REQUIRE_FALSE(std::is_void<int>::value);
 }
 
-TEST_CASE_METHOD(UniqueTestsFixture, "main-approach1()") {
+TEST_CASE_METHOD(UniqueTestsFixture, "main-standard-composition()") {
   // setup (before each test) -- done sequentially before each test gets spawned off in parallel
   const auto sbs_output = getOutputSbsPath();
   const auto nlp_output = getOutputNlpPath();
 
   auto logger = logger::GetOrCreateLogger("main()");
-  const char *approach = "";
+  const char *approach = "--composition-approach standard";
 
   SECTION("empty_hyp_ctm") {
     const auto result = exec(command("wer", approach, "empty.ref.txt", "empty.hyp.ctm", sbs_output));
@@ -394,13 +394,13 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-approach1()") {
 
 */
 
-TEST_CASE_METHOD(UniqueTestsFixture, "main-approach2()") {
+TEST_CASE_METHOD(UniqueTestsFixture, "main-adapted-composition()") {
   // setup (before each test) -- done sequentially before each test gets spawned off in parallel
   const auto sbs_output = getOutputSbsPath();
   const auto nlp_output = getOutputNlpPath();
 
   auto logger = logger::GetOrCreateLogger("main()");
-  const char *approach = "--do-adapted-composition";
+  const char *approach = "--composition-approach adapted";
 
   SECTION("empty_hyp_ctm") {
     const auto result = exec(command("wer", approach, "empty.ref.txt", "empty.hyp.ctm", sbs_output));
