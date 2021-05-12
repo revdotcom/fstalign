@@ -34,7 +34,6 @@ void OneBestFstLoader::LoadTextFile(const std::string filename) {
 void OneBestFstLoader::addToSymbolTable(fst::SymbolTable &symbol) const {
   for (TokenType::const_iterator i = mToken.begin(); i != mToken.end(); ++i) {
     std::string token = *i;
-    // putting everything to lowercase
     std::transform(token.begin(), token.end(), token.begin(), ::tolower);
     // fst::kNoSymbol
     if (symbol.Find(token) == -1) {

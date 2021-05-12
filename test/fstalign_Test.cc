@@ -266,6 +266,17 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-standard-composition()") {
     REQUIRE_THAT(result, Contains("WER: INS:0 DEL:3 SUB:3"));
   }
 
+  SECTION("Case Metrics") {
+    const auto result =
+        exec(command("wer", approach, "short.ref.nlp", "short.hyp.txt", sbs_output, nlp_output, TEST_SYNONYMS, nullptr,
+                     false, -1, "--record-case-stats"));
+    const auto testFile = std::string{TEST_DATA} + "short.aligned.nlp";
+
+    REQUIRE(compareFiles(nlp_output.c_str(), testFile.c_str()));
+    REQUIRE_THAT(result, Contains("case WER, (matching words only): Precision:1.0"));
+    REQUIRE_THAT(result, Contains("case WER, (all including substitutions): Precision:0.77"));
+  }
+
   // alignment tests
 
   SECTION("align_1") {

@@ -28,6 +28,7 @@ int main(int argc, char **argv) {
   string composition_approach = "adapted";
   int speaker_switch_context_size = 5;
   int numBests = 100;
+  bool record_case_stats = false;
 
   CLI::App app("Rev FST Align");
   app.set_help_all_flag("--help-all", "Expand all help");
@@ -98,6 +99,9 @@ int main(int argc, char **argv) {
                                 speakerWER:{1:{deletions:INT, insertions:INT, substitutions:INT, numErrors:INT, numWordsInReference:INT, wer:FLOAT, meta:{}}},\n\
                             }\n\
                         }");
+
+  get_wer->add_flag("--record-case-stats", record_case_stats, "Record precision/recall for how well the hypothesis"
+                    "casing matches the reference.");
 
   // CLI11_PARSE(app, argc, argv);
   try {
@@ -175,7 +179,7 @@ int main(int argc, char **argv) {
     NlpReader nlpReader = NlpReader();
     console->info("reading reference nlp from {}", ref_filename);
     auto vec = nlpReader.read_from_disk(ref_filename);
-    NlpFstLoader *nlpFst = new NlpFstLoader(vec, obj);
+    NlpFstLoader *nlpFst = new NlpFstLoader(vec, obj, true);
     ref = nlpFst;
   } else if (EndsWithCaseInsensitive(ref_filename, string(".ctm"))) {
     console->info("reading reference ctm from {}", ref_filename);
@@ -227,7 +231,7 @@ int main(int argc, char **argv) {
 
   if (command == "wer") {
     HandleWer(ref, hyp, engine, output_sbs, output_nlp, speaker_switch_context_size, numBests, pr_threshold,
-              symbols_filename, composition_approach);
+              symbols_filename, composition_approach, record_case_stats);
   } else if (command == "align") {
     if (output_nlp.empty()) {
       console->error("the output nlp file must be specified");

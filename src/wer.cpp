@@ -228,6 +228,96 @@ void RecordSpeakerSwitchWer(vector<shared_ptr<Stitching>> stitches, int speaker_
       speaker_switch_context_size;
 }
 
+void RecordCaseWer(vector<shared_ptr<Stitching>> aligned_stitches) {
+  auto logger = logger::GetOrCreateLogger("wer");
+  logger->set_level(spdlog::level::info);
+  int true_positive = 0;  // h is upper and r is upper
+  int false_positive = 0;  // h is upper and r is lower
+  int false_negative = 0;  // h is lower and r is upper
+  int sub_tp(0), sub_fp(0), sub_fn(0);
+
+  for (auto &&stitch : aligned_stitches) {
+    string hyp = stitch->hyp_orig;
+    string ref = stitch->nlpRow.token;
+    string reftk = stitch->reftk;
+    string hyptk = stitch->hyptk;
+    string ref_casing = stitch->nlpRow.casing;
+
+    if (hyptk == DEL || reftk == INS) {
+      continue;
+    }
+
+    // Calculate false_positive/true_positive/false_negative at token level instead of character level
+    // This is to keep it more consistent with WER, which is also at token level
+    // A false positive is where there are more uppercase in the hypothesis than the ref
+    // A false negative is the opposite
+    // A true positive matches
+    if (reftk == hyptk) {
+      if (ref_casing == "LC") {
+        for (auto &&c : hyp) {
+          if (isupper(c)) {
+            false_positive++;
+            break;
+          }
+        }
+      } else {
+        int ref_upper = 0;
+        for (int i = 0; i < ref.size(); i++) {
+          if (isupper(ref[i])) ref_upper++;
+        }
+        int hyp_upper = 0;
+        for (int i = 0; i < hyp.size(); i++) {
+          if (isupper(hyp[i])) hyp_upper++;
+        }
+        if (ref_upper == hyp_upper) true_positive++;
+        else if (ref_upper > hyp_upper) false_negative++;
+        else if (ref_upper < hyp_upper) false_positive++;
+      }
+    } else {
+      if (ref_casing == "LC") {
+        for (auto &&c : hyp) {
+          if (isupper(c)) {
+            sub_fp++;
+            break;
+          }
+        }
+      } else {
+        int ref_upper = 0;
+        for (int i = 0; i < ref.size(); i++) {
+          if (isupper(ref[i])) ref_upper++;
+        }
+        int hyp_upper = 0;
+        for (int i = 0; i < hyp.size(); i++) {
+          if (isupper(hyp[i])) hyp_upper++;
+        }
+        if (ref_upper == hyp_upper) sub_tp++;
+        else if (ref_upper > hyp_upper) sub_fn++;
+        else if (ref_upper < hyp_upper) sub_fp++;
+      }
+    }
+  }
+
+  float base_precision = float(true_positive) / float(true_positive + false_positive);
+  float base_recall = float(true_positive) / float(true_positive + false_negative);
+  float precision_with_sub = float(true_positive + sub_tp) / float(true_positive + sub_tp + false_positive + sub_fp);
+  float recall_with_sub = float(true_positive + sub_tp) / float(true_positive + sub_tp + false_negative + sub_fn);
+
+  logger->info("case WER, (matching words only): Precision:{:01.6f} Recall:{:01.6f}", base_precision, base_recall);
+  logger->info("case WER, (all including substitutions): Precision:{:01.6f} Recall:{:01.6f}", precision_with_sub, recall_with_sub);
+
+  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["matching"]["precision"] = base_precision;
+  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["matching"]["recall"] = base_recall;
+  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["matching"]["true_positive"] = true_positive;
+  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["matching"]["false_positive"] = false_positive;
+  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["matching"]["false_negative"] = false_negative;
+
+  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["all"]["precision"] = precision_with_sub;
+  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["all"]["recall"] = recall_with_sub;
+  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["all"]["true_positive"] = sub_tp + true_positive;
+  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["all"]["false_positive"] = sub_fp + false_positive;
+  jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["all"]["false_negative"] = sub_fn + false_negative;
+}
+
 void RecordTagWer(vector<shared_ptr<Stitching>> stitches) {
   // Record per wer_tag ID stats
   auto logger = logger::GetOrCreateLogger("wer");

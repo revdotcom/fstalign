@@ -40,6 +40,7 @@ void RecordWer(spWERA topAlignment);
 void RecordSpeakerWer(vector<shared_ptr<Stitching>> stitches);
 void RecordSpeakerSwitchWer(vector<shared_ptr<Stitching>> stitches, int speaker_switch_context_size);
 void RecordTagWer(vector<shared_ptr<Stitching>> stitches);
+void RecordCaseWer(vector<shared_ptr<Stitching>> aligned_stitches);
 
 // Adds PR metrics to topAlignment
 void CalculatePrecisionRecall(spWERA &topAlignment, int threshold);
