@@ -28,6 +28,7 @@ int main(int argc, char **argv) {
   string composition_approach = "adapted";
   int speaker_switch_context_size = 5;
   int numBests = 100;
+  bool keep_case = false;
 
   CLI::App app("Rev FST Align");
   app.set_help_all_flag("--help-all", "Expand all help");
@@ -98,6 +99,8 @@ int main(int argc, char **argv) {
                                 speakerWER:{1:{deletions:INT, insertions:INT, substitutions:INT, numErrors:INT, numWordsInReference:INT, wer:FLOAT, meta:{}}},\n\
                             }\n\
                         }");
+
+  get_wer->add_flag("--keep-case", keep_case, "Keep casing information, default is to only compare lowercase tokens");
 
   // CLI11_PARSE(app, argc, argv);
   try {
@@ -175,18 +178,18 @@ int main(int argc, char **argv) {
     NlpReader nlpReader = NlpReader();
     console->info("reading reference nlp from {}", ref_filename);
     auto vec = nlpReader.read_from_disk(ref_filename);
-    NlpFstLoader *nlpFst = new NlpFstLoader(vec, obj);
+    NlpFstLoader *nlpFst = new NlpFstLoader(vec, obj, true, keep_case);
     ref = nlpFst;
   } else if (EndsWithCaseInsensitive(ref_filename, string(".ctm"))) {
     console->info("reading reference ctm from {}", ref_filename);
     CtmReader ctmReader = CtmReader();
     auto vect = ctmReader.read_from_disk(ref_filename);
-    CtmFstLoader *ctmFst = new CtmFstLoader(vect);
+    CtmFstLoader *ctmFst = new CtmFstLoader(vect, keep_case);
     ref = ctmFst;
   } else {
     console->info("reading reference plain text from {}", ref_filename);
     auto *oneBestFst = new OneBestFstLoader();
-    oneBestFst->LoadTextFile(ref_filename);
+    oneBestFst->LoadTextFile(ref_filename, keep_case);
     ref = oneBestFst;
   }
 
@@ -197,13 +200,13 @@ int main(int argc, char **argv) {
     auto vec = nlpReader.read_from_disk(hyp_filename);
     // for now, nlp files passed as hypothesis won't have their labels handled as such
     // this also mean that json normalization will be ignored
-    NlpFstLoader *nlpFst = new NlpFstLoader(vec, hyp_json_obj, false);
+    NlpFstLoader *nlpFst = new NlpFstLoader(vec, hyp_json_obj, false, keep_case);
     hyp = nlpFst;
   } else if (EndsWithCaseInsensitive(hyp_filename, string(".ctm"))) {
     console->info("reading hypothesis ctm from {}", hyp_filename);
     CtmReader ctmReader = CtmReader();
     auto vect = ctmReader.read_from_disk(hyp_filename);
-    CtmFstLoader *ctmFst = new CtmFstLoader(vect);
+    CtmFstLoader *ctmFst = new CtmFstLoader(vect, keep_case);
     hyp = ctmFst;
   } else if (EndsWithCaseInsensitive(hyp_filename, string(".fst"))) {
     if (symbols_filename.empty()) {
@@ -215,7 +218,7 @@ int main(int argc, char **argv) {
   } else {
     console->info("reading hypothesis plain text from {}", hyp_filename);
     auto *hypOneBest = new OneBestFstLoader();
-    hypOneBest->LoadTextFile(hyp_filename);
+    hypOneBest->LoadTextFile(hyp_filename, keep_case);
     hyp = hypOneBest;
   }
 

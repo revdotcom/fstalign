@@ -27,7 +27,7 @@ struct RawCtmRecord {
 
 class CtmFstLoader : public FstLoader {
  public:
-  CtmFstLoader(std::vector<RawCtmRecord> &records);
+  CtmFstLoader(std::vector<RawCtmRecord> &records, bool keep_case);
   ~CtmFstLoader();
   vector<RawCtmRecord> mCtmRows;
   virtual void addToSymbolTable(fst::SymbolTable &symbol) const;
