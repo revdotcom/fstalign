@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
   string composition_approach = "adapted";
   int speaker_switch_context_size = 5;
   int numBests = 100;
-  bool keep_case = false;
+  bool record_case_stats = false;
 
   CLI::App app("Rev FST Align");
   app.set_help_all_flag("--help-all", "Expand all help");
@@ -100,7 +100,8 @@ int main(int argc, char **argv) {
                             }\n\
                         }");
 
-  get_wer->add_flag("--keep-case", keep_case, "Keep casing information, default is to only compare lowercase tokens");
+  get_wer->add_flag("--record-case-stats", record_case_stats, "Record precision/recall for how well the hypothesis"
+                    "casing matches the reference.");
 
   // CLI11_PARSE(app, argc, argv);
   try {
@@ -230,7 +231,7 @@ int main(int argc, char **argv) {
 
   if (command == "wer") {
     HandleWer(ref, hyp, engine, output_sbs, output_nlp, speaker_switch_context_size, numBests, pr_threshold,
-              symbols_filename, composition_approach, keep_case);
+              symbols_filename, composition_approach, record_case_stats);
   } else if (command == "align") {
     if (output_nlp.empty()) {
       console->error("the output nlp file must be specified");

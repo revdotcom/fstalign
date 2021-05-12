@@ -513,7 +513,7 @@ void write_stitches_to_nlp(vector<shared_ptr<Stitching>> stitches, ofstream &out
 
 void HandleWer(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engine, string output_sbs, string output_nlp,
                int speaker_switch_context_size, int numBests, int pr_threshold, string symbols_filename,
-               string composition_approach, bool keep_case) {
+               string composition_approach, bool record_case_stats) {
   auto logger = logger::GetOrCreateLogger("fstalign");
   logger->set_level(spdlog::level::info);
 
@@ -556,7 +556,7 @@ void HandleWer(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engine
       logger->error("Speaker switch diagnostics failed from memory error, likely due to overlapping class labels.");
     }
 
-    if (keep_case) {
+    if (record_case_stats) {
       RecordCaseWer(stitches);
     }
 
