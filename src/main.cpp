@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
   int pr_threshold = 0;
   bool disable_cutoffs;
   bool version;
-  bool do_adapted_composition = false;
+  string composition_approach = "adapted";
   int speaker_switch_context_size = 5;
   int numBests = 100;
   bool keep_case = false;
@@ -77,7 +77,8 @@ int main(int argc, char **argv) {
     c->add_option("--symbols", symbols_filename,
                   "Symbols table to use as a common starting point. Required for FST inputs.");
 
-    c->add_flag("--do-adapted-composition", do_adapted_composition, "Use new alternative composition logic");
+    c->add_option("--composition-approach", composition_approach,
+                  "Desired composition logic. Choices are 'standard' or 'adapted'");
   }
 
   get_wer->add_option("--speaker-switch-context", speaker_switch_context_size,
@@ -228,13 +229,8 @@ int main(int argc, char **argv) {
   }
 
   if (command == "wer") {
-    if (do_adapted_composition) {
-      HandleWer(ref, hyp, engine, output_sbs, output_nlp, speaker_switch_context_size, numBests, pr_threshold,
-                symbols_filename, "adapted", keep_case);
-    } else {
-      HandleWer(ref, hyp, engine, output_sbs, output_nlp, speaker_switch_context_size, numBests, pr_threshold,
-                symbols_filename, "standard", keep_case);
-    }
+    HandleWer(ref, hyp, engine, output_sbs, output_nlp, speaker_switch_context_size, numBests, pr_threshold,
+              symbols_filename, composition_approach, keep_case);
   } else if (command == "align") {
     if (output_nlp.empty()) {
       console->error("the output nlp file must be specified");
@@ -249,11 +245,7 @@ int main(int argc, char **argv) {
     NlpFstLoader *nlpRef = dynamic_cast<NlpFstLoader *>(ref);
     CtmFstLoader *ctmHyp = dynamic_cast<CtmFstLoader *>(hyp);
 
-    if (do_adapted_composition) {
-      HandleAlign(nlpRef, ctmHyp, engine, output_nlp_file, numBests, symbols_filename, "adapted");
-    } else {
-      HandleAlign(nlpRef, ctmHyp, engine, output_nlp_file, numBests, symbols_filename, "standard");
-    }
+    HandleAlign(nlpRef, ctmHyp, engine, output_nlp_file, numBests, symbols_filename, composition_approach);
 
     output_nlp_file.flush();
     output_nlp_file.close();
