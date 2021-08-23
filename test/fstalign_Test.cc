@@ -262,8 +262,8 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-standard-composition()") {
     const auto testFile = std::string{TEST_DATA} + "short.aligned.nlp";
 
     REQUIRE(compareFiles(nlp_output.c_str(), testFile.c_str()));
-    REQUIRE_THAT(result, Contains("WER: 6/32 = 0.1875"));
-    REQUIRE_THAT(result, Contains("WER: INS:0 DEL:3 SUB:3"));
+    REQUIRE_THAT(result, Contains("WER: 5/31 = 0.1613"));
+    REQUIRE_THAT(result, Contains("WER: INS:0 DEL:2 SUB:2"));
   }
 
   SECTION("Case Metrics") {
