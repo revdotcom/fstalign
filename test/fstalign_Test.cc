@@ -252,7 +252,7 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-standard-composition()") {
   SECTION("short file") {
     const auto result = exec(command("wer", approach, "short.ref.nlp", "short.hyp.nlp", sbs_output, "", TEST_SYNONYMS));
 
-    REQUIRE_THAT(result, Contains("WER: 6/31 = 0.1613"));
+    REQUIRE_THAT(result, Contains("WER: 5/31 = 0.1613"));
     REQUIRE_THAT(result, Contains("WER: INS:0 DEL:2 SUB:2"));
   }
 
