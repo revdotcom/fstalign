@@ -46,6 +46,8 @@ class NlpFstLoader : public FstLoader {
   virtual ~NlpFstLoader();
   virtual void addToSymbolTable(fst::SymbolTable &symbol) const;
   virtual fst::StdVectorFst convertToFst(const fst::SymbolTable &symbol) const;
+  virtual std::vector<int> convertToIntVector(fst::SymbolTable &symbol) const;
+
   int GetProperSymbolId(const fst::SymbolTable &symbol, string token, string symUnk) const;
   vector<RawNlpRecord> mNlpRows;
   vector<std::string> mSpeakers;

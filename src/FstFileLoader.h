@@ -23,6 +23,7 @@ class FstFileLoader : public FstLoader {
 
   virtual void addToSymbolTable(fst::SymbolTable &symbol) const;
   virtual fst::StdVectorFst convertToFst(const fst::SymbolTable &symbol) const;
+  virtual std::vector<int> convertToIntVector(fst::SymbolTable &symbol) const;
 
  private:
   std::string filename_;

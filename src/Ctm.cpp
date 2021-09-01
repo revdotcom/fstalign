@@ -62,6 +62,28 @@ StdVectorFst CtmFstLoader::convertToFst(const SymbolTable &symbol) const {
   return transducer;
 }
 
+std::vector<int> CtmFstLoader::convertToIntVector(fst::SymbolTable &symbol) const {
+  auto logger = logger::GetOrCreateLogger("ctmloader");
+  logger->debug("creating std::vector<int> for CTM");
+  std::vector<int> vect;
+  addToSymbolTable(symbol);
+  int sz = mToken.size();
+  vect.reserve(sz);
+  vect.resize(sz, 0);
+
+  FstAlignOption options;
+  for (TokenType::const_iterator i = mToken.begin(); i != mToken.end(); ++i) {
+    std::string token = *i;
+    int token_sym = symbol.Find(token);
+    if (token_sym == -1) {
+      token_sym = symbol.Find(options.symUnk);
+    }
+    vect.push_back(token_sym);
+  }
+
+  return vect;
+}
+
 /***************************************
       CTM FST Loader Class End
    ***************************************/

@@ -19,6 +19,7 @@ class OneBestFstLoader : public FstLoader {
   virtual void addToSymbolTable(fst::SymbolTable &symbol) const;
   virtual fst::StdVectorFst convertToFst(const fst::SymbolTable &symbol) const;
   virtual const std::string &getToken(int index) const { return mToken.at(index); }
+  virtual std::vector<int> convertToIntVector(fst::SymbolTable &symbol) const;
   int TokensSize() { return mToken.size(); }
 };
 

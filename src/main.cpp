@@ -3,8 +3,10 @@
 
 #include "FstFileLoader.h"
 #include "OneBestFstLoader.h"
+#include "fast-d.h"
 #include "fstalign.h"
 #include "json_logging.h"
+#include "utilities.h"
 #include "version.h"
 
 using namespace std;
@@ -29,6 +31,7 @@ int main(int argc, char **argv) {
   int speaker_switch_context_size = 5;
   int numBests = 100;
   bool record_case_stats = false;
+  bool get_approximate_alignment = false;
 
   CLI::App app("Rev FST Align");
   app.set_help_all_flag("--help-all", "Expand all help");
@@ -53,6 +56,8 @@ int main(int argc, char **argv) {
     c->add_flag("--disable-cutoffs", disable_cutoffs,
                 "Prevents the synonym engine from adding synonyms of cutoff "
                 "words (e.g. the-)");
+    c->add_flag("--approx-alignment", get_approximate_alignment,
+                "get a first approximate alignment/WER before the more exhaustive search happens");
 
     // NOTE: we can't have -h as a synonym for --hyp as it collides with --help
     c->add_option("--hyp", hyp_filename, "Hypothesis filename (same rules as for --ref handling.)");
@@ -100,7 +105,8 @@ int main(int argc, char **argv) {
                             }\n\
                         }");
 
-  get_wer->add_flag("--record-case-stats", record_case_stats, "Record precision/recall for how well the hypothesis"
+  get_wer->add_flag("--record-case-stats", record_case_stats,
+                    "Record precision/recall for how well the hypothesis"
                     "casing matches the reference.");
 
   // CLI11_PARSE(app, argc, argv);
@@ -227,6 +233,19 @@ int main(int argc, char **argv) {
   if (synonyms_filename.size() > 0) {
     engine = new SynonymEngine(disable_cutoffs);
     engine->load_file(synonyms_filename);
+  }
+
+  if (get_approximate_alignment) {
+    std::vector<int> mapA;
+    std::vector<int> mapB;
+    fst::SymbolTable sym;
+
+    console->info("starting conversion to int vector");
+    auto vA = ref->convertToIntVector(sym);
+    auto vB = hyp->convertToIntVector(sym);
+
+    int dist = GetEditDistance(vA, mapA, vB, mapB);
+    console->info("vA size is {}, vB size is {}, edit distance is {}", vA.size(), vB.size(), dist);
   }
 
   if (command == "wer") {

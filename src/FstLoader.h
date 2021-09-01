@@ -8,6 +8,7 @@ FstLoader.h
 #ifndef __FSTLOADER_H_
 #define __FSTLOADER_H_
 
+#include <vector>
 #include "utilities.h"
 
 class FstLoader {
@@ -21,6 +22,7 @@ class FstLoader {
   virtual void addToSymbolTable(fst::SymbolTable &symbol) const = 0;
   static void AddSymbolIfNeeded(fst::SymbolTable &symbol, std::string str_value);
   virtual fst::StdVectorFst convertToFst(const fst::SymbolTable &symbol) const = 0;
+  virtual std::vector<int> convertToIntVector(fst::SymbolTable &symbol) const = 0;
 };
 
 #endif /* __FSTLOADER_H_ */

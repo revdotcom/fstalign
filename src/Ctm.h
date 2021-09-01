@@ -32,6 +32,7 @@ class CtmFstLoader : public FstLoader {
   vector<RawCtmRecord> mCtmRows;
   virtual void addToSymbolTable(fst::SymbolTable &symbol) const;
   virtual fst::StdVectorFst convertToFst(const fst::SymbolTable &symbol) const;
+  virtual std::vector<int> convertToIntVector(fst::SymbolTable &symbol) const;
   virtual const std::string &getToken(int index) const { return mToken.at(index); }
 };
 
