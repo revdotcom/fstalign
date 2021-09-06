@@ -123,7 +123,6 @@ std::vector<int> NlpFstLoader::convertToIntVector(fst::SymbolTable &symbol) cons
   addToSymbolTable(symbol);
   int sz = mToken.size();
   vect.reserve(sz);
-  vect.resize(sz, 0);
 
   FstAlignOption options;
   for (TokenType::const_iterator i = mToken.begin(); i != mToken.end(); ++i) {
@@ -132,13 +131,14 @@ std::vector<int> NlpFstLoader::convertToIntVector(fst::SymbolTable &symbol) cons
     if (token_sym == -1) {
       token_sym = symbol.Find(options.symUnk);
     }
-    vect.push_back(token_sym);
+    vect.emplace_back(token_sym);
   }
 
   return vect;
+  // return std::move(vect);
 }
 
-fst::StdVectorFst NlpFstLoader::convertToFst(const fst::SymbolTable &symbol) const {
+fst::StdVectorFst NlpFstLoader::convertToFst(const fst::SymbolTable &symbol, std::vector<int> map) const {
   auto logger = logger::GetOrCreateLogger("NlpFstLoader");
   fst::StdVectorFst transducer;
 
@@ -163,6 +163,8 @@ fst::StdVectorFst NlpFstLoader::convertToFst(const fst::SymbolTable &symbol) con
 
   int prevState = 0;
   int nextState = 1;
+  int map_sz = map.size();
+  int wc = 0;
   for (TokenType::const_iterator i = mToken.begin(); i != mToken.end(); ++i) {
     transducer.AddState();
 
@@ -172,7 +174,11 @@ fst::StdVectorFst NlpFstLoader::convertToFst(const fst::SymbolTable &symbol) con
       token_sym = symbol.Find(options.symUnk);
     }
 
-    transducer.AddArc(prevState, fst::StdArc(token_sym, token_sym, 0.0f, nextState));
+    if (map_sz > wc && map[wc] > 0) {
+      transducer.AddArc(prevState, fst::StdArc(token_sym, token_sym, 1.0f, nextState));
+    } else {
+      transducer.AddArc(prevState, fst::StdArc(token_sym, token_sym, 0.0f, nextState));
+    }
 
     if (isEntityLabel(token)) {
       /*

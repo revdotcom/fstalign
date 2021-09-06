@@ -12,6 +12,7 @@
 
 #include <fstream>
 #include <stdexcept>
+#include <vector>
 
 #include "FstLoader.h"
 #include "utilities.h"
@@ -22,7 +23,7 @@ class FstFileLoader : public FstLoader {
   ~FstFileLoader();
 
   virtual void addToSymbolTable(fst::SymbolTable &symbol) const;
-  virtual fst::StdVectorFst convertToFst(const fst::SymbolTable &symbol) const;
+  virtual fst::StdVectorFst convertToFst(const fst::SymbolTable &symbol, std::vector<int> map) const;
   virtual std::vector<int> convertToIntVector(fst::SymbolTable &symbol) const;
 
  private:

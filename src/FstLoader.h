@@ -21,7 +21,7 @@ class FstLoader {
   virtual ~FstLoader();
   virtual void addToSymbolTable(fst::SymbolTable &symbol) const = 0;
   static void AddSymbolIfNeeded(fst::SymbolTable &symbol, std::string str_value);
-  virtual fst::StdVectorFst convertToFst(const fst::SymbolTable &symbol) const = 0;
+  virtual fst::StdVectorFst convertToFst(const fst::SymbolTable &symbol, std::vector<int> map) const = 0;
   virtual std::vector<int> convertToIntVector(fst::SymbolTable &symbol) const = 0;
 };
 

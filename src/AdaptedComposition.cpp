@@ -16,12 +16,18 @@ AdaptedCompositionFst::AdaptedCompositionFst(const fst::StdFst &fstA, const fst:
     : fstA_{fstA}, fstB_{fstB}, symbols_{NULL} {
   logger_ = logger::GetOrCreateLogger("AdaptedCompositionFst");
   logger_->set_level(spdlog::level::info);
+#if TRACE
+  logger_->set_level(spdlog::level::trace);
+#endif
 }
 
 AdaptedCompositionFst::AdaptedCompositionFst(const fst::StdFst &fstA, const fst::StdFst &fstB, SymbolTable &symbols)
     : fstA_{fstA}, fstB_{fstB} {
   logger_ = logger::GetOrCreateLogger("AdaptedCompositionFst");
   logger_->set_level(spdlog::level::info);
+#if TRACE
+  logger_->set_level(spdlog::level::trace);
+#endif
   SetSymbols(&symbols);
 
   FstAlignOption options;
@@ -237,6 +243,8 @@ bool AdaptedCompositionFst::TryGetArcsAtState(StateId fromStateId, vector<fst::S
   int num_match = 0;
   int num_entity = 0;
 
+  int arc_added = 0;
+
   for (ArcIterator<StdFst> aiter(fstA_, refA); !aiter.Done(); aiter.Next()) {
     const fst::StdArc &arcA = aiter.Value();
 
@@ -256,6 +264,7 @@ bool AdaptedCompositionFst::TryGetArcsAtState(StateId fromStateId, vector<fst::S
     if (arcA.olabel == 0) {
       StateId skip_eps_state_ref_id = GetOrCreateComposedState(arcA.nextstate, refB);
       out_vector->push_back(StdArc(0, 0, 0.0, skip_eps_state_ref_id));
+      arc_added++;
       continue;
     }
 
@@ -279,6 +288,7 @@ bool AdaptedCompositionFst::TryGetArcsAtState(StateId fromStateId, vector<fst::S
         // let's keep the weight to 0, this isn't an error
         StateId del_state_ref_id = GetOrCreateComposedState(arcA.nextstate, refB);
         out_vector->push_back(StdArc(arcA.ilabel, del_label_id_, 0.0, del_state_ref_id));
+        arc_added++;
       } else {
         // skipping this path already since we can't reach the end of it without deletions or insertions or
         // substitutions
@@ -291,15 +301,25 @@ bool AdaptedCompositionFst::TryGetArcsAtState(StateId fromStateId, vector<fst::S
       continue;
     }
 
+    float weightA = arcA.weight.Value();
+
     for (ArcIterator<StdFst> aiterB(fstB_, refB); !aiterB.Done(); aiterB.Next()) {
       const fst::StdArc &arcB = aiterB.Value();
+
+      float weightB = arcB.weight.Value();
+      bool arcs_matched = false;
+      if (TRACE) {
+        logger_->trace("word-B {} has a weight {}", symbols_->Find(arcB.ilabel), weightB);
+      }
 
       // we have a matching label
       if (arcA.olabel == arcB.ilabel) {
         num_match++;
+        arcs_matched = true;
 
         StateId c = GetOrCreateComposedState(arcA.nextstate, arcB.nextstate);
         out_vector->push_back(StdArc(arcA.ilabel, arcB.olabel, 0.0, c));
+        arc_added++;
       }
 
       if (TRACE) {
@@ -308,8 +328,14 @@ bool AdaptedCompositionFst::TryGetArcsAtState(StateId fromStateId, vector<fst::S
                        num_entity);
       }
 
-      if (num_match == 0) {
-        // if (num_match == 0 || num_match == num_entity) {
+      if (true && (weightA > 0 || weightB > 0) && !arcs_matched) {
+        // we have arcs that were identified as "must match" but they didn't match together, so we'll skip the
+        // ins/del/subs steps
+        // logger_->info("({} | {}, {}) : We have weightB {} and arcA.olabel({}) doesn't match arcB.ilabel({})",
+        //               fromStateId, refA, refB, weightB, symbols_->Find(arcA.olabel), symbols_->Find(arcB.ilabel));
+        continue;
+      } else if (num_match == 0) {
+        // if (num_match == 0 || num_match == num_entity)
         // this could be an insertion, this could be a substitution
         // TODO: we can be more clever here
         StateId ins_state_ref_id = GetOrCreateComposedState(refA, arcB.nextstate);
@@ -319,6 +345,7 @@ bool AdaptedCompositionFst::TryGetArcsAtState(StateId fromStateId, vector<fst::S
         logger_->trace("{}/{} adding sub/{}/{}", dbg_count, here_snap, arcA.ilabel, arcB.olabel);
 #endif
         // out_vector->push_back(StdArc(ins_label_id, arcB.olabel, insertion_cost, ins_state_ref_id));
+        arc_added += 2;
         out_vector->push_back(StdArc(0, arcB.olabel, insertion_cost, ins_state_ref_id));
         out_vector->push_back(StdArc(arcA.ilabel, arcB.olabel, substitution_cost, sub_state_ref_id));
       } else {
@@ -333,8 +360,13 @@ bool AdaptedCompositionFst::TryGetArcsAtState(StateId fromStateId, vector<fst::S
       // let's add a potential deletion
       // TODO: we can be more clever here
       // out_vector->push_back(StdArc(arcA.ilabel, del_label_id, deletion_cost, del_state_ref_id));
+      if (weightA > 0) {
+        // we have a ref arc that /must/ matched, but didn't, skipping deletion.
+        continue;
+      }
       StateId del_state_ref_id = GetOrCreateComposedState(arcA.nextstate, refB);
       out_vector->push_back(StdArc(arcA.ilabel, 0, deletion_cost, del_state_ref_id));
+      arc_added++;
       if (TRACE) {
         logger_->trace("{}/{} adding del/{}/{}", dbg_count, here_snap, arcA.ilabel, symbols_->Find(arcA.ilabel));
       }
@@ -347,8 +379,14 @@ bool AdaptedCompositionFst::TryGetArcsAtState(StateId fromStateId, vector<fst::S
 
   if (fstA_.NumArcs(refA) == 0) {
     // we reached the end of the A graph, but what about B?
+
     for (ArcIterator<StdFst> aiterB(fstB_, refB); !aiterB.Done(); aiterB.Next()) {
       const fst::StdArc &arcB = aiterB.Value();
+      arc_added++;
+      float weightB = arcB.weight.Value();
+      if (weightB > 0) {
+        continue;
+      }
 
       StateId ins_state_ref_id = GetOrCreateComposedState(refA, arcB.nextstate);
       // out_vector->push_back(StdArc(ins_label_id, arcB.olabel, insertion_cost, ins_state_ref_id));
@@ -368,7 +406,7 @@ void AdaptedCompositionFst::SetSymbols(fst::SymbolTable *symbols) {
   entity_label_ids.resize(symbols->NumSymbols(), false);
 
   // mostly for optimization purpose
-  logger_->info("{}:{} we created 2 vector<bool> of {} items", __FILE__, __LINE__, symbols->NumSymbols());
+  logger_->debug("{}:{} we created 2 vector<bool> of {} items", __FILE__, __LINE__, symbols->NumSymbols());
 
   for (SymbolTableIterator siter(*symbols); !siter.Done(); siter.Next()) {
     int64 sid = siter.Value();

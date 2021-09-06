@@ -344,7 +344,8 @@ void RecordTagWer(vector<shared_ptr<Stitching>> stitches) {
   for (auto &a : wer_results) {
     string wer_id = a.first;
     WerResult wr = a.second;
-    logger->info("Wer Entity ID {} WER: {}/{} = {:.4f}", wer_id, wr.NumErrors(), wr.numWordsInReference, wr.WER());
+    // JPR : disabled for now for debugging purposes
+    // logger->info("Wer Entity ID {} WER: {}/{} = {:.4f}", wer_id, wr.NumErrors(), wr.numWordsInReference, wr.WER());
     RecordWerResult(jsonLogger::JsonLogger::getLogger().root["wer"]["wer_tag"][wer_id], wr);
     jsonLogger::JsonLogger::getLogger().root["wer"]["wer_tag"][wer_id]["meta"] = Json::objectValue;
   }

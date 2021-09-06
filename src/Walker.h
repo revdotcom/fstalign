@@ -20,6 +20,7 @@ class Walker {
   vector<shared_ptr<wer_alignment>> walkComposed(IComposition &fst, SymbolTable &symbol, FstAlignOption &options,
                                                  int numBests);
   int numberOfLoopsBeforePruning = 50;
+  int pruningHeapSizeTarget = 20;
 
  private:
   map<int, float> *logbook;

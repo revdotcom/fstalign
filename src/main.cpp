@@ -235,22 +235,17 @@ int main(int argc, char **argv) {
     engine->load_file(synonyms_filename);
   }
 
-  if (get_approximate_alignment) {
-    std::vector<int> mapA;
-    std::vector<int> mapB;
-    fst::SymbolTable sym;
-
-    console->info("starting conversion to int vector");
-    auto vA = ref->convertToIntVector(sym);
-    auto vB = hyp->convertToIntVector(sym);
-
-    int dist = GetEditDistance(vA, mapA, vB, mapB);
-    console->info("vA size is {}, vB size is {}, edit distance is {}", vA.size(), vB.size(), dist);
-  }
+  AlignerOptions alignerOptions;
+  alignerOptions.speaker_switch_context_size = speaker_switch_context_size;
+  alignerOptions.levenstein_first_pass = get_approximate_alignment;
+  alignerOptions.numBests = numBests;
+  alignerOptions.pr_threshold = pr_threshold;
+  alignerOptions.record_case_stats = record_case_stats;
+  alignerOptions.symbols_filename = symbols_filename;
+  alignerOptions.composition_approach = composition_approach;
 
   if (command == "wer") {
-    HandleWer(ref, hyp, engine, output_sbs, output_nlp, speaker_switch_context_size, numBests, pr_threshold,
-              symbols_filename, composition_approach, record_case_stats);
+    HandleWer(ref, hyp, engine, output_sbs, output_nlp, alignerOptions);
   } else if (command == "align") {
     if (output_nlp.empty()) {
       console->error("the output nlp file must be specified");
@@ -265,7 +260,7 @@ int main(int argc, char **argv) {
     NlpFstLoader *nlpRef = dynamic_cast<NlpFstLoader *>(ref);
     CtmFstLoader *ctmHyp = dynamic_cast<CtmFstLoader *>(hyp);
 
-    HandleAlign(nlpRef, ctmHyp, engine, output_nlp_file, numBests, symbols_filename, composition_approach);
+    HandleAlign(nlpRef, ctmHyp, engine, output_nlp_file, alignerOptions);
 
     output_nlp_file.flush();
     output_nlp_file.close();

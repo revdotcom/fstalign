@@ -7,7 +7,7 @@ FstFileLoader::FstFileLoader(std::string filename) : FstLoader(), filename_(file
 
 void FstFileLoader::addToSymbolTable(fst::SymbolTable& symbol) const { return; }
 
-fst::StdVectorFst FstFileLoader::convertToFst(const fst::SymbolTable& symbol) const {
+fst::StdVectorFst FstFileLoader::convertToFst(const fst::SymbolTable& symbol, std::vector<int> map) const {
   auto logger = logger::GetOrCreateLogger("FstFileLoader");
   fst::StdVectorFst* transducer = fst::StdVectorFst::Read(filename_);
   logger->info("Total FST has {} states.", transducer->NumStates());

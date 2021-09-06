@@ -42,7 +42,7 @@ void OneBestFstLoader::addToSymbolTable(fst::SymbolTable &symbol) const {
   }
 }
 
-fst::StdVectorFst OneBestFstLoader::convertToFst(const fst::SymbolTable &symbol) const {
+fst::StdVectorFst OneBestFstLoader::convertToFst(const fst::SymbolTable &symbol, std::vector<int> map) const {
   auto logger = logger::GetOrCreateLogger("OneBestFstLoader");
 
   FstAlignOption options;
@@ -55,22 +55,27 @@ fst::StdVectorFst OneBestFstLoader::convertToFst(const fst::SymbolTable &symbol)
 
   int prevState = 0;
   int nextState = 1;
+  int map_sz = map.size();
   int wc = 0;
   for (TokenType::const_iterator i = mToken.begin(); i != mToken.end(); ++i) {
-    wc++;
     std::string token = *i;
     std::transform(token.begin(), token.end(), token.begin(), ::tolower);
     transducer.AddState();
 
     int tk_idx = symbol.Find(token);
     if (tk_idx < 0) {
-      logger->trace("we found an invalid token [{}] at token position {} which gave a label id of {}", token, wc,
+      logger->trace("we found an invalid token [{}] at token position {} which gave a label id of {}", token, (wc + 1),
                     tk_idx);
     }
+    if (map_sz > wc && map[wc] > 0) {
+      transducer.AddArc(prevState, fst::StdArc(tk_idx, tk_idx, 1.0f, nextState));
+    } else {
+      transducer.AddArc(prevState, fst::StdArc(tk_idx, tk_idx, 0.0f, nextState));
+    }
 
-    transducer.AddArc(prevState, fst::StdArc(tk_idx, tk_idx, 0.0f, nextState));
     prevState = nextState;
     nextState++;
+    wc++;
   }
 
   int realFinal = transducer.AddState();
@@ -81,12 +86,11 @@ fst::StdVectorFst OneBestFstLoader::convertToFst(const fst::SymbolTable &symbol)
 
 std::vector<int> OneBestFstLoader::convertToIntVector(fst::SymbolTable &symbol) const {
   auto logger = logger::GetOrCreateLogger("OneBestFstLoader");
-  logger->debug("creating std::vector<int> for OneBestFstLoader");
   std::vector<int> vect;
   addToSymbolTable(symbol);
   int sz = mToken.size();
+  logger->info("creating std::vector<int> for OneBestFstLoader for {} tokens", sz);
   vect.reserve(sz);
-  vect.resize(sz, 0);
 
   FstAlignOption options;
   for (TokenType::const_iterator i = mToken.begin(); i != mToken.end(); ++i) {
@@ -95,7 +99,7 @@ std::vector<int> OneBestFstLoader::convertToIntVector(fst::SymbolTable &symbol) 
     if (token_sym == -1) {
       token_sym = symbol.Find(options.symUnk);
     }
-    vect.push_back(token_sym);
+    vect.emplace_back(token_sym);
   }
 
   return vect;
