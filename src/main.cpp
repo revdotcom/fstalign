@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
   int speaker_switch_context_size = 5;
   int numBests = 100;
   bool record_case_stats = false;
-  bool get_approximate_alignment = false;
+  bool get_approximate_alignment = true;
 
   CLI::App app("Rev FST Align");
   app.set_help_all_flag("--help-all", "Expand all help");
