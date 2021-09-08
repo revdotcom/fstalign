@@ -64,6 +64,20 @@ got to | gotta
 them | 'em
 would've | would have
 would have | would've
+all right | alright
+
+don't know | dunno
+dunno | don't know
+let me | lemme
+lemme | let me
+give me | gimme
+gimme | give me
+should have | shoulda
+shoulda | should have
+out of | outta
+outta | out of
+what are you | whatcha
+whatcha | what are you
 
 # handling comments/annotations in the nlp files
 # note: anything after a : is ignored for now

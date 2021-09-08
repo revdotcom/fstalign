@@ -252,8 +252,8 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-standard-composition()") {
   SECTION("short file") {
     const auto result = exec(command("wer", approach, "short.ref.nlp", "short.hyp.nlp", sbs_output, "", TEST_SYNONYMS));
 
-    REQUIRE_THAT(result, Contains("WER: 6/32 = 0.1875"));
-    REQUIRE_THAT(result, Contains("WER: INS:0 DEL:3 SUB:3"));
+    REQUIRE_THAT(result, Contains("WER: 5/31 = 0.1613"));
+    REQUIRE_THAT(result, Contains("WER: INS:0 DEL:2 SUB:2"));
   }
 
   SECTION("wer (nlp output)") {
@@ -262,8 +262,8 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-standard-composition()") {
     const auto testFile = std::string{TEST_DATA} + "short.aligned.nlp";
 
     REQUIRE(compareFiles(nlp_output.c_str(), testFile.c_str()));
-    REQUIRE_THAT(result, Contains("WER: 6/32 = 0.1875"));
-    REQUIRE_THAT(result, Contains("WER: INS:0 DEL:3 SUB:3"));
+    REQUIRE_THAT(result, Contains("WER: 5/31 = 0.1613"));
+    REQUIRE_THAT(result, Contains("WER: INS:0 DEL:2 SUB:2"));
   }
 
   SECTION("Case Metrics") {
@@ -639,7 +639,7 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-adapted-composition()") {
   SECTION("wer (nlp output)") {
     const auto result =
         exec(command("wer", approach, "short.ref.nlp", "short.hyp.nlp", sbs_output, nlp_output, TEST_SYNONYMS));
-    const auto testFile = std::string{TEST_DATA} + "short.aligned.nlp";
+    const auto testFile = std::string{TEST_DATA} + "short.aligned.strict.nlp";
 
     REQUIRE(compareFiles(nlp_output.c_str(), testFile.c_str()));
     REQUIRE_THAT(result, Contains("WER: 6/32 = 0.1875"));
