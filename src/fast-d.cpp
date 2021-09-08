@@ -116,10 +116,7 @@ int GetEditDistance(std::vector<int> &seqA, std::vector<int> &mapA, std::vector<
   // the path
 
   int current_pos = lengthA;
-
   int seqB_track = lengthB;
-
-  std::cout << " all_distances.size() " << all_distances.size() << std::endl;
 
   while (current_pos > 0 && seqB_track >= 0) {
     int current_pos_score = distance[current_pos];

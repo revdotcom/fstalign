@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
   int speaker_switch_context_size = 5;
   int numBests = 100;
   bool record_case_stats = false;
-  bool get_approximate_alignment = true;
+  bool disable_approximate_alignment = false;
 
   CLI::App app("Rev FST Align");
   app.set_help_all_flag("--help-all", "Expand all help");
@@ -56,8 +56,8 @@ int main(int argc, char **argv) {
     c->add_flag("--disable-cutoffs", disable_cutoffs,
                 "Prevents the synonym engine from adding synonyms of cutoff "
                 "words (e.g. the-)");
-    c->add_flag("--approx-alignment", get_approximate_alignment,
-                "get a first approximate alignment/WER before the more exhaustive search happens");
+    c->add_flag("--disable-approx-alignment", disable_approximate_alignment,
+                "Disable getting a first approximate alignment/WER before the more exhaustive search happens");
 
     // NOTE: we can't have -h as a synonym for --hyp as it collides with --help
     c->add_option("--hyp", hyp_filename, "Hypothesis filename (same rules as for --ref handling.)");
@@ -237,7 +237,7 @@ int main(int argc, char **argv) {
 
   AlignerOptions alignerOptions;
   alignerOptions.speaker_switch_context_size = speaker_switch_context_size;
-  alignerOptions.levenstein_first_pass = get_approximate_alignment;
+  alignerOptions.levenstein_first_pass = !disable_approximate_alignment;
   alignerOptions.numBests = numBests;
   alignerOptions.pr_threshold = pr_threshold;
   alignerOptions.record_case_stats = record_case_stats;
