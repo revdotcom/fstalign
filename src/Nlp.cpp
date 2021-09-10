@@ -174,11 +174,13 @@ fst::StdVectorFst NlpFstLoader::convertToFst(const fst::SymbolTable &symbol, std
       token_sym = symbol.Find(options.symUnk);
     }
 
+    // logger->info("wc {}, token {}, map[wc] = {}, map_sz = {}", wc, token, map[wc], map_sz);
     if (map_sz > wc && map[wc] > 0) {
       transducer.AddArc(prevState, fst::StdArc(token_sym, token_sym, 1.0f, nextState));
     } else {
       transducer.AddArc(prevState, fst::StdArc(token_sym, token_sym, 0.0f, nextState));
     }
+    wc++;
 
     if (isEntityLabel(token)) {
       /*

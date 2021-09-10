@@ -154,7 +154,7 @@ int GetEditDistance(std::vector<int> &seqA, std::vector<int> &mapA, std::vector<
     if (min_path_score == nw) {
       // the upper-left diagonal is the best path
       is_sub = true;
-      if (min_path_score == current_pos_score) {
+      if (token_a == token_b) {
         // we have a caracter match
         mapA[current_pos - 1] = 1;
         mapB[seqB_track - 1] = 1;
@@ -162,7 +162,8 @@ int GetEditDistance(std::vector<int> &seqA, std::vector<int> &mapA, std::vector<
         is_sub = false;
       }
 #if debug_map
-      std::cout << "S(" << token_a << "|" << token_b << ")" << std::endl;
+      std::cout << "S(" << token_a << "|" << token_b << ") (matched " << is_match << "), (sub " << is_sub << ")"
+                << std::endl;
 #endif
       // going up-left, next time we need to be one position on the left
       // to read the distance
@@ -225,6 +226,17 @@ int GetEditDistance(std::vector<int> &seqA, std::vector<int> &mapA, std::vector<
       }
     }
   }
+
+#if debug_map
+  std::cout << "starting iter" << std::endl;
+  std::cout << "current_pos = " << current_pos << std::endl;
+  std::cout << "current_pos_score = 0" << std::endl;
+  std::cout << "seqB_track  = " << seqB_track << std::endl;
+  print_vect(std::string("mapA:"), mapA.data(), lengthA);
+  print_vect(std::string("mapB:"), mapB.data(), lengthB);
+  print_vect(std::string("dP: "), distancePrev, lengthA + 1);
+  print_vect(std::string("d : "), distance, lengthA + 1);
+#endif
 
   return edit_distance;
 }
