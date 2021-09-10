@@ -308,13 +308,12 @@ bool AdaptedCompositionFst::TryGetArcsAtState(StateId fromStateId, vector<fst::S
 
       float weightB = arcB.weight.Value();
       bool arcs_matched = false;
-      if (TRACE) {
-        logger_->trace("{}/{} >] word-B {} has a weight {}", dbg_count, here_snap, symbols_->Find(arcB.ilabel),
-                       weightB);
-        logger_->trace("{}/{} >] for {}/{} vs {}/{}, we have num_match {} and num_entity {}", dbg_count, here_snap,
-                       arcA.olabel, symbols_->Find(arcA.olabel), arcB.ilabel, symbols_->Find(arcB.ilabel), num_match,
-                       num_entity);
-      }
+#if TRACE
+      logger_->trace("{}/{} >] word-B {} has a weight {}", dbg_count, here_snap, symbols_->Find(arcB.ilabel), weightB);
+      logger_->trace("{}/{} >] for {}/{} vs {}/{}, we have num_match {} and num_entity {}", dbg_count, here_snap,
+                     arcA.olabel, symbols_->Find(arcA.olabel), arcB.ilabel, symbols_->Find(arcB.ilabel), num_match,
+                     num_entity);
+#endif
 
       // we have a matching label
       if (arcA.olabel == arcB.ilabel) {
@@ -322,13 +321,15 @@ bool AdaptedCompositionFst::TryGetArcsAtState(StateId fromStateId, vector<fst::S
         arcs_matched = true;
 
         StateId c = GetOrCreateComposedState(arcA.nextstate, arcB.nextstate);
+#if TRACE
         logger_->trace("{}/{} >] adding cor/{}/{} to {}, num_match = {}", dbg_count, here_snap, arcB.olabel,
                        symbols_->Find(arcB.olabel), c, num_match);
+#endif
         out_vector->push_back(StdArc(arcA.ilabel, arcB.olabel, 0.0, c));
         arc_added++;
       }
 
-      if (weightB <= 0) {
+      if (!arcs_matched && weightB <= 0) {
         // B can be inserted...
         StateId ins_state_ref_id = GetOrCreateComposedState(refA, arcB.nextstate);
 #if TRACE
@@ -359,19 +360,21 @@ bool AdaptedCompositionFst::TryGetArcsAtState(StateId fromStateId, vector<fst::S
       StateId del_state_ref_id = GetOrCreateComposedState(arcA.nextstate, refB);
       out_vector->push_back(StdArc(arcA.ilabel, 0, deletion_cost, del_state_ref_id));
       arc_added++;
-      if (TRACE) {
-        logger_->trace("{}/{} >] adding del/{}/{}", dbg_count, here_snap, arcA.ilabel, symbols_->Find(arcA.ilabel));
-      }
+#if TRACE
+      logger_->trace("{}/{} >] adding del/{}/{}", dbg_count, here_snap, arcA.ilabel, symbols_->Find(arcA.ilabel));
+#endif
     } else {
-      if (TRACE) {
-        logger_->trace("{}/{} >]  >]a label match was found, not putting del arc", dbg_count, here_snap);
-      }
+#if TRACE
+      logger_->trace("{}/{} >]  >]a label match was found, not putting del arc", dbg_count, here_snap);
+#endif
     }
   }
 
   if (fstA_.NumArcs(refA) == 0) {
     // we reached the end of the A graph, but what about B?
+#if TRACE
     logger_->trace("{}/{} >] end of graph A found at {}", dbg_count, here_snap, refA);
+#endif
 
     for (ArcIterator<StdFst> aiterB(fstB_, refB); !aiterB.Done(); aiterB.Next()) {
       const fst::StdArc &arcB = aiterB.Value();
@@ -381,9 +384,9 @@ bool AdaptedCompositionFst::TryGetArcsAtState(StateId fromStateId, vector<fst::S
         continue;
       }
 
-      if (TRACE) {
-        logger_->trace("{}/{} >] adding ins/{}/{}", dbg_count, here_snap, arcB.olabel, symbols_->Find(arcB.olabel));
-      }
+#if TRACE
+      logger_->trace("{}/{} >] adding ins/{}/{}", dbg_count, here_snap, arcB.olabel, symbols_->Find(arcB.olabel));
+#endif
       StateId ins_state_ref_id = GetOrCreateComposedState(refA, arcB.nextstate);
       // out_vector->push_back(StdArc(ins_label_id, arcB.olabel, insertion_cost, ins_state_ref_id));
       out_vector->push_back(StdArc(0, arcB.olabel, insertion_cost, ins_state_ref_id));

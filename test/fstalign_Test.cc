@@ -258,7 +258,7 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-standard-composition()") {
 
   SECTION("wer (nlp output)") {
     const auto result =
-        exec(command("wer", approach, "short.ref.nlp", "short.hyp.nlp", sbs_output, nlp_output, TEST_SYNONYMS));
+        exec(command("wer", approach, "short.ref.nlp", "short.hyp.nlp", sbs_output, nlp_output, TEST_SYNONYMS, nullptr, false, -1, "--disable-approx-alignment"));
     const auto testFile = std::string{TEST_DATA} + "short.aligned.nlp";
 
     REQUIRE(compareFiles(nlp_output.c_str(), testFile.c_str()));
