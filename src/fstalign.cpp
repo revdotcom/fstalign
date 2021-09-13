@@ -71,29 +71,34 @@ spWERA Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engin
     logger->debug("vA size is {}, vB size is {}", vA.size(), vB.size());
 
     int dist = 0;
-    dist = GetEditDistance(vA, mapA, vB, mapB);
-    logger->debug("vA size is {}, vB size is {}, edit distance is {}, mapA size is {}, mapB size is {}", vA.size(),
-                  vB.size(), dist, mapA.size(), mapB.size());
+    if (vA.size() > 10 && vB.size() > 10) {
+      dist = GetEditDistance(vA, mapA, vB, mapB);
+      logger->debug("vA size is {}, vB size is {}, edit distance is {}, mapA size is {}, mapB size is {}", vA.size(),
+                    vB.size(), dist, mapA.size(), mapB.size());
 
-    int dist_prime = dist;
+      int dist_prime = dist;
 
-    // We'll relax the matches a bit.  if one word is marked to be forcefully aligned
-    // but the words before and after are possible errors, we'll let this word be
-    // possibly an error as well.
+      // We'll relax the matches a bit.  if one word is marked to be forcefully aligned
+      // but the words before and after are possible errors, we'll let this word be
+      // possibly an error as well.
 
-    for (int x = 1; x < mapA.size() - 1; x++) {
-      if (mapA[x - 1] < 0 && mapA[x + 1] < 0) {
-        dist_prime++;
-        mapA[x] = -1;
+      for (int x = 1; x < mapA.size() - 1; x++) {
+        if (mapA[x - 1] < 0 && mapA[x + 1] < 0) {
+          dist_prime++;
+          mapA[x] = -1;
+        }
       }
-    }
-    for (int x = 1; x < mapB.size() - 2; x++) {
-      if (mapB[x - 1] < 0 && mapB[x + 1] < 0) {
-        mapB[x] = -1;
+      for (int x = 1; x < mapB.size() - 2; x++) {
+        if (mapB[x - 1] < 0 && mapB[x + 1] < 0) {
+          mapB[x] = -1;
+        }
       }
-    }
 
-    logger->info("Estimated edit distance : {} / {} ({} edits originally)", dist_prime, vA.size(), dist);
+      logger->info("Estimated edit distance : {} / {} ({} edits originally)", dist_prime, vA.size(), dist);
+    } else {
+      logger->info("Either ref or hyp is really small, skipping over the levenstein distance,  ref size: {}, hyp size: {}",
+                   vA.size(), vB.size());
+    }
   }
 
   refLoader->addToSymbolTable(symbol);
