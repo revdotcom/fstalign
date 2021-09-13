@@ -74,6 +74,26 @@ spWERA Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engin
     dist = GetEditDistance(vA, mapA, vB, mapB);
     logger->debug("vA size is {}, vB size is {}, edit distance is {}, mapA size is {}, mapB size is {}", vA.size(),
                   vB.size(), dist, mapA.size(), mapB.size());
+
+    int dist_prime = dist;
+
+    // We'll relax the matches a bit.  if one word is marked to be forcefully aligned
+    // but the words before and after are possible errors, we'll let this word be
+    // possibly an error as well.
+
+    for (int x = 1; x < mapA.size() - 1; x++) {
+      if (mapA[x - 1] < 0 && mapA[x + 1] < 0) {
+        dist_prime++;
+        mapA[x] = -1;
+      }
+    }
+    for (int x = 1; x < mapB.size() - 2; x++) {
+      if (mapB[x - 1] < 0 && mapB[x + 1] < 0) {
+        mapB[x] = -1;
+      }
+    }
+
+    logger->info("Estimated edit distance : {} / {} ({} edits originally)", dist_prime, vA.size(), dist);
   }
 
   refLoader->addToSymbolTable(symbol);
@@ -165,7 +185,7 @@ spWERA Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engin
     ReverseOLabelCompare<StdArc> comparer;
     ArcSort(&refFst, comparer);
     AdaptedCompositionFst composed_fst(refFst, hypFst, symbol);
-    composed_fst.DebugComposedGraph();
+    // composed_fst.DebugComposedGraph();
     Walker walker;
     best_alignments = walker.walkComposed(composed_fst, symbol, options, alignerOptions.numBests);
   } else {

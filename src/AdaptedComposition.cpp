@@ -329,7 +329,9 @@ bool AdaptedCompositionFst::TryGetArcsAtState(StateId fromStateId, vector<fst::S
         arc_added++;
       }
 
-      if (!arcs_matched && weightB <= 0) {
+      // When the WER of a section is high, greedy matches can lead to a dead-end.
+      // if (!arcs_matched && weightB <= 0) {
+      if (weightB <= 0) {
         // B can be inserted...
         StateId ins_state_ref_id = GetOrCreateComposedState(refA, arcB.nextstate);
 #if TRACE
@@ -339,7 +341,9 @@ bool AdaptedCompositionFst::TryGetArcsAtState(StateId fromStateId, vector<fst::S
         arc_added++;
       }
 
-      if (!arcs_matched && weightA <= 0 && weightB <= 0) {
+      // When the WER of a section is high, greedy matches can lead to a dead-end.
+      // if (!arcs_matched && weightA <= 0 && weightB <= 0) {
+      if (weightA <= 0 && weightB <= 0) {
         // allow sub
         StateId sub_state_ref_id = GetOrCreateComposedState(arcA.nextstate, arcB.nextstate);
 #if TRACE
@@ -350,13 +354,15 @@ bool AdaptedCompositionFst::TryGetArcsAtState(StateId fromStateId, vector<fst::S
       }
     }
 
-    if (num_match == 0) {
+    if (num_match == 0 || weightA < 0) {
       // let's add a potential deletion
       // TODO: we can be more clever here
-      if (weightA > 0) {
-        // we have a ref arc that /must/ matched, but didn't, skipping deletion.
-        continue;
-      }
+      //
+      // When the WER of a section is high, greedy matches can lead to a dead-end.
+      // if (weightA > 0) {
+      //   // we have a ref arc that /must/ matched, but didn't, skipping deletion.
+      //   continue;
+      // }
       StateId del_state_ref_id = GetOrCreateComposedState(arcA.nextstate, refB);
       out_vector->push_back(StdArc(arcA.ilabel, 0, deletion_cost, del_state_ref_id));
       arc_added++;
