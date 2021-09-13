@@ -29,3 +29,10 @@ target_link_libraries(compose-tests Threads::Threads)
 add_test(NAME compose-tests
   COMMAND $<TARGET_FILE:compose-tests>
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/build)
+
+add_executable(fast-d-tests fast-d-tests.cc)
+target_link_libraries(fast-d-tests Threads::Threads)
+
+add_test(NAME fast-d-tests
+  COMMAND $<TARGET_FILE:fast-d-tests>
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/build)

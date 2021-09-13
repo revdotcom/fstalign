@@ -12,7 +12,8 @@ StdVectorFst GetFstFromString(SymbolTable *symbols, const std::string str) {
   OneBestFstLoader loader;
   loader.BuildFromString(str);
   loader.addToSymbolTable(*symbols);
-  return  loader.convertToFst(*symbols);
+  std::vector<int> map;
+  return  loader.convertToFst(*symbols, map);
 }
 
 StdVectorFst GetStdFstA() {

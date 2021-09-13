@@ -116,7 +116,29 @@ void NlpFstLoader::addToSymbolTable(fst::SymbolTable &symbol) const {
   }
 }
 
-fst::StdVectorFst NlpFstLoader::convertToFst(const fst::SymbolTable &symbol) const {
+std::vector<int> NlpFstLoader::convertToIntVector(fst::SymbolTable &symbol) const {
+  auto logger = logger::GetOrCreateLogger("NlpFstLoader");
+  std::vector<int> vect;
+  logger->info("convertToIntVector() Building a std::vector<int> from NLP rows");
+  addToSymbolTable(symbol);
+  int sz = mToken.size();
+  vect.reserve(sz);
+
+  FstAlignOption options;
+  for (TokenType::const_iterator i = mToken.begin(); i != mToken.end(); ++i) {
+    std::string token = *i;
+    int token_sym = symbol.Find(token);
+    if (token_sym == -1) {
+      token_sym = symbol.Find(options.symUnk);
+    }
+    vect.emplace_back(token_sym);
+  }
+
+  return vect;
+  // return std::move(vect);
+}
+
+fst::StdVectorFst NlpFstLoader::convertToFst(const fst::SymbolTable &symbol, std::vector<int> map) const {
   auto logger = logger::GetOrCreateLogger("NlpFstLoader");
   fst::StdVectorFst transducer;
 
@@ -141,6 +163,8 @@ fst::StdVectorFst NlpFstLoader::convertToFst(const fst::SymbolTable &symbol) con
 
   int prevState = 0;
   int nextState = 1;
+  int map_sz = map.size();
+  int wc = 0;
   for (TokenType::const_iterator i = mToken.begin(); i != mToken.end(); ++i) {
     transducer.AddState();
 
@@ -150,7 +174,13 @@ fst::StdVectorFst NlpFstLoader::convertToFst(const fst::SymbolTable &symbol) con
       token_sym = symbol.Find(options.symUnk);
     }
 
-    transducer.AddArc(prevState, fst::StdArc(token_sym, token_sym, 0.0f, nextState));
+    // logger->info("wc {}, token {}, map[wc] = {}, map_sz = {}", wc, token, map[wc], map_sz);
+    if (map_sz > wc && map[wc] > 0) {
+      transducer.AddArc(prevState, fst::StdArc(token_sym, token_sym, 1.0f, nextState));
+    } else {
+      transducer.AddArc(prevState, fst::StdArc(token_sym, token_sym, 0.0f, nextState));
+    }
+    wc++;
 
     if (isEntityLabel(token)) {
       /*

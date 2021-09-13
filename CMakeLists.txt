@@ -52,6 +52,7 @@ endif()
 add_library(fstaligner-common
   src/fstalign.cpp
   src/wer.cpp
+  src/fast-d.cpp
   src/AdaptedComposition.cpp
   src/StandardComposition.cpp
   src/AlignmentTraversor.cpp
