@@ -12,11 +12,10 @@ jobs:
       DOCKER_IMAGE: fstalign
 
     steps:
-      # Checks out the repo under $GITHUB_WORKSPACE so the job can access it
-      - uses: actions/checkout@v2
-
-      - name: Checkout submodules
-        uses: textbook/git-checkout-submodule-action@2.1.1
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
 
       - name: Build the docker container
         run: docker build . -f Dockerfile -t ${DOCKER_IMAGE}
