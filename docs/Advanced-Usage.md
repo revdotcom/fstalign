@@ -17,7 +17,7 @@ Much of the advanced features for fstalign come from providing [NLP file inputs]
 ### CTM
 Time-marked conversations (CTM) are typical outputs for ASR systems. The format of CTMs that fstalign assumes is that each token is on a new line separated by spaces with the following fields.
 ```
-<recording_id> <channel_id> <token_start_ts> <token_end_ts> <token_value>
+<recording_id> <channel_id> <token_start_ts> <token_duration_ts> <token_value>
 ```
 Moreover, there is an optional sixth field `<confidence_score>` that is read in if provided. The field does not affect the WER calculation and is primarily there just to support the parsing the common alteration to the basic CTM format.
 
