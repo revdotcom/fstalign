@@ -3,8 +3,10 @@
 
 #include "FstFileLoader.h"
 #include "OneBestFstLoader.h"
+#include "fast-d.h"
 #include "fstalign.h"
 #include "json_logging.h"
+#include "utilities.h"
 #include "version.h"
 
 using namespace std;
@@ -29,6 +31,7 @@ int main(int argc, char **argv) {
   int speaker_switch_context_size = 5;
   int numBests = 100;
   bool record_case_stats = false;
+  bool disable_approximate_alignment = false;
 
   CLI::App app("Rev FST Align");
   app.set_help_all_flag("--help-all", "Expand all help");
@@ -53,6 +56,8 @@ int main(int argc, char **argv) {
     c->add_flag("--disable-cutoffs", disable_cutoffs,
                 "Prevents the synonym engine from adding synonyms of cutoff "
                 "words (e.g. the-)");
+    c->add_flag("--disable-approx-alignment", disable_approximate_alignment,
+                "Disable getting a first approximate alignment/WER before the more exhaustive search happens");
 
     // NOTE: we can't have -h as a synonym for --hyp as it collides with --help
     c->add_option("--hyp", hyp_filename, "Hypothesis filename (same rules as for --ref handling.)");
@@ -100,7 +105,8 @@ int main(int argc, char **argv) {
                             }\n\
                         }");
 
-  get_wer->add_flag("--record-case-stats", record_case_stats, "Record precision/recall for how well the hypothesis"
+  get_wer->add_flag("--record-case-stats", record_case_stats,
+                    "Record precision/recall for how well the hypothesis"
                     "casing matches the reference.");
 
   // CLI11_PARSE(app, argc, argv);
@@ -229,9 +235,17 @@ int main(int argc, char **argv) {
     engine->load_file(synonyms_filename);
   }
 
+  AlignerOptions alignerOptions;
+  alignerOptions.speaker_switch_context_size = speaker_switch_context_size;
+  alignerOptions.levenstein_first_pass = !disable_approximate_alignment;
+  alignerOptions.numBests = numBests;
+  alignerOptions.pr_threshold = pr_threshold;
+  alignerOptions.record_case_stats = record_case_stats;
+  alignerOptions.symbols_filename = symbols_filename;
+  alignerOptions.composition_approach = composition_approach;
+
   if (command == "wer") {
-    HandleWer(ref, hyp, engine, output_sbs, output_nlp, speaker_switch_context_size, numBests, pr_threshold,
-              symbols_filename, composition_approach, record_case_stats);
+    HandleWer(ref, hyp, engine, output_sbs, output_nlp, alignerOptions);
   } else if (command == "align") {
     if (output_nlp.empty()) {
       console->error("the output nlp file must be specified");
@@ -246,7 +260,7 @@ int main(int argc, char **argv) {
     NlpFstLoader *nlpRef = dynamic_cast<NlpFstLoader *>(ref);
     CtmFstLoader *ctmHyp = dynamic_cast<CtmFstLoader *>(hyp);
 
-    HandleAlign(nlpRef, ctmHyp, engine, output_nlp_file, numBests, symbols_filename, composition_approach);
+    HandleAlign(nlpRef, ctmHyp, engine, output_nlp_file, alignerOptions);
 
     output_nlp_file.flush();
     output_nlp_file.close();
