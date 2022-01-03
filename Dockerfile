@@ -19,6 +19,7 @@ COPY src /fstalign/src
 COPY test /fstalign/test
 COPY third-party /fstalign/third-party
 COPY sample_data /fstalign/sample_data
+COPY tools /fstalign/tools
 
 WORKDIR /fstalign
 

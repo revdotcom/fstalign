@@ -64,12 +64,20 @@ my $num_ins = 0;
 my $num_del = 0;
 my $num_sub = 0;
 my $i = 0;
-my $last_was_ins = 0;
 my $last_was_del = 0;
 
 my $ins_thres = $ins_fract;
 my $del_thres = $ins_thres + $del_fract;
 my $sub_thres = $del_thres + $sub_fract;
+my $owed_ins = 0;
+
+# Algorithm is as follows:
+# Because "word error rate" is defined as a rate respective to the number of 
+# reference words, we sample for an "error" while looping over a reference word
+# counter. The only thing we need to do is avoid consecutive INS+DEL or DEL+INS,
+# because these will be counted as SUB. Thus, for every INS sampled, we add a
+# ref word after the INS to avoid INS+DEL, or add to a counter to owed_ins if
+# a DEL just happened.
 
 while($i < $ref_length)
 {
@@ -81,23 +89,26 @@ while($i < $ref_length)
         if($last_was_del){
             #let's not insert after a deletion, this looks like 
             #a substitution
+            $owed_ins++;
+
+            # Add in a reference word to keep sampling
+            push(@hyp_words, $rw);
+            $i++;
             next;
+        } else {
+            my $ins_w = select_word();
+            push(@hyp_words, $ins_w);
+            $num_ins++;
+
+            # Add in a reference word to keep sampling
+            push(@hyp_words, $rw);
+            $i++;
+            $last_was_del = 0;
         }
-
-        my $ins_w = select_word();
-        push(@hyp_words, $ins_w);
-        $num_ins++;
-
-        # Add in a reference word to keep sampling
-        push(@hyp_words, $rw);
-        $i++;
-
-        $last_was_del = 0;
     } elsif($r < $del_thres){
         $num_del++;
         $i++;
         $last_was_del = 1;
-        $last_was_ins = 0;
     } elsif($r < $sub_thres){
         my $sub_w = select_word();
         while($sub_w eq $rw)
@@ -109,13 +120,20 @@ while($i < $ref_length)
         push(@hyp_words, $sub_w);
         $i++;
         $last_was_del = 0;
-        $last_was_ins = 0;
     } else {
+        if(!$last_was_del){
+            while($owed_ins > 0){
+                my $ins_w = select_word();
+                push(@hyp_words, $ins_w);
+                $num_ins++;
+                $owed_ins--;
+            }
+        }
+
         $i++;
         # phew...  a correct word...
         push(@hyp_words, $rw);
         $last_was_del = 0;
-        $last_was_ins = 0;
     }
 }
 
