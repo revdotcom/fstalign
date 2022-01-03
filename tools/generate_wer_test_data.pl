@@ -87,16 +87,13 @@ while($i < $ref_length)
         my $ins_w = select_word();
         push(@hyp_words, $ins_w);
         $num_ins++;
-        $last_was_ins = 1;
-        $last_was_del = 0;
-        # we don't increment $i
-    } elsif($r < $del_thres){
-        if($last_was_ins){
-            #let's not delete after an insertion, this looks like 
-            #a substitution
-            next;
-        }
 
+        # Add in a reference word to keep sampling
+        push(@hyp_words, $rw);
+        $i++;
+
+        $last_was_del = 0;
+    } elsif($r < $del_thres){
         $num_del++;
         $i++;
         $last_was_del = 1;
