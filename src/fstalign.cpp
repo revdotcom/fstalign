@@ -15,12 +15,15 @@ fstalign.cpp
 #include "OneBestFstLoader.h"
 #include "StandardComposition.h"
 #include "Walker.h"
+#include "fast-d.h"
 #include "json_logging.h"
 #include "utilities.h"
 #include "wer.h"
 
 using namespace std;
 using namespace fst;
+
+#define debug_levenstein false
 
 // Compare class for comparing output labels of arcs.
 template <class Arc>
@@ -41,24 +44,121 @@ using StdReverseOlabelCompare = ReverseOLabelCompare<StdArc>;
 
 bool sort_alignment(spWERA a, spWERA b) { return a->WER() < b->WER(); }
 
-spWERA Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engine, int numBests,
-                string symbols_filename, string composition_approach) {
+spWERA Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engine, AlignerOptions alignerOptions) {
+  //  int numBests, string symbols_filename, string composition_approach, bool levenstein_first_pass) {
   auto logger = logger::GetOrCreateLogger("fstalign");
   FstAlignOption options;
   SymbolTable symbol;
-  if (!symbols_filename.empty()) {
-    std::ifstream strm(symbols_filename, std::ios_base::in);
+  if (!alignerOptions.symbols_filename.empty()) {
+    std::ifstream strm(alignerOptions.symbols_filename, std::ios_base::in);
     symbol = *(SymbolTable::ReadText(strm, "symbols"));
   } else {
     symbol = SymbolTable("symbols");
   }
   options.RegisterSymbols(symbol);
 
+  std::vector<int> mapA;
+  std::vector<int> mapB;
+
+  if (alignerOptions.levenstein_first_pass) {
+    fst::SymbolTable levensteinn_sym;
+    logger->info("starting conversion to int vector");
+    logger->info("converting ref to int vector");
+    std::vector<int> vA = refLoader->convertToIntVector(levensteinn_sym);
+
+    logger->info("converting hyp to int vector");
+    std::vector<int> vB = hypLoader->convertToIntVector(levensteinn_sym);
+    logger->debug("vA size is {}, vB size is {}", vA.size(), vB.size());
+
+    int dist = 0;
+    if (vA.size() > 10 && vB.size() > 10) {
+      dist = GetEditDistance(vA, mapA, vB, mapB);
+      logger->debug("vA size is {}, vB size is {}, edit distance is {}, mapA size is {}, mapB size is {}", vA.size(),
+                    vB.size(), dist, mapA.size(), mapB.size());
+
+      int dist_prime = dist;
+
+      // We'll relax the matches a bit.  if one word is marked to be forcefully aligned
+      // but the words before and after are possible errors, we'll let this word be
+      // possibly an error as well.
+
+      for (int x = 1; x < mapA.size() - 1; x++) {
+        if (mapA[x - 1] < 0 && mapA[x + 1] < 0) {
+          dist_prime++;
+          mapA[x] = -1;
+        }
+      }
+      for (int x = 1; x < mapB.size() - 2; x++) {
+        if (mapB[x - 1] < 0 && mapB[x + 1] < 0) {
+          mapB[x] = -1;
+        }
+      }
+
+      logger->info("Estimated edit distance : {} / {} ({} edits originally)", dist_prime, vA.size(), dist);
+    } else {
+      logger->info("Either ref or hyp is really small, skipping over the levenstein distance,  ref size: {}, hyp size: {}",
+                   vA.size(), vB.size());
+    }
+  }
+
   refLoader->addToSymbolTable(symbol);
   hypLoader->addToSymbolTable(symbol);
 
-  auto refFst = refLoader->convertToFst(symbol);
-  auto hypFst = hypLoader->convertToFst(symbol);
+#if debug_levensten
+  int seq_cnt = 0;
+  int seq_no = 0;
+  int good_match = 0;
+  int seq_start = -1;
+  logger->info("mapA");
+  for (int x = 0; x < mapA.size() - 1; x++) {
+    if (mapA[x] > 0) {
+      good_match++;
+      seq_cnt++;
+      if (seq_start < 0) {
+        seq_start = x;
+      }
+    } else if (seq_cnt > 0) {
+      seq_no++;
+      logger->info("streak no {} has {} items, from {} to {}", seq_no, seq_cnt, seq_start, x - 1);
+      seq_cnt = 0;
+      seq_start = -1;
+    }
+  }
+  if (seq_cnt > 0) {
+    seq_no++;
+    logger->info("streak no {} has {} items, from {} to {}", seq_no, seq_cnt, seq_start, vA.size() - 1);
+  }
+  logger->info("total good items: {}", good_match);
+
+  seq_cnt = 0;
+  seq_no = 0;
+  good_match = 0;
+  seq_start = -1;
+  logger->info("mapB");
+  for (int x = 0; x < mapB.size() - 1; x++) {
+    if (mapB[x] > 0) {
+      good_match++;
+      seq_cnt++;
+      if (seq_start < 0) {
+        seq_start = x;
+      }
+    } else if (seq_cnt > 0) {
+      seq_no++;
+      logger->info("streak no {} has {} items, from {} to {}", seq_no, seq_cnt, seq_start, x - 1);
+      seq_cnt = 0;
+      seq_start = -1;
+    }
+  }
+  if (seq_cnt > 0) {
+    seq_no++;
+    logger->info("streak no {} has {} items, from {} to {}", seq_no, seq_cnt, seq_start, vA.size() - 1);
+  }
+  logger->info("total good items: {}", good_match);
+#endif
+
+  auto refFst = refLoader->convertToFst(symbol, mapA);
+  auto hypFst = hypLoader->convertToFst(symbol, mapB);
+
   if (engine != nullptr) {
     logger->info("applying ref synonyms on ref fst");
     engine->apply_to_fst(refFst, symbol);
@@ -80,17 +180,19 @@ spWERA Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engin
   }
 
   vector<shared_ptr<wer_alignment>> best_alignments;
-  if (composition_approach == "standard") {
+  if (alignerOptions.composition_approach == "standard") {
     StandardCompositionFst composed_fst(refFst, hypFst, symbol);
     Walker walker;
-    best_alignments = walker.walkComposed(composed_fst, symbol, options, numBests);
-  } else if (composition_approach == "adapted") {
+    walker.pruningHeapSizeTarget = alignerOptions.heapPruningTarget;
+    best_alignments = walker.walkComposed(composed_fst, symbol, options, alignerOptions.numBests);
+  } else if (alignerOptions.composition_approach == "adapted") {
     RmEpsilon(&refFst, true);
     ReverseOLabelCompare<StdArc> comparer;
     ArcSort(&refFst, comparer);
     AdaptedCompositionFst composed_fst(refFst, hypFst, symbol);
+    // composed_fst.DebugComposedGraph();
     Walker walker;
-    best_alignments = walker.walkComposed(composed_fst, symbol, options, numBests);
+    best_alignments = walker.walkComposed(composed_fst, symbol, options, alignerOptions.numBests);
   } else {
     throw std::runtime_error("invalid composition approach specified");
   }
@@ -105,7 +207,8 @@ spWERA Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engin
 }
 
 vector<shared_ptr<Stitching>> make_stitches(spWERA alignment, vector<RawCtmRecord> hyp_ctm_rows = {},
-                                            vector<RawNlpRecord> hyp_nlp_rows = {}, vector<string> one_best_tokens = {}) {
+                                            vector<RawNlpRecord> hyp_nlp_rows = {},
+                                            vector<string> one_best_tokens = {}) {
   auto logger = logger::GetOrCreateLogger("fstalign");
 
   // Go through top alignment and create stitches
@@ -512,13 +615,14 @@ void write_stitches_to_nlp(vector<shared_ptr<Stitching>> stitches, ofstream &out
 }
 
 void HandleWer(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engine, string output_sbs, string output_nlp,
-               int speaker_switch_context_size, int numBests, int pr_threshold, string symbols_filename,
-               string composition_approach, bool record_case_stats) {
+               AlignerOptions alignerOptions) {
+  //  int speaker_switch_context_size, int numBests, int pr_threshold, string symbols_filename,
+  //  string composition_approach, bool record_case_stats) {
   auto logger = logger::GetOrCreateLogger("fstalign");
   logger->set_level(spdlog::level::info);
 
-  spWERA topAlignment = Fstalign(refLoader, hypLoader, engine, numBests, symbols_filename, composition_approach);
-  CalculatePrecisionRecall(topAlignment, pr_threshold);
+  spWERA topAlignment = Fstalign(refLoader, hypLoader, engine, alignerOptions);
+  CalculatePrecisionRecall(topAlignment, alignerOptions.pr_threshold);
 
   RecordWer(topAlignment);
   if (!output_sbs.empty()) {
@@ -540,7 +644,7 @@ void HandleWer(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engine
     } else if (best_loader) {
       vector<string> tokens;
       tokens.reserve(best_loader->TokensSize());
-      for (int i = 0; i < best_loader->TokensSize(); i++ ) {
+      for (int i = 0; i < best_loader->TokensSize(); i++) {
         string token = best_loader->getToken(i);
         tokens.push_back(token);
       }
@@ -556,15 +660,16 @@ void HandleWer(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engine
       logger->error("Speaker switch diagnostics failed from memory error, likely due to overlapping class labels.");
     }
 
-    if (record_case_stats) {
+    if (alignerOptions.record_case_stats) {
       RecordCaseWer(stitches);
     }
 
     // Calculate and record speaker switch WER if context size is provided
-    if (speaker_switch_context_size > 0) {
-      logger->info("Calculating WER around speaker switches, using a window size of {0}", speaker_switch_context_size);
+    if (alignerOptions.speaker_switch_context_size > 0) {
+      logger->info("Calculating WER around speaker switches, using a window size of {0}",
+                   alignerOptions.speaker_switch_context_size);
       // Count and record errors around speaker switches
-      RecordSpeakerSwitchWer(stitches, speaker_switch_context_size);
+      RecordSpeakerSwitchWer(stitches, alignerOptions.speaker_switch_context_size);
     }
 
     // Calculate and record per-speaker WER
@@ -583,8 +688,9 @@ void HandleWer(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engine
 }
 
 void HandleAlign(NlpFstLoader *refLoader, CtmFstLoader *hypLoader, SynonymEngine *engine, ofstream &output_nlp_file,
-                 int numBests, string symbols_filename, string composition_approach) {
-  auto topAlignment = Fstalign(refLoader, hypLoader, engine, numBests, symbols_filename, composition_approach);
+                 AlignerOptions alignerOptions) {
+  //  int numBests, string symbols_filename, string composition_approach) {
+  auto topAlignment = Fstalign(refLoader, hypLoader, engine, alignerOptions);
   // dump the WER details even when we're just considering alignment
   RecordWer(topAlignment);
 
