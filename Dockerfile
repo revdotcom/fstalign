@@ -19,7 +19,6 @@ COPY src /fstalign/src
 COPY test /fstalign/test
 COPY third-party /fstalign/third-party
 COPY sample_data /fstalign/sample_data
-COPY tools /fstalign/tools
 
 WORKDIR /fstalign
 
@@ -31,3 +30,9 @@ RUN mkdir -p /fstalign/build && \
     mkdir -p /fstalign/bin && \
     cp /fstalign/build/fstalign /fstalign/bin && \
     strip /fstalign/bin/*
+
+COPY tools /fstalign/tools
+
+ENV PATH \
+/fstalign/bin/:\
+$PATH
