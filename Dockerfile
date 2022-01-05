@@ -30,3 +30,9 @@ RUN mkdir -p /fstalign/build && \
     mkdir -p /fstalign/bin && \
     cp /fstalign/build/fstalign /fstalign/bin && \
     strip /fstalign/bin/*
+
+COPY tools /fstalign/tools
+
+ENV PATH \
+/fstalign/bin/:\
+$PATH
