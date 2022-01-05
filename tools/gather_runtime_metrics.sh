@@ -1,13 +1,13 @@
 # Script to gather runtime metrics on fstalign binary
 
 benchmark_settings() {
-    local outdir=$1
-    local ref_length=$2
-    local num_repeats=$3
-    local ins_rate=$4
-    local del_rate=$5
-    local sub_rate=$6
-    local outcsv=$7
+    local outdir=$1         # directory to write refs, hyps, and stats to
+    local ref_length=$2     # target number of words when making a synthetic reference
+    local num_repeats=$3    # number of trials to run for this benchmark
+    local ins_rate=$4       # target insertion rate when making a synthetic hypothesis
+    local del_rate=$5       # target deletion rate when making a synthetic hypothesis
+    local sub_rate=$6       # target substitution rate when making a synthetic hypothesis
+    local outcsv=$7         # output to write comma separated stats to
 
     for i in $(seq $num_repeats); do
         perl generate_wer_test_data.pl --ins_fract $ins_rate \

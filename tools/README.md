@@ -18,6 +18,8 @@ writing to [hyp.out]
 expected WER 0.702
 ```
 
+NOTE: this script provides an approximate WER, the algorithm could use some fine tuning to be exact.
+
 ## gather_runtime_metrics.sh
 A simple bash script that is meant for benchmarking the resource (RAM and runtime) consumption of fstalign across different transcript settings (length, WER). It uses the `generate_wer_test_data.pl` to generate fake transcripts with a suite of hard-coded settings and runs them through fstalign, recording the resource usage to a CSV.
 

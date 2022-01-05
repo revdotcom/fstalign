@@ -87,8 +87,8 @@ while($i < $ref_length)
     if($r <= $ins_thres)
     {
         if($last_was_del){
-            #let's not insert after a deletion, this looks like 
-            #a substitution
+            # let's not insert after a deletion, this looks like 
+            # a substitution
             $owed_ins++;
 
             # Add in a reference word to keep sampling
@@ -96,11 +96,12 @@ while($i < $ref_length)
             $i++;
             next;
         } else {
+            # safe to insert, add an inserted word and also
+            # add the reference word we are sampling
             my $ins_w = select_word();
             push(@hyp_words, $ins_w);
             $num_ins++;
 
-            # Add in a reference word to keep sampling
             push(@hyp_words, $rw);
             $i++;
             $last_was_del = 0;
@@ -122,6 +123,7 @@ while($i < $ref_length)
         $last_was_del = 0;
     } else {
         if(!$last_was_del){
+            # clean out the buffer of owed insertions
             while($owed_ins > 0){
                 my $ins_w = select_word();
                 push(@hyp_words, $ins_w);
