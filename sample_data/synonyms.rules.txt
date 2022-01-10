@@ -89,13 +89,13 @@ i would | i'd
 you'd | you had  ; you would
 you had | you'd
 you would | you'd
-he'd | he had
+he'd | he had ; he would
 he had | he'd
 he would | he'd
-she'd | she had
+she'd | she had ; she would
 she had | she'd
 she would | she'd
-they'd | they had
+they'd | they had ; they would
 they had | they'd
 they would | they'd
 i've | i have
