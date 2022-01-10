@@ -45,8 +45,6 @@ okay    | ok ; 'kay
 ok      | okay ; 'kay
 'kay    | okay ; ok
 
-i'd     |i had ; i would
-
 til     | until ; 'til
 'til    | until ; til
 until   | 'til ; til
@@ -85,14 +83,21 @@ might've | might have
 might have | might've
 could've | could have
 could have | could've
-you'd | you had 
+i'd     | i had ; i would
+i had | i'd
+i would | i'd
+you'd | you had  ; you would
 you had | you'd
+you would | you'd
 he'd | he had
 he had | he'd
+he would | he'd
 she'd | she had
 she had | she'd
+she would | she'd
 they'd | they had
 they had | they'd
+they would | they'd
 i've | i have
 i have | i've
 they've | they have
