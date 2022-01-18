@@ -67,10 +67,6 @@ let me | lemme
 lets | let us
 let us | lets
 
-long term | longterm ; long-term
-longterm | long term ; long-term
-long-term | long term ; longterm
-
 # TODO: can't -> cannot ?
 # TODO: To Have ?
 must've   | must have
