@@ -52,8 +52,8 @@ until   | 'til ; til
 awhile | a while
 a while | awhile
 
-lotta    | a lot of
-a lot of | lotta
+lotta    | lot of
+lot of | lotta
 sorta    | sort of
 sort of  | sorta
 
@@ -64,8 +64,8 @@ do not know | dunno
 lemme | let me
 let me | lemme
 
-lets | let us
-let us | lets
+let's | let us
+let us | let's
 
 # TODO: can't -> cannot ?
 # TODO: To Have ?
