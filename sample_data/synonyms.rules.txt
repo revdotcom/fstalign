@@ -41,13 +41,66 @@ they will |they'll
 they'll   |they will
 
 
-okay    | ok
-ok      | okay
+okay    | ok ; 'kay
+ok      | okay ; 'kay
+'kay    | okay ; ok
 
-i'd     |i had ; i would
+til     | until ; 'til
+'til    | until ; til
+until   | 'til ; til
+
+awhile | a while
+a while | awhile
+
+lotta    | lot of
+lot of | lotta
+sorta    | sort of
+sort of  | sorta
+
+dunno | don't know ; do not know
+don't know | dunno
+do not know | dunno
+
+lemme | let me
+let me | lemme
+
+let's | let us
+let us | let's
 
 # TODO: can't -> cannot ?
 # TODO: To Have ?
+must've   | must have
+must have | must've
+would've | would have
+would have | would've
+should've | should have
+should have | should've
+might've | might have
+might have | might've
+could've | could have
+could have | could've
+i'd     | i had ; i would
+i had | i'd
+i would | i'd
+you'd | you had  ; you would
+you had | you'd
+you would | you'd
+he'd | he had ; he would
+he had | he'd
+he would | he'd
+she'd | she had ; she would
+she had | she'd
+she would | she'd
+they'd | they had ; they would
+they had | they'd
+they would | they'd
+i've | i have
+i have | i've
+they've | they have
+they have | they've
+you've | you have
+you have | you've
+
 # TODO: which other contractions?
 
 'cause | cause ; because
@@ -62,8 +115,6 @@ gotta | got to
 got to | gotta
 'em | them
 them | 'em
-would've | would have
-would have | would've
 all right | alright
 
 don't know | dunno
