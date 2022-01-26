@@ -74,7 +74,7 @@ must have | must've
 would've | would have
 would have | would've
 should've | should have
-should have | should've
+should have | should've ; shoulda
 might've | might have
 might have | might've
 could've | could have
@@ -117,13 +117,8 @@ got to | gotta
 them | 'em
 all right | alright
 
-don't know | dunno
-dunno | don't know
-let me | lemme
-lemme | let me
 give me | gimme
 gimme | give me
-should have | shoulda
 shoulda | should have
 out of | outta
 outta | out of
