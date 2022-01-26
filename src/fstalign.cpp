@@ -200,6 +200,20 @@ spWERA Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engin
   logger->info("done walking the graph");
   if (best_alignments.size() > 0) {
     sort(best_alignments.begin(), best_alignments.end(), sort_alignment);
+    /* for (auto p: best_alignments[0]->tokens) { */
+    /*   logger->info("pair"); */
+    /*   logger->info(p.first); */
+    /*   logger->info(p.second); */
+    /* } */
+    /* logger->info("+++++++labels+++++"); */
+    /* for (auto p: best_alignments[0]->label_alignments) { */
+    /*   logger->info(p->classLabel); */
+    /*     for (auto r: p->tokens) { */
+    /*       logger->info(r.first); */
+    /*       logger->info(r.second); */
+    /*     } */
+    /* } */
+
     return best_alignments[0];
   }
 

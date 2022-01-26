@@ -29,12 +29,12 @@ bool AlignmentTraversor::NextTriple(triple *triple) {
     }
 
     auto tk = root->tokens[currentPosInRoot];
-    if (isEntityLabel(tk.first)) {
+    if (isEntityLabel(tk.first) || isEntityLabel(tk.second)) {
       // handle class
       currentPosInSubclass = -1;
       // find subclass spWERA from within the root
       for (auto &a : root->label_alignments) {
-        if (a->classLabel == tk.first) {
+        if (a->classLabel == tk.first || a->classLabel == tk.second) {
           currentSubclass = a;
           break;
         }
@@ -49,6 +49,7 @@ bool AlignmentTraversor::NextTriple(triple *triple) {
 
     return true;
   } else {
+    // We're in a subclass
     currentPosInSubclass++;
     if (currentPosInSubclass == 0 && currentSubclass->tokens.size() == 0 &&
         currentSubclass->classLabel.find("FALLBACK") != std::string::npos) {

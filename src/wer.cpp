@@ -515,10 +515,12 @@ void WriteSbs(spWERA topAlignment, string sbs_filename) {
   std::set<std::string> op_set = {"<ins>", "<del>", "<sub>"};
 
   size_t offset = 2;  // line number in output file where first triple starts
+  std::cout << "+++visitor+++" << std::endl;
   while (visitor.NextTriple(tk_pair)) {
     string tk_classLabel = tk_pair->classLabel;
     string ref_tk = tk_pair->ref;
     string hyp_tk = tk_pair->hyp;
+    std::cout << ref_tk << " <-> " << hyp_tk << std::endl;
     string tag = "";
 
     if (ref_tk == NOOP) {
