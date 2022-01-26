@@ -190,7 +190,7 @@ spWERA Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engin
     ReverseOLabelCompare<StdArc> comparer;
     ArcSort(&refFst, comparer);
     AdaptedCompositionFst composed_fst(refFst, hypFst, symbol);
-    // composed_fst.DebugComposedGraph();
+    /* composed_fst.DebugComposedGraph(); */
     Walker walker;
     best_alignments = walker.walkComposed(composed_fst, symbol, options, alignerOptions.numBests);
   } else {

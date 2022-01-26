@@ -4,6 +4,8 @@ Walker.cpp
  2018
 
 */
+#define TRACE true
+
 #include "Walker.h"
 
 #include "utilities.h"
@@ -17,6 +19,9 @@ Walker::Walker() {
   heapA = new PathHeap();
   heapB = new PathHeap();
   logger = logger::GetOrCreateLogger("walker");
+#if TRACE
+  logger->set_level(spdlog::level::trace);
+#endif
 }
 
 Walker::~Walker() {
@@ -248,17 +253,19 @@ shared_ptr<wer_alignment> Walker::GetDetailsFromTopCandidates(ShortlistEntry &cu
     string olabel = symbol.Find(local_arc.olabel);
 
     bool isClassLabel_i = isEntityLabel(ilabel);
-    // bool isClassLabel_o = olabel.find("___") == 0 ? true : false;
+    bool isClassLabel_o = olabel.find("___") == 0 ? true : false;
 
     if (logger->should_log(spdlog::level::trace)) {
       logger->trace("we have {}/{} with a weight of {}", ilabel, olabel, local_arc.weight);
     }
 
-    if (isClassLabel_i) {
+    if (isClassLabel_i || isClassLabel_o) {
+      // Give ilabel precidence
+      auto local_label = isClassLabel_i ? ilabel : olabel;
       if (class_label_wer_info == nullptr) {
         // we are entring a class label
         class_label_wer_info = shared_ptr<wer_alignment>(new wer_alignment());
-        class_label_wer_info->classLabel = ilabel;
+        class_label_wer_info->classLabel = local_label;
         global_wer_alignment->label_alignments.push_back(class_label_wer_info);
         global_wer_alignment->tokens.push_back(make_pair(ilabel, olabel));
       } else if (ilabel == class_label_wer_info->classLabel) {
@@ -353,7 +360,7 @@ olabel was in hyp
           global_wer_alignment->tokens.push_back(pair);
         }
       }
-    } else if (!isClassLabel_i && special_symbols.find(local_arc.ilabel) == special_symbols.end() &&
+    } else if (! isClassLabel_o && !isClassLabel_i && special_symbols.find(local_arc.ilabel) == special_symbols.end() &&
                special_symbols.find(local_arc.olabel) == special_symbols.end()) {
       std::pair<string, string> pair;
       pair = std::make_pair(ilabel, olabel);

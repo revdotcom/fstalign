@@ -5,7 +5,7 @@ AdaptedComposition.cpp
 
 */
 
-#define TRACE false
+#define TRACE true
 
 #include "AdaptedComposition.h"
 #include <chrono>

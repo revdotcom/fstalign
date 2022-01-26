@@ -63,9 +63,9 @@ int main(int argc, char **argv) {
     c->add_option("--hyp", hyp_filename, "Hypothesis filename (same rules as for --ref handling.)");
 
     // TODO: add support for hypothesis-side normalization
-    // c->add_option("--hyp-json", hyp_json_norm_filename,
-    //               "JSon normalization sidecar file, used in conjunction with "
-    //               ".nlp input.)");
+    c->add_option("--hyp-json", hyp_json_norm_filename,
+                  "JSon normalization sidecar file, used in conjunction with "
+                  ".nlp input.)");
 
     c->add_option("--output-nlp", output_nlp, "The output path to store the aligned nlp file");
     c->add_option("--output-sbs", output_sbs, "The output path to store the side-by-side alignment");
@@ -207,7 +207,7 @@ int main(int argc, char **argv) {
     auto vec = nlpReader.read_from_disk(hyp_filename);
     // for now, nlp files passed as hypothesis won't have their labels handled as such
     // this also mean that json normalization will be ignored
-    NlpFstLoader *nlpFst = new NlpFstLoader(vec, hyp_json_obj, false);
+    NlpFstLoader *nlpFst = new NlpFstLoader(vec, hyp_json_obj, true);
     hyp = nlpFst;
   } else if (EndsWithCaseInsensitive(hyp_filename, string(".ctm"))) {
     console->info("reading hypothesis ctm from {}", hyp_filename);
