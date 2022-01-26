@@ -6,9 +6,9 @@
 #include "src/logging.h"
 #ifndef __TEST_UTILITIES_H__
 #define __TEST_UTILITIES_H__ 1
-const auto TEST_BINARY = "./fstalign";
-const auto TEST_DATA = "../sample_data/tests/";
-const auto TEST_SYNONYMS = "../synonyms.rules.txt";
+const std::string TEST_BINARY = "./fstalign";
+const std::string TEST_DATA = "../test/data/";
+const std::string TEST_SYNONYMS = "../sample_data/synonyms.rules.txt";
 #ifdef WINDOWS
 #include <direct.h>
 #define GetCurrentDir _getcwd
@@ -52,7 +52,7 @@ std::string exec(const std::string &cmd) {
 // Generates a specific fstalign command given certain flag values
 std::string command(const char *subcommand, const char *approach, const char *reference, const char *hypothesis,
                     const std::string output_sbs = "", const std::string output_nlp = "",
-                    const char *synonyms = nullptr, const char *refJson = nullptr, const bool disableCutoffs = false,
+                    const std::string synonyms = "", const char *refJson = nullptr, const bool disableCutoffs = false,
                     const int speakerSwitchContextSize = -1, const std::string extraFlags = "") {
   const auto ref = std::string{"--ref "} + TEST_DATA + reference;
   const auto hyp = std::string{"--hyp "} + TEST_DATA + hypothesis;
@@ -62,8 +62,8 @@ std::string command(const char *subcommand, const char *approach, const char *re
   //   auto logger = logger::GetOrCreateLogger("main()");
   //   logger->info("final command is {}", cmd);
 
-  if (synonyms != nullptr) {
-    cmd = cmd + " --syn " + TEST_DATA + synonyms;
+  if (!synonyms.empty()) {
+    cmd = cmd + " --syn " + synonyms;
   }
   if (refJson != nullptr) {
     cmd = cmd + " --ref-json " + TEST_DATA + refJson;
@@ -98,7 +98,7 @@ bool compareFiles(const std::string &p1, const std::string &p2) {
   std::ifstream f2(p2, std::ifstream::binary | std::ifstream::ate);
 
   // useful for debugging test
-    auto logger = logger::GetOrCreateLogger("main()");
+  auto logger = logger::GetOrCreateLogger("main()");
   //   logger->info("comparing {} with {}", p1, p2);
 
   if (f1.fail() || f2.fail()) {

@@ -137,7 +137,7 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-standard-composition()") {
 
   SECTION("syn_7 (hyp1)") {
     const auto result = exec(command("wer", approach, "syn_7.ref.nlp", "syn_7.hyp.txt", sbs_output, "",
-                                     "syn_7.synonym.rules.txt", "syn_7.norm.json"));
+                                     TEST_DATA + "syn_7.synonym.rules.txt", "syn_7.norm.json"));
 
     REQUIRE_THAT(result, Contains("WER: 1/20 = 0.0500"));
     REQUIRE_THAT(result, Contains("WER: INS:1 DEL:0 SUB:0"));
@@ -145,7 +145,7 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-standard-composition()") {
 
   SECTION("syn_7 (hyp2)") {
     const auto result = exec(command("wer", approach, "syn_7.ref.nlp", "syn_7.hyp2.txt", sbs_output, "",
-                                     "syn_7.synonym.rules.txt", "syn_7.norm.json"));
+                                     TEST_DATA + "syn_7.synonym.rules.txt", "syn_7.norm.json"));
 
     REQUIRE_THAT(result, Contains("WER: 2/20 = 0.1000"));
     REQUIRE_THAT(result, Contains("WER: INS:1 DEL:1 SUB:0"));
@@ -153,7 +153,7 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-standard-composition()") {
 
   SECTION("syn_7 (hyp3)") {
     const auto result = exec(command("wer", approach, "syn_7.ref.nlp", "syn_7.hyp3.txt", sbs_output, "",
-                                     "syn_7.synonym.rules.txt", "syn_7.norm.json"));
+                                     TEST_DATA + "syn_7.synonym.rules.txt", "syn_7.norm.json"));
 
     REQUIRE_THAT(result, Contains("WER: 1/19 = 0.0526"));
     REQUIRE_THAT(result, Contains("WER: INS:1 DEL:0 SUB:0"));
@@ -161,7 +161,7 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-standard-composition()") {
 
   SECTION("syn_7 (hyp4)") {
     const auto result = exec(command("wer", approach, "syn_7_ref4.nlp", "syn_7.hyp4.txt", sbs_output, "",
-                                     "syn_7.synonym.rules.txt", "syn_7.norm.json"));
+                                     TEST_DATA + "syn_7.synonym.rules.txt", "syn_7.norm.json"));
 
     REQUIRE_THAT(result, Contains("WER: 0/2 = 0.0000"));
     REQUIRE_THAT(result, Contains("WER: INS:0 DEL:0 SUB:0"));
@@ -169,16 +169,16 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-standard-composition()") {
   }
 
   SECTION("syn_9") {
-    const auto result =
-        exec(command("wer", approach, "syn_9.ref.txt", "syn_9.hyp.txt", sbs_output, "", "syn_9.synonym.rules.txt"));
+    const auto result = exec(command("wer", approach, "syn_9.ref.txt", "syn_9.hyp.txt", sbs_output, "",
+                                     TEST_DATA + "syn_9.synonym.rules.txt"));
 
     REQUIRE_THAT(result, Contains("WER: 0/6 = 0.0"));
     REQUIRE_THAT(result, Contains("WER: INS:0 DEL:0 SUB:0"));
   }
 
   SECTION("syn_10") {
-    const auto result =
-        exec(command("wer", approach, "syn_10.ref.txt", "syn_10.hyp.txt", sbs_output, "", "syn_9.synonym.rules.txt"));
+    const auto result = exec(command("wer", approach, "syn_10.ref.txt", "syn_10.hyp.txt", sbs_output, "",
+                                     TEST_DATA + "syn_9.synonym.rules.txt"));
 
     REQUIRE_THAT(result, Contains("WER: 1/6 = 0.1667"));
     REQUIRE_THAT(result, Contains("WER: INS:0 DEL:0 SUB:1"));
@@ -257,8 +257,8 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-standard-composition()") {
   }
 
   SECTION("wer (nlp output)") {
-    const auto result =
-        exec(command("wer", approach, "short.ref.nlp", "short.hyp.nlp", sbs_output, nlp_output, TEST_SYNONYMS, nullptr, false, -1, "--disable-approx-alignment"));
+    const auto result = exec(command("wer", approach, "short.ref.nlp", "short.hyp.nlp", sbs_output, nlp_output,
+                                     TEST_SYNONYMS, nullptr, false, -1, "--disable-approx-alignment"));
     const auto testFile = std::string{TEST_DATA} + "short.aligned.nlp";
 
     REQUIRE(compareFiles(nlp_output.c_str(), testFile.c_str()));
@@ -382,9 +382,9 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-standard-composition()") {
   // test oracle WER calculation with lattice FST archive as hypothesis input
   SECTION("oracle_1") {
     const auto result = exec(
-        "./fstalign wer --ref ../sample_data/tests/oracle_1.ref.txt "
-        "--hyp ../sample_data/tests/oracle_1.hyp.fst "
-        "--symbols ../sample_data/tests/oracle_1.symbols.txt "
+        "./fstalign wer --ref ../test/data/oracle_1.ref.txt "
+        "--hyp ../test/data/oracle_1.hyp.fst "
+        "--symbols ../test/data/oracle_1.symbols.txt "
         "--output-sbs " +
         sbs_output);
 
@@ -516,7 +516,7 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-adapted-composition()") {
 
   SECTION("syn_7 (hyp1)") {
     const auto result = exec(command("wer", approach, "syn_7.ref.nlp", "syn_7.hyp.txt", sbs_output, "",
-                                     "syn_7.synonym.rules.txt", "syn_7.norm.json"));
+                                     TEST_DATA + "syn_7.synonym.rules.txt", "syn_7.norm.json"));
 
     REQUIRE_THAT(result, Contains("WER: 1/20 = 0.0500"));
     REQUIRE_THAT(result, Contains("WER: INS:1 DEL:0 SUB:0"));
@@ -524,7 +524,7 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-adapted-composition()") {
 
   SECTION("syn_7 (hyp2)") {
     const auto result = exec(command("wer", approach, "syn_7.ref.nlp", "syn_7.hyp2.txt", sbs_output, "",
-                                     "syn_7.synonym.rules.txt", "syn_7.norm.json"));
+                                     TEST_DATA + "syn_7.synonym.rules.txt", "syn_7.norm.json"));
 
     REQUIRE_THAT(result, Contains("WER: 4/18 = 0.2222"));
     REQUIRE_THAT(result, Contains("WER: INS:2 DEL:0 SUB:2"));
@@ -532,7 +532,7 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-adapted-composition()") {
 
   SECTION("syn_7 (hyp3)") {
     const auto result = exec(command("wer", approach, "syn_7.ref.nlp", "syn_7.hyp3.txt", sbs_output, "",
-                                     "syn_7.synonym.rules.txt", "syn_7.norm.json"));
+                                     TEST_DATA + "syn_7.synonym.rules.txt", "syn_7.norm.json"));
 
     REQUIRE_THAT(result, Contains("WER: 1/19 = 0.0526"));
     REQUIRE_THAT(result, Contains("WER: INS:1 DEL:0 SUB:0"));
@@ -540,7 +540,7 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-adapted-composition()") {
 
   SECTION("syn_7 (hyp4)") {
     const auto result = exec(command("wer", approach, "syn_7_ref4.nlp", "syn_7.hyp4.txt", sbs_output, "",
-                                     "syn_7.synonym.rules.txt", "syn_7.norm.json"));
+                                     TEST_DATA + "syn_7.synonym.rules.txt", "syn_7.norm.json"));
 
     REQUIRE_THAT(result, Contains("WER: 0/2 = 0.0000"));
     REQUIRE_THAT(result, Contains("WER: INS:0 DEL:0 SUB:0"));
@@ -548,16 +548,16 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-adapted-composition()") {
   }
 
   SECTION("syn_9") {
-    const auto result =
-        exec(command("wer", approach, "syn_9.ref.txt", "syn_9.hyp.txt", sbs_output, "", "syn_9.synonym.rules.txt"));
+    const auto result = exec(command("wer", approach, "syn_9.ref.txt", "syn_9.hyp.txt", sbs_output, "",
+                                     TEST_DATA + "syn_9.synonym.rules.txt"));
 
     REQUIRE_THAT(result, Contains("WER: 0/6 = 0.0"));
     REQUIRE_THAT(result, Contains("WER: INS:0 DEL:0 SUB:0"));
   }
 
   SECTION("syn_10") {
-    const auto result =
-        exec(command("wer", approach, "syn_10.ref.txt", "syn_10.hyp.txt", sbs_output, "", "syn_9.synonym.rules.txt"));
+    const auto result = exec(command("wer", approach, "syn_10.ref.txt", "syn_10.hyp.txt", sbs_output, "",
+                                     TEST_DATA + "syn_9.synonym.rules.txt"));
 
     REQUIRE_THAT(result, Contains("WER: 1/6 = 0.1667"));
     REQUIRE_THAT(result, Contains("WER: INS:0 DEL:0 SUB:1"));
@@ -753,9 +753,9 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-adapted-composition()") {
   // test oracle WER calculation with lattice FST archive as hypothesis input
   SECTION("oracle_1") {
     const auto result = exec(
-        "./fstalign wer --ref ../sample_data/tests/oracle_1.ref.txt "
-        "--hyp ../sample_data/tests/oracle_1.hyp.fst "
-        "--symbols ../sample_data/tests/oracle_1.symbols.txt "
+        "./fstalign wer --ref ../test/data/oracle_1.ref.txt "
+        "--hyp ../test/data/oracle_1.hyp.fst "
+        "--symbols ../test/data/oracle_1.symbols.txt "
         "--output-sbs " +
         sbs_output);
 
