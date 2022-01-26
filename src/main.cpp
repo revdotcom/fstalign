@@ -25,13 +25,15 @@ int main(int argc, char **argv) {
   string output_json_log;
   string symbols_filename = "";
   int pr_threshold = 0;
-  bool disable_cutoffs;
   bool version;
   string composition_approach = "adapted";
   int speaker_switch_context_size = 5;
   int numBests = 100;
   bool record_case_stats = false;
   bool disable_approximate_alignment = false;
+
+  bool disable_cutoffs = false;
+  bool disable_hyphen_ignore = false;
 
   CLI::App app("Rev FST Align");
   app.set_help_all_flag("--help-all", "Expand all help");
@@ -56,6 +58,9 @@ int main(int argc, char **argv) {
     c->add_flag("--disable-cutoffs", disable_cutoffs,
                 "Prevents the synonym engine from adding synonyms of cutoff "
                 "words (e.g. the-)");
+    c->add_flag("--disable-hyphen-ignore", disable_hyphen_ignore,
+                "Prevents the synonym engine from adding synonyms of hyphenated "
+                "compound words (e.g. best-ever <-> best ever)");
     c->add_flag("--disable-approx-alignment", disable_approximate_alignment,
                 "Disable getting a first approximate alignment/WER before the more exhaustive search happens");
 
@@ -229,10 +234,13 @@ int main(int argc, char **argv) {
     hyp = hypOneBest;
   }
 
-  SynonymEngine *engine = nullptr;
+  SynonymOptions syn_opts;
+  syn_opts.disable_cutoffs = disable_cutoffs;
+  syn_opts.disable_hyphen_ignore = disable_hyphen_ignore;
+
+  SynonymEngine *engine = new SynonymEngine(syn_opts);
   if (synonyms_filename.size() > 0) {
-    engine = new SynonymEngine(disable_cutoffs);
-    engine->load_file(synonyms_filename);
+    engine->LoadFile(synonyms_filename);
   }
 
   AlignerOptions alignerOptions;
