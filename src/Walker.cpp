@@ -4,7 +4,7 @@ Walker.cpp
  2018
 
 */
-#define TRACE true
+#define TRACE false
 
 #include "Walker.h"
 

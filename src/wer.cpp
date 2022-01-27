@@ -520,7 +520,6 @@ void WriteSbs(spWERA topAlignment, string sbs_filename) {
     string tk_classLabel = tk_pair->classLabel;
     string ref_tk = tk_pair->ref;
     string hyp_tk = tk_pair->hyp;
-    std::cout << ref_tk << " <-> " << hyp_tk << std::endl;
     string tag = "";
 
     if (ref_tk == NOOP) {

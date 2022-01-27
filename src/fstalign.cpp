@@ -409,8 +409,8 @@ void align_stitches_to_nlp(NlpFstLoader *refLoader, vector<shared_ptr<Stitching>
       continue;
     }
 
-    int classLabelRowsInStitches = 1;
-    int classLabelRowsInNlp = 1;
+    int classLabelRowsInStitches = 0;
+    int classLabelRowsInNlp = nlp_classLabel != "" ? 1: 0;
 
     if (inSynonymPath) {
       int tmpid;
@@ -425,18 +425,25 @@ void align_stitches_to_nlp(NlpFstLoader *refLoader, vector<shared_ptr<Stitching>
 
         break;
       }
+    /* } else if (classLabelRowsInNlp == 0) { */
+    /*   // We have an entity on the hyp side that is getting normalized to match */
+    /*   // the ref side, so we can 1:1 match it. */
     } else {
       while (alignedTokensIndex + classLabelRowsInStitches < numStitches) {
+        // Look for end of class in the stiches
         int p = alignedTokensIndex + classLabelRowsInStitches;
         if (stitch->classLabel == (*stitches)[p]->classLabel) {
+          // Haven't found the end of the class yet
           classLabelRowsInStitches++;
           continue;
         }
 
+        // Found the end of the class
         break;
       }
 
-      while (nlpRowIndex + classLabelRowsInNlp < nlpMaxRow) {
+      while (classLabelRowsInNlp > 0 && nlpRowIndex + classLabelRowsInNlp < nlpMaxRow) {
+        // Look for end of class in the NLP rows
         int p = nlpRowIndex + classLabelRowsInNlp;
         if (nlp_classLabel == GetClassLabel(nlpRows[p].best_label)) {
           classLabelRowsInNlp++;
@@ -459,13 +466,13 @@ void align_stitches_to_nlp(NlpFstLoader *refLoader, vector<shared_ptr<Stitching>
 
     // same number of rows.  We'll make the /assumption/ that a
     // direct alignment make sense
-    if (classLabelRowsInNlp == classLabelRowsInStitches) {
+    if (classLabelRowsInNlp == 0 || classLabelRowsInNlp == classLabelRowsInStitches) {
       stitch->nlpRow = nlpPart;
       stitch->comment += ",direct";
       alignedTokensIndex++;
       nlpRowIndex++;
 
-      for (int i = 1; i < classLabelRowsInNlp; i++) {
+      for (int i = 1; i < classLabelRowsInStitches; i++) {
         (*stitches)[alignedTokensIndex]->nlpRow = nlpRows[nlpRowIndex];
         (*stitches)[alignedTokensIndex]->comment += ",direct";
         alignedTokensIndex++;
