@@ -137,6 +137,7 @@ vector<int> SeekForward(SynKey &lhs, int lhsPos, StdVectorFst &fst, int starting
 
 void SynonymEngine::GenerateSynFromSymbolTable(SymbolTable &symbol) {
   logger_->debug("Adding synonyms dynamically from symbol table.");
+  int kNoSymbol = -1;
 
   int cutoff_count = 0;
   int compound_hyphen_count = 0;
