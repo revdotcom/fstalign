@@ -136,30 +136,59 @@ vector<int> SeekForward(SynKey &lhs, int lhsPos, StdVectorFst &fst, int starting
 }
 
 void SynonymEngine::GenerateSynFromSymbolTable(SymbolTable &symbol) {
-  if (!opts_.disable_cutoffs) {
-    logger_->debug("Adding synonyms for cutoff words");
-    SymbolTableIterator symIter(symbol);
-    int cutoff_count = 0;
-    while (!symIter.Done()) {
-      auto sym = symIter.Symbol();
-      symIter.Next();
-      if (sym.back() == '-') {
-        auto w = sym.substr(0, sym.size() - 1);
+  logger_->debug("Adding synonyms dynamically from symbol table.");
+
+  int cutoff_count = 0;
+  int compound_hyphen_count = 0;
+
+  SymbolTableIterator symIter(symbol);
+  while (!symIter.Done()) {
+    auto sym = symIter.Symbol();
+    symIter.Next();
+    int hyphen_idx = sym.find('-');
+    if (!opts_.disable_cutoffs && hyphen_idx == sym.length() - 1) {
+      // Cutoff rules take precedence
+      auto new_word = sym.substr(0, sym.size() - 1);
+      int id = symbol.Find(new_word);
+      if (id == kNoSymbol) {
+        id = symbol.AddSymbol(new_word);
+      }
+      auto key = GetKeyFromString(sym);
+      auto values = GetValuesFromStrings(new_word);
+      if (synonyms.find(key) == synonyms.end()) {
+        // Only add the cutoff synonym if no synonym is already defined
+        synonyms[key] = values;
+      }
+      cutoff_count++;
+    } else if (!opts_.disable_hyphen_ignore && hyphen_idx != -1 && hyphen_idx != sym.length() - 1) {
+      // Generate other hyphenation rules
+      vector<string> new_words;
+      strtk::split("-", trim_copy(sym), strtk::range_to_type_back_inserter(new_words),
+                   strtk::split_options::compress_delimiters);
+
+      vector<string> hyphenated = GetKeyFromString(sym);
+
+      // Add new subwords if they didn't exist in the table
+      for (auto w : new_words) {
         int id = symbol.Find(w);
         if (id == kNoSymbol) {
           id = symbol.AddSymbol(w);
         }
-        auto key = GetKeyFromString(sym);
-        auto values = GetValuesFromStrings(w);
-        if (synonyms.find(key) == synonyms.end()) {
-          // Only add the cutoff synonym if no synonym is already defined
-          synonyms[key] = values;
-        }
-        cutoff_count++;
       }
+
+      if (synonyms.find(hyphenated) == synonyms.end()) {
+        // Add hyphenated --> unhyphenated synonym
+        synonyms[hyphenated] = {new_words};
+      }
+      if (synonyms.find(new_words) == synonyms.end()) {
+        // Add unhyphenated --> hyphenated synonym
+        synonyms[new_words] = {hyphenated};
+      }
+      compound_hyphen_count++;
     }
-    logger_->debug("Found {} cutoff words and added their synonyms", cutoff_count);
   }
+  logger_->debug("Found {} cutoff words and added their synonyms", cutoff_count);
+  logger_->debug("Found {} compound hyphen words and added their synonyms", compound_hyphen_count);
   return;
 }
 
