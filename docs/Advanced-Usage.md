@@ -42,6 +42,8 @@ OpenFST FST files can only be passed to the `--hyp` parameter. fstalign will dir
 ### Synonyms
 Synonyms allow for reference words to be equivalent to similar forms (determined by the user) for error counting. They are accepted for any input formats and passed into the tool via the `--syn <path_to_synonym_file>` flag. For details see [Synonyms Format](https://github.com/revdotcom/fstalign/blob/develop/docs/Synonyms-Format.md). A standard set of synonyms we use at Rev.ai is available in the repository under `sample_data/synonyms.rules.txt`.
 
+In addition to allowing for custom synonyms to be passed in via CLI, fstalign also automatically generates synonyms based on the reference and hypothesis text. Currently, it does this for two cases: cutoff words (hello-) and compound hyphenated words (long-term). In both cases, a synonym is dynamically generated with the hyphen removed. Both of these synonym types can be disabled through the CLI by passing in `--disable-cutoffs` and `--disable-hyphen-ignore`, respectively.
+
 ### Normalizations
 Normalizations are a similar concept to synonyms. They allow a token or group of tokens to be represented by alternatives when calculating the WER alignment. Unlike synonyms, they are only accepted for NLP file inputs where the tokens are tagged with a unique ID. The normalizations are specified in a JSON format, with the unique ID as keys. Example to illustrate the schema:
 ```
