@@ -18,16 +18,25 @@ using namespace fst;
 typedef vector<string> SynKey;
 typedef vector<vector<string>> SynVals;
 
+struct SynonymOptions {
+  bool disable_cutoffs = false;
+  bool disable_hyphen_ignore = false;
+};
+
 class SynonymEngine {
  public:
-  SynonymEngine(bool disable_cutoffs);
-  void load_file(string filename);
-  void parse_strings(vector<string> lines);
-  void apply_to_fst(StdVectorFst &fst, SymbolTable &symbol);
+  SynonymEngine(SynonymOptions syn_opts);
+
+  void LoadFile(string filename);
+  SynKey GetKeyFromString(string lhs);
+  SynVals GetValuesFromStrings(string rhs);
+  void ParseStrings(vector<string> lines);
+  void ApplyToFst(StdVectorFst &fst, SymbolTable &symbol);
+  void GenerateSynFromSymbolTable(SymbolTable &symbol);
 
  protected:
+  SynonymOptions opts_;
   map<SynKey, SynVals> synonyms;
-  bool disable_cutoffs;
   std::shared_ptr<spdlog::logger> logger_;
 };
 

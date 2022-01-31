@@ -399,7 +399,7 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-standard-composition()") {
 
 /*
 
-  Approach 2
+  Approach 2 - which is the current default
 
 
 */
@@ -561,6 +561,30 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-adapted-composition()") {
 
     REQUIRE_THAT(result, Contains("WER: 1/6 = 0.1667"));
     REQUIRE_THAT(result, Contains("WER: INS:0 DEL:0 SUB:1"));
+  }
+
+  SECTION("syn_compound_1") {
+    const auto result = exec(
+        command("wer", approach, "syn_compound_1.ref.txt", "syn_compound_1.hyp.txt", sbs_output, "", TEST_SYNONYMS));
+
+    REQUIRE_THAT(result, Contains("WER: 0/9 = 0.0"));
+    REQUIRE_THAT(result, Contains("WER: INS:0 DEL:0 SUB:0"));
+  }
+
+  SECTION("syn_compound_1 (disabled hyphen ignore") {
+    const auto result = exec(command("wer", approach, "syn_compound_1.ref.txt", "syn_compound_1.hyp.txt", sbs_output,
+                                     "", TEST_SYNONYMS, nullptr, false, -1, "--disable-hyphen-ignore"));
+
+    REQUIRE_THAT(result, Contains("WER: 2/8 = 0.2500"));
+    REQUIRE_THAT(result, Contains("WER: INS:1 DEL:0 SUB:1"));
+  }
+
+  SECTION("syn_compound_2") {
+    const auto result = exec(
+        command("wer", approach, "syn_compound_2.ref.txt", "syn_compound_2.hyp.txt", sbs_output, "", TEST_SYNONYMS));
+
+    REQUIRE_THAT(result, Contains("WER: 2/7 = 0.2857"));
+    REQUIRE_THAT(result, Contains("WER: INS:0 DEL:0 SUB:2"));
   }
 
   // synonyms for noise codes

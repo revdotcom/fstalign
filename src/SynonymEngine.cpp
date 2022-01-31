@@ -11,13 +11,13 @@
 #define strtk_no_tr1_or_boost
 #include <strtk/strtk.hpp>
 
-SynonymEngine::SynonymEngine(bool disable_cutoffs) {
+SynonymEngine::SynonymEngine(SynonymOptions syn_opts) {
   map<SynKey, SynVals> synonyms;
-  this->disable_cutoffs = disable_cutoffs;
+  opts_ = syn_opts;
   logger_ = logger::GetOrCreateLogger("SynonymEngine");
 }
 
-void SynonymEngine::load_file(string filename) {
+void SynonymEngine::LoadFile(string filename) {
   ifstream input(filename);
 
   if (!input.is_open()) throw std::runtime_error("Cannot open input file");
@@ -27,14 +27,12 @@ void SynonymEngine::load_file(string filename) {
   while (std::getline(input, s)) {
     lines.push_back(s);
   }
-  //   std::copy(std::istream_iterator<std::string>(input),
-  // std::istream_iterator<std::string>(), std::back_inserter(lines));
   input.close();
 
-  parse_strings(lines);
+  ParseStrings(lines);
 }
 
-SynKey getKeyFromString(string lhs) {
+SynKey SynonymEngine::GetKeyFromString(string lhs) {
   //   SynKey k;
   vector<string> k;
   // splitStringIter2(lhs, " ", std::back_inserter(k));
@@ -43,13 +41,12 @@ SynKey getKeyFromString(string lhs) {
   return k;
 }
 
-SynVals getValuesFromStrings(string rhs) {
-  auto logger = logger::GetOrCreateLogger("SynonymEngine");
+SynVals SynonymEngine::GetValuesFromStrings(string rhs) {
   vector<string> alternatives;
   // splitStringIter2(rhs, "|", back_inserter(alternatives));
   strtk::split(";", rhs, strtk::range_to_type_back_inserter(alternatives), strtk::split_options::compress_delimiters);
 
-  logger->debug("with rhs = [{}], we have {} alternatives", rhs, alternatives.size());
+  logger_->debug("with rhs = [{}], we have {} alternatives", rhs, alternatives.size());
 
   SynVals values;
   for (auto &alt : alternatives) {
@@ -58,14 +55,14 @@ SynVals getValuesFromStrings(string rhs) {
     strtk::split(" ", trim_copy(alt), strtk::range_to_type_back_inserter(tokens),
                  strtk::split_options::compress_delimiters);
 
-    logger->debug("   for alt [{}], we have {} tokens", alt, tokens.size());
+    logger_->debug("   for alt [{}], we have {} tokens", alt, tokens.size());
     values.push_back(tokens);
   }
 
   return values;
 }
 
-void SynonymEngine::parse_strings(vector<string> lines) {
+void SynonymEngine::ParseStrings(vector<string> lines) {
   vector<string> parts;
   for (auto &line : lines) {
     trim(line);
@@ -89,11 +86,11 @@ void SynonymEngine::parse_strings(vector<string> lines) {
     // parts.erase(parts.begin());
 
     trim(lhs);
-    auto key = getKeyFromString(lhs);
+    auto key = GetKeyFromString(lhs);
 
     if (synonyms.find(key) == synonyms.end()) {
       // new entry
-      auto values = getValuesFromStrings(rhs);
+      auto values = GetValuesFromStrings(rhs);
       synonyms[key] = values;
     } else {
       logger_->warn(
@@ -104,7 +101,7 @@ void SynonymEngine::parse_strings(vector<string> lines) {
   }
 }
 
-vector<int> seek_forward(SynKey &lhs, int lhsPos, StdVectorFst &fst, int startingStateId, SymbolTable &symbol) {
+vector<int> SeekForward(SynKey &lhs, int lhsPos, StdVectorFst &fst, int startingStateId, SymbolTable &symbol) {
   vector<int> lastStates;
 
   int stateId = startingStateId;
@@ -130,7 +127,7 @@ vector<int> seek_forward(SynKey &lhs, int lhsPos, StdVectorFst &fst, int startin
 
     int label_id = arc.ilabel;
     if (label_id == currKeyPartLabelId) {
-      auto endStates = seek_forward(lhs, lhsPos + 1, fst, arc.nextstate, symbol);
+      auto endStates = SeekForward(lhs, lhsPos + 1, fst, arc.nextstate, symbol);
       copy(endStates.begin(), endStates.end(), back_inserter(lastStates));
     }
   }
@@ -138,33 +135,66 @@ vector<int> seek_forward(SynKey &lhs, int lhsPos, StdVectorFst &fst, int startin
   return lastStates;
 }
 
-void SynonymEngine::apply_to_fst(StdVectorFst &fst, SymbolTable &symbol) {
+void SynonymEngine::GenerateSynFromSymbolTable(SymbolTable &symbol) {
+  logger_->debug("Adding synonyms dynamically from symbol table.");
   int kNoSymbol = -1;
 
-  if (!disable_cutoffs) {
-    logger_->debug("Adding synonyms for cutoff words");
-    SymbolTableIterator symIter(symbol);
-    int cutoff_count = 0;
-    while (!symIter.Done()) {
-      auto sym = symIter.Symbol();
-      symIter.Next();
-      if (sym.back() == '-') {
-        auto w = sym.substr(0, sym.size() - 1);
+  int cutoff_count = 0;
+  int compound_hyphen_count = 0;
+
+  SymbolTableIterator symIter(symbol);
+  while (!symIter.Done()) {
+    auto sym = symIter.Symbol();
+    symIter.Next();
+    int hyphen_idx = sym.find('-');
+    if (!opts_.disable_cutoffs && hyphen_idx == sym.length() - 1) {
+      // Cutoff rules take precedence
+      auto new_word = sym.substr(0, sym.size() - 1);
+      int id = symbol.Find(new_word);
+      if (id == kNoSymbol) {
+        id = symbol.AddSymbol(new_word);
+      }
+      auto key = GetKeyFromString(sym);
+      auto values = GetValuesFromStrings(new_word);
+      if (synonyms.find(key) == synonyms.end()) {
+        // Only add the cutoff synonym if no synonym is already defined
+        synonyms[key] = values;
+      }
+      cutoff_count++;
+    } else if (!opts_.disable_hyphen_ignore && hyphen_idx != -1 && hyphen_idx != sym.length() - 1) {
+      // Generate other hyphenation rules
+      vector<string> new_words;
+      strtk::split("-", trim_copy(sym), strtk::range_to_type_back_inserter(new_words),
+                   strtk::split_options::compress_delimiters);
+
+      vector<string> hyphenated = GetKeyFromString(sym);
+
+      // Add new subwords if they didn't exist in the table
+      for (auto w : new_words) {
         int id = symbol.Find(w);
         if (id == kNoSymbol) {
           id = symbol.AddSymbol(w);
         }
-        auto key = getKeyFromString(sym);
-        auto values = getValuesFromStrings(w);
-        if (synonyms.find(key) == synonyms.end()) {
-          // Only add the cutoff synonym if no synonym is already defined
-          synonyms[key] = values;
-        }
-        cutoff_count++;
       }
+
+      if (synonyms.find(hyphenated) == synonyms.end()) {
+        // Add hyphenated --> unhyphenated synonym
+        synonyms[hyphenated] = {new_words};
+      }
+      if (synonyms.find(new_words) == synonyms.end()) {
+        // Add unhyphenated --> hyphenated synonym
+        synonyms[new_words] = {hyphenated};
+      }
+      compound_hyphen_count++;
     }
-    logger_->debug("Found {} cutoff words and added their synonyms", cutoff_count);
   }
+  logger_->debug("Found {} cutoff words and added their synonyms", cutoff_count);
+  logger_->debug("Found {} compound hyphen words and added their synonyms", compound_hyphen_count);
+  return;
+}
+
+void SynonymEngine::ApplyToFst(StdVectorFst &fst, SymbolTable &symbol) {
+  int kNoSymbol = -1;
 
   // let's get the list of all words that 'start' a synonym
   // expression
@@ -213,7 +243,7 @@ void SynonymEngine::apply_to_fst(StdVectorFst &fst, SymbolTable &symbol) {
       vector<SynKey> candidates = (*firstWordEntry).second;
       logger_->debug("for state {} and label id {} we have {} candidates", stateId, label_id, candidates.size());
       for (auto &lhs : candidates) {
-        auto lastTargetStates = seek_forward(lhs, 0, fst, stateId, symbol);
+        auto lastTargetStates = SeekForward(lhs, 0, fst, stateId, symbol);
         if (lastTargetStates.size() == 0) {
           // no match, let's continue
           continue;

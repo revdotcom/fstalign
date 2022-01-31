@@ -96,8 +96,9 @@ spWERA Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engin
 
       logger->info("Estimated edit distance : {} / {} ({} edits originally)", dist_prime, vA.size(), dist);
     } else {
-      logger->info("Either ref or hyp is really small, skipping over the levenstein distance,  ref size: {}, hyp size: {}",
-                   vA.size(), vB.size());
+      logger->info(
+          "Either ref or hyp is really small, skipping over the levenstein distance,  ref size: {}, hyp size: {}",
+          vA.size(), vB.size());
     }
   }
 
@@ -160,8 +161,10 @@ spWERA Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engin
   auto hypFst = hypLoader->convertToFst(symbol, mapB);
 
   if (engine != nullptr) {
+    logger->info("generating ref synonyms from symbol table");
+    engine->GenerateSynFromSymbolTable(symbol);
     logger->info("applying ref synonyms on ref fst");
-    engine->apply_to_fst(refFst, symbol);
+    engine->ApplyToFst(refFst, symbol);
     ArcSort(&refFst, StdILabelCompare());
   }
 
