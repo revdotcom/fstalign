@@ -477,6 +477,7 @@ void align_stitches_to_nlp(NlpFstLoader *refLoader, vector<shared_ptr<Stitching>
       newRecord->ts = nlpPart.ts;
       newRecord->endTs = nlpPart.endTs;
       newRecord->punctuation = "";
+      newRecord->prepunctuation = "";
       newRecord->casing = "LC";
 
       stitch->nlpRow = *newRecord;
@@ -550,7 +551,7 @@ void write_stitches_to_nlp(vector<shared_ptr<Stitching>> stitches, ofstream &out
   logger->info("Writing nlp output");
   // write header; 'comment' is there to store information about how well the alignment went
   // for this word
-  output_nlp_file << "token|speaker|ts|endTs|punctuation|case|tags|wer_tags|oldTs|"
+  output_nlp_file << "token|speaker|ts|endTs|punctuation|prepunctuation|case|tags|wer_tags|oldTs|"
                      "oldEndTs|ali_comment"
                   << endl;
   for (auto &stitch : stitches) {
@@ -601,7 +602,7 @@ void write_stitches_to_nlp(vector<shared_ptr<Stitching>> stitches, ofstream &out
                       << "|";
     }
 
-    output_nlp_file << stitch->nlpRow.punctuation << "|" << stitch->nlpRow.casing << "|" << stitch->nlpRow.labels << "|"
+    output_nlp_file << stitch->nlpRow.punctuation << "|" << stitch->nlpRow.prepunctuation << "|" << stitch->nlpRow.casing << "|" << stitch->nlpRow.labels << "|"
                     << "[";
     /* for (auto wer_tag : nlpRow.wer_tags) { */
     for (auto it = stitch->nlpRow.wer_tags.begin(); it != stitch->nlpRow.wer_tags.end(); ++it) {
