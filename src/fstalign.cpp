@@ -162,7 +162,8 @@ spWERA Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engin
   if (MapContainsErrorStreaks(mapB, alignerOptions.levenstein_maximum_error_streak)) {
     // Only use map if it is safe for composition, only checking hypothesis map for now
     logger->info("Not using levenshtein pre-computation - error streak longer than {}",
-                 alignerOptions.levenstein_maximum_error_streak) refFst = refLoader->convertToFst(symbol, {});
+                 alignerOptions.levenstein_maximum_error_streak);
+    refFst = refLoader->convertToFst(symbol, {});
     hypFst = hypLoader->convertToFst(symbol, {});
   } else {
     refFst = refLoader->convertToFst(symbol, mapA);
