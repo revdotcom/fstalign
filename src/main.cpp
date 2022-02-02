@@ -29,6 +29,7 @@ int main(int argc, char **argv) {
   string composition_approach = "adapted";
   int speaker_switch_context_size = 5;
   int numBests = 100;
+  int levenstein_maximum_error_streak = 100;
   bool record_case_stats = false;
   bool disable_approximate_alignment = false;
 
@@ -79,6 +80,9 @@ int main(int argc, char **argv) {
 
     c->add_option("--numbests", numBests,
                   "The maximum number of minimum error paths through the alignment graph. Defaults to 100.");
+
+    c->add_option("--levenstein-max-error-streak", levenstein_maximum_error_streak,
+                  "The maximum number of consecutive errors supported by levenstein approximation. Defaults to 100.");
 
     c->add_option("--pr_threshold", pr_threshold,
                   "Threshold of occurrences that will be output in"
@@ -247,6 +251,7 @@ int main(int argc, char **argv) {
   alignerOptions.speaker_switch_context_size = speaker_switch_context_size;
   alignerOptions.levenstein_first_pass = !disable_approximate_alignment;
   alignerOptions.numBests = numBests;
+  alignerOptions.levenstein_maximum_error_streak = levenstein_maximum_error_streak;
   alignerOptions.pr_threshold = pr_threshold;
   alignerOptions.record_case_stats = record_case_stats;
   alignerOptions.symbols_filename = symbols_filename;

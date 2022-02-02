@@ -42,7 +42,7 @@ NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value norma
         // mToken.push_back("___" + curr_label_id + "___");
         // mToken.push_back("___" + curr_label + "___");
         //
-        if (mJsonNorm != NULL && mJsonNorm != Json::nullValue) {
+        if (mJsonNorm != Json::nullValue) {
           // todo: add a new "candidate" where this token and the following (if
           // from the same label id) will also be available in the norm
           // candidates.  Right now, if we have 10$ marked as MONEY, the '10$' itself
@@ -85,7 +85,7 @@ void NlpFstLoader::addToSymbolTable(fst::SymbolTable &symbol) const {
       AddSymbolIfNeeded(symbol, tk);
       std::string label_id = getLabelIdFromToken(tk);
 
-      if (mJsonNorm != NULL && mJsonNorm != Json::nullValue) {
+      if (mJsonNorm != Json::nullValue) {
         auto candidates = mJsonNorm[label_id]["candidates"];
         logger->trace("for tk [{}] we have label_id [{}] and {} candidates", tk, label_id, candidates.size());
         for (Json::Value::ArrayIndex i = 0; i != candidates.size(); i++) {

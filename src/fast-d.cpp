@@ -283,3 +283,18 @@ int GetEditDistanceOnly(std::vector<int> &seqA, std::vector<int> &seqB) {
 
   return distance[lengthA];
 }
+
+bool MapContainsErrorStreaks(std::vector<int> map, int streak_cutoff) {
+  int seq_cnt = 0;
+  int bad_match_seq_cnt = 0;
+  for (int x = 0; x < map.size(); x++) {
+    if (map[x] <= 0) {
+      bad_match_seq_cnt++;
+    } else if (bad_match_seq_cnt > streak_cutoff) {
+      return true;
+    } else {
+      bad_match_seq_cnt = 0;
+    }
+  }
+  return false;
+}
