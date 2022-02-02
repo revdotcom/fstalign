@@ -102,9 +102,6 @@ spWERA Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engin
     }
   }
 
-  refLoader->addToSymbolTable(symbol);
-  hypLoader->addToSymbolTable(symbol);
-
 #if debug_levensten
   int seq_cnt = 0;
   int seq_no = 0;
@@ -157,8 +154,19 @@ spWERA Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engin
   logger->info("total good items: {}", good_match);
 #endif
 
-  auto refFst = refLoader->convertToFst(symbol, mapA);
-  auto hypFst = hypLoader->convertToFst(symbol, mapB);
+  refLoader->addToSymbolTable(symbol);
+  hypLoader->addToSymbolTable(symbol);
+
+  fst::StdVectorFst refFst;
+  fst::StdVectorFst hypFst;
+  if (MapContainsErrorStreaks(mapB, alignerOptions.levenstein_maximum_error_streak)) {
+    // Only use map if it is safe for composition, only checking hypothesis map for now
+    refFst = refLoader->convertToFst(symbol, {});
+    hypFst = hypLoader->convertToFst(symbol, {});
+  } else {
+    refFst = refLoader->convertToFst(symbol, mapA);
+    hypFst = hypLoader->convertToFst(symbol, mapB);
+  }
 
   if (engine != nullptr) {
     logger->info("generating ref synonyms from symbol table");
