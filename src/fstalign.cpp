@@ -161,7 +161,8 @@ spWERA Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engin
   fst::StdVectorFst hypFst;
   if (MapContainsErrorStreaks(mapB, alignerOptions.levenstein_maximum_error_streak)) {
     // Only use map if it is safe for composition, only checking hypothesis map for now
-    refFst = refLoader->convertToFst(symbol, {});
+    logger->info("Not using levenshtein pre-computation - error streak longer than {}",
+                 alignerOptions.levenstein_maximum_error_streak) refFst = refLoader->convertToFst(symbol, {});
     hypFst = hypLoader->convertToFst(symbol, {});
   } else {
     refFst = refLoader->convertToFst(symbol, mapA);
@@ -191,10 +192,10 @@ spWERA Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engin
   }
 
   vector<shared_ptr<wer_alignment>> best_alignments;
+  Walker walker;
+  walker.pruningHeapSizeTarget = alignerOptions.heapPruningTarget;
   if (alignerOptions.composition_approach == "standard") {
     StandardCompositionFst composed_fst(refFst, hypFst, symbol);
-    Walker walker;
-    walker.pruningHeapSizeTarget = alignerOptions.heapPruningTarget;
     best_alignments = walker.walkComposed(composed_fst, symbol, options, alignerOptions.numBests);
   } else if (alignerOptions.composition_approach == "adapted") {
     RmEpsilon(&refFst, true);
@@ -202,7 +203,6 @@ spWERA Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engin
     ArcSort(&refFst, comparer);
     AdaptedCompositionFst composed_fst(refFst, hypFst, symbol);
     // composed_fst.DebugComposedGraph();
-    Walker walker;
     best_alignments = walker.walkComposed(composed_fst, symbol, options, alignerOptions.numBests);
   } else {
     throw std::runtime_error("invalid composition approach specified");
