@@ -10,6 +10,8 @@ jobs:
       - 
         name: Check out the repo
         uses: actions/checkout@v2
+        with:
+          submodules: recursive
 
       - 
         name: Prepare tags
@@ -24,10 +26,6 @@ jobs:
           echo ::set-output name=version::${VERSION}
           echo ::set-output name=tags::${TAGS}
           echo ::set-output name=created::$(date -u +'%Y-%m-%dT%H:%M:%SZ')
-
-      - 
-        name: Checkout submodules
-        uses: textbook/git-checkout-submodule-action@2.1.1
 
       -
         name: Set up Docker Buildx
