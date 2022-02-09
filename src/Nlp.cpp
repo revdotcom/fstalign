@@ -318,7 +318,9 @@ std::vector<RawNlpRecord> NlpReader::read_from_disk(const std::string &filename)
     record.speakerId = speaker;
     record.casing = casing;
     record.punctuation = punctuation;
-    record.prepunctuation = prepunctuation;
+    if (input_nlp.has_column("prepunctuation")) {
+        record.prepunctuation = prepunctuation;
+    }
     record.ts = ts;
     record.endTs = endTs;
     record.best_label = GetBestLabel(tags);
