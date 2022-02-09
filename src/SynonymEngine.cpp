@@ -147,6 +147,9 @@ void SynonymEngine::GenerateSynFromSymbolTable(SymbolTable &symbol) {
     auto sym = symIter.Symbol();
     symIter.Next();
     int hyphen_idx = sym.find('-');
+    if (hyphen_idx < 0) {
+      continue;
+    }
     if (!opts_.disable_cutoffs && hyphen_idx == sym.length() - 1) {
       // Cutoff rules take precedence
       auto new_word = sym.substr(0, sym.size() - 1);
@@ -161,7 +164,7 @@ void SynonymEngine::GenerateSynFromSymbolTable(SymbolTable &symbol) {
         synonyms[key] = values;
       }
       cutoff_count++;
-    } else if (!opts_.disable_hyphen_ignore && hyphen_idx != -1 && hyphen_idx != sym.length() - 1) {
+    } else if (!opts_.disable_hyphen_ignore && hyphen_idx != sym.length() - 1) {
       // Generate other hyphenation rules
       vector<string> new_words;
       strtk::split("-", trim_copy(sym), strtk::range_to_type_back_inserter(new_words),
