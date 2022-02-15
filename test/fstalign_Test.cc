@@ -757,6 +757,14 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-adapted-composition()") {
     REQUIRE_THAT(result, Contains("Wer Entity ID 3 WER: 1/3 = 0.3333"));
   }
 
+  SECTION("wer_utf wer") {
+    const auto result =
+        exec(command("wer", approach, "wer_utf.ref.txt", "wer_utf.hyp.txt", sbs_output, "", TEST_SYNONYMS));
+
+    REQUIRE_THAT(result, Contains("WER: 2/7 = 0.2857"));
+    REQUIRE_THAT(result, Contains("WER: INS:1 DEL:0 SUB:1"));
+  }
+
   // Additional WER tests
   SECTION("entity precision recall") {
     const auto testFile = std::string{TEST_DATA} + "twenty.hyp-a2.sbs";
