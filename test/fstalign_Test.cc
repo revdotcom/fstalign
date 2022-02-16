@@ -749,8 +749,8 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-adapted-composition()") {
         exec(command("align", approach, "align_6.ref.nlp", "align_6.hyp.ctm", "", nlp_output, TEST_SYNONYMS));
     const auto testFile = std::string{TEST_DATA} + "align_6.ref.aligned.nlp";
 
-    // REQUIRE_THAT(result, Contains("WER: 1/11 = 0.0909"));
-    // REQUIRE_THAT(result, Contains("WER: INS:0 DEL:0 SUB:1"));
+    REQUIRE_THAT(result, Contains("WER: 3/11 = 0.2727"));
+    REQUIRE_THAT(result, Contains("WER: INS:2 DEL:0 SUB:1"));
     REQUIRE(compareFiles(nlp_output.c_str(), testFile.c_str()));
   }
 
