@@ -8,6 +8,9 @@
 #ifndef UTILITIES_H_
 #define UTILITIES_H_
 
+#include <unicode/locid.h>
+#include <unicode/unistr.h>
+#include <unicode/ustream.h>
 #include <algorithm>
 #include <cctype>
 #include <codecvt>
@@ -213,7 +216,7 @@ static bool EndsWithCaseInsensitive(const string &value, const string &ending) {
     return false;
   }
   return equal(ending.rbegin(), ending.rend(), value.rbegin(),
-               [](const char a, const char b) { return tolower(a) == tolower(b); });
+               [](const char a, const char b) { return UnicodeLowercase(a) == UnicodeLowercase(b); });
 }
 
 bool iequals(const std::string &, const std::string &);
@@ -241,5 +244,7 @@ std::string GetEnv(const std::string &var, const std::string default_value);
 string GetLabelNameFromClassLabel(string classLabel);
 
 string GetClassLabel(string best_label);
+
+string UnicodeLowercase(string token);
 
 #endif  // UTILITIES_H_

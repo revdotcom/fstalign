@@ -233,3 +233,10 @@ string GetClassLabel(string best_label) {
   std::replace(classlabel.begin(), classlabel.end(), ':', '_');
   return classlabel;
 }
+
+string UnicodeLowercase(string token) {
+  icu::UnicodeString utoken = icu::UnicodeString::fromUTF8(token);
+  std::string lower_cased;
+  utoken.toLower().toUTF8String(lower_cased);
+  return lower_cased;
+}

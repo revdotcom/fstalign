@@ -289,8 +289,7 @@ vector<shared_ptr<Stitching>> make_stitches(spWERA alignment, vector<RawCtmRecor
 
       part->hyp_orig = ctmPart.word;
       // sanity check
-      std::string ctmCopy = ctmPart.word;
-      std::transform(ctmCopy.begin(), ctmCopy.end(), ctmCopy.begin(), ::tolower);
+      std::string ctmCopy = UnicodeLowercase(ctmPart.word);
       if (hyp_tk != ctmCopy) {
         logger->warn(
             "hum, looks like the ctm and the alignment got out of sync? [{}] vs "
@@ -329,8 +328,7 @@ vector<shared_ptr<Stitching>> make_stitches(spWERA alignment, vector<RawCtmRecor
       part->hyp_orig = token;
 
       // sanity check
-      std::string token_copy = token;
-      std::transform(token_copy.begin(), token_copy.end(), token_copy.begin(), ::tolower);
+      std::string token_copy = UnicodeLowercase(token);
       if (hyp_tk != token_copy) {
         logger->warn(
             "hum, looks like the text and the alignment got out of sync? [{}] vs "
