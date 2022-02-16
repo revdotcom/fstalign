@@ -744,6 +744,16 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-adapted-composition()") {
     REQUIRE(compareFiles(nlp_output.c_str(), testFile.c_str()));
   }
 
+  SECTION("align_6 (prepunctuation stitching)") {
+    const auto result =
+        exec(command("align", approach, "align_6.ref.nlp", "align_6.hyp.ctm", "", nlp_output, TEST_SYNONYMS));
+    const auto testFile = std::string{TEST_DATA} + "align_6.ref.aligned.nlp";
+
+    REQUIRE_THAT(result, Contains("WER: 3/11 = 0.2727"));
+    REQUIRE_THAT(result, Contains("WER: INS:2 DEL:0 SUB:1"));
+    REQUIRE(compareFiles(nlp_output.c_str(), testFile.c_str()));
+  }
+
   SECTION("wer_tag wer") {
     const auto testFile = std::string{TEST_DATA} + "twenty.hyp.sbs";
     auto cmd = command("wer", approach, "twenty.ref.testing.nlp", "twenty.hyp.txt", sbs_output, "", TEST_SYNONYMS,

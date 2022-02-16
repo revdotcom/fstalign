@@ -306,18 +306,21 @@ NlpReader::~NlpReader() {
 
 std::vector<RawNlpRecord> NlpReader::read_from_disk(const std::string &filename) {
   std::vector<RawNlpRecord> vect;
-  io::CSVReader<11, io::trim_chars<' ', '\t'>, io::no_quote_escape<'|'>> input_nlp(filename);
-  // token|speaker|ts|endTs|punctuation|case|tags|wer_tags|ali_comment|oldTs|oldEndTs
-  input_nlp.read_header(io::ignore_missing_column, "token", "speaker", "ts", "endTs", "punctuation", "case", "tags",
+  io::CSVReader<12, io::trim_chars<' ', '\t'>, io::no_quote_escape<'|'>> input_nlp(filename);
+  // token|speaker|ts|endTs|punctuation|prepunctuation|case|tags|wer_tags|ali_comment|oldTs|oldEndTs
+  input_nlp.read_header(io::ignore_missing_column, "token", "speaker", "ts", "endTs", "punctuation", "prepunctuation", "case", "tags",
                         "wer_tags", "ali_comment", "oldTs", "oldEndTs");
 
-  std::string token, speaker, ts, endTs, punctuation, casing, tags, wer_tags, ali_comment, oldTs, oldEndTs;
-  while (input_nlp.read_row(token, speaker, ts, endTs, punctuation, casing, tags, wer_tags, ali_comment, oldTs,
+  std::string token, speaker, ts, endTs, punctuation, prepunctuation, casing, tags, wer_tags, ali_comment, oldTs, oldEndTs;
+  while (input_nlp.read_row(token, speaker, ts, endTs, punctuation, prepunctuation, casing, tags, wer_tags, ali_comment, oldTs,
                             oldEndTs)) {
     RawNlpRecord record;
     record.speakerId = speaker;
     record.casing = casing;
     record.punctuation = punctuation;
+    if (input_nlp.has_column("prepunctuation")) {
+        record.prepunctuation = prepunctuation;
+    }
     record.ts = ts;
     record.endTs = endTs;
     record.best_label = GetBestLabel(tags);

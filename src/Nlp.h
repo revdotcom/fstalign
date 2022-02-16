@@ -20,6 +20,7 @@ struct RawNlpRecord {
   string token;
   string speakerId;
   string punctuation;
+  string prepunctuation;
   string ts;
   string endTs;
   string casing;
