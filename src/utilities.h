@@ -211,14 +211,7 @@ void printFst(string loggerName, const fst::StdFst *fst, const fst::SymbolTable 
 template <typename StringFunction>
 void splitString(const string &str, char delimiter, StringFunction f);
 
-static bool EndsWithCaseInsensitive(const string &value, const string &ending) {
-  if (ending.size() > value.size()) {
-    return false;
-  }
-  return equal(ending.rbegin(), ending.rend(), value.rbegin(),
-               [](const char a, const char b) { return UnicodeLowercase(a) == UnicodeLowercase(b); });
-}
-
+bool EndsWithCaseInsensitive(const string &value, const string &ending);
 bool iequals(const std::string &, const std::string &);
 
 // string manip

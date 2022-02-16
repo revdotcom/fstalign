@@ -240,3 +240,11 @@ string UnicodeLowercase(string token) {
   utoken.toLower().toUTF8String(lower_cased);
   return lower_cased;
 }
+
+bool EndsWithCaseInsensitive(const string &value, const string &ending) {
+  if (ending.size() > value.size()) {
+    return false;
+  }
+  return equal(ending.rbegin(), ending.rend(), value.rbegin(),
+               [](const char a, const char b) { return tolower(a) == tolower(b); });
+}
