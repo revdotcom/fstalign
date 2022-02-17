@@ -10,6 +10,7 @@
 #include <fstream>
 
 #include <csv/csv.h>
+#include "utilities.h"
 
 /***********************************
    NLP FstLoader class start
@@ -64,8 +65,8 @@ NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value norma
         mJsonNorm[curr_label_id]["candidates"][last_idx]["verbalization"].append(curr_tk);
       }
     } else {
-      std::transform(curr_tk.begin(), curr_tk.end(), curr_tk.begin(), ::tolower);
-      mToken.push_back(curr_tk);
+      std::string lower_cased = UnicodeLowercase(curr_tk);
+      mToken.push_back(lower_cased);
       mSpeakers.push_back(speaker);
     }
 
@@ -93,8 +94,8 @@ void NlpFstLoader::addToSymbolTable(fst::SymbolTable &symbol) const {
           auto candidate = candidates[i]["verbalization"];
           for (auto tk_itr : candidate) {
             std::string token = tk_itr.asString();
-            std::transform(token.begin(), token.end(), token.begin(), ::tolower);
-            AddSymbolIfNeeded(symbol, token);
+            std::string lower_cased = UnicodeLowercase(token);
+            AddSymbolIfNeeded(symbol, lower_cased);
           }
         }
       }
@@ -225,11 +226,11 @@ so we add 2 states
         auto candidate = candidates[i]["verbalization"];
         for (auto tk_itr : candidate) {
           std::string ltoken = std::string(tk_itr.asString());
-          std::transform(ltoken.begin(), ltoken.end(), ltoken.begin(), ::tolower);
+          std::string lower_cased = UnicodeLowercase(ltoken);
           transducer.AddState();
           nextState++;
 
-          int token_sym = symbol.Find(ltoken);
+          int token_sym = symbol.Find(lower_cased);
           if (token_sym == -1) {
             token_sym = symbol.Find(options.symUnk);
           }

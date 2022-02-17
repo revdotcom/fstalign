@@ -21,9 +21,8 @@ CtmFstLoader::CtmFstLoader(vector<RawCtmRecord> &records) : FstLoader() {
   {
     mCtmRows = records;
     for (auto &row : mCtmRows) {
-      string token = string(row.word);
-      std::transform(token.begin(), token.end(), token.begin(), ::tolower);
-      mToken.push_back(token);
+      std::string lower_cased = UnicodeLowercase(row.word);
+      mToken.push_back(lower_cased);
     }
   }
 }
@@ -52,13 +51,13 @@ StdVectorFst CtmFstLoader::convertToFst(const SymbolTable &symbol, std::vector<i
   int map_sz = map.size();
   for (TokenType::const_iterator i = mToken.begin(); i != mToken.end(); ++i) {
     std::string token = *i;
-    std::transform(token.begin(), token.end(), token.begin(), ::tolower);
+    std::string lower_cased = UnicodeLowercase(token);
     transducer.AddState();
 
     if (map_sz > wc && map[wc] > 0) {
-      transducer.AddArc(prevState, StdArc(symbol.Find(token), symbol.Find(token), 1.0f, nextState));
+      transducer.AddArc(prevState, StdArc(symbol.Find(lower_cased), symbol.Find(lower_cased), 1.0f, nextState));
     } else {
-      transducer.AddArc(prevState, StdArc(symbol.Find(token), symbol.Find(token), 0.0f, nextState));
+      transducer.AddArc(prevState, StdArc(symbol.Find(lower_cased), symbol.Find(lower_cased), 0.0f, nextState));
     }
 
     prevState = nextState;

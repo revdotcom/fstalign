@@ -33,8 +33,7 @@ void OneBestFstLoader::LoadTextFile(const std::string filename) {
 
 void OneBestFstLoader::addToSymbolTable(fst::SymbolTable &symbol) const {
   for (TokenType::const_iterator i = mToken.begin(); i != mToken.end(); ++i) {
-    std::string token = *i;
-    std::transform(token.begin(), token.end(), token.begin(), ::tolower);
+    std::string token = UnicodeLowercase(*i);
     // fst::kNoSymbol
     if (symbol.Find(token) == -1) {
       symbol.AddSymbol(token);
@@ -58,8 +57,7 @@ fst::StdVectorFst OneBestFstLoader::convertToFst(const fst::SymbolTable &symbol,
   int map_sz = map.size();
   int wc = 0;
   for (TokenType::const_iterator i = mToken.begin(); i != mToken.end(); ++i) {
-    std::string token = *i;
-    std::transform(token.begin(), token.end(), token.begin(), ::tolower);
+    std::string token = UnicodeLowercase(*i);
     transducer.AddState();
 
     int tk_idx = symbol.Find(token);
