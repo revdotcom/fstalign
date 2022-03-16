@@ -359,7 +359,8 @@ void CalculatePrecisionRecall(spWERA &topAlignment, int threshold) {
   int total = 0;  //= topAlignment->ref_words.size();
   correct = 0;
   int del = 0;
-  int subst = 0;
+  int subst_fp = 0;
+  int subst_fn = 0;
   int ins = 0;
   int hyp = 0;
   precision_t precision = 0;
@@ -369,7 +370,8 @@ void CalculatePrecisionRecall(spWERA &topAlignment, int threshold) {
   map<string, uint64_t> correct_words_counts;
   map<string, uint64_t> hyp_words_counts;
   map<string, uint64_t> del_words_counts;
-  map<string, uint64_t> subst_words_counts;
+  map<string, uint64_t> subst_fp_words_counts;
+  map<string, uint64_t> subst_fn_words_counts;
   map<string, uint64_t> ins_words_counts;
   UpdateHypCorrectAndAllwords(topAlignment, hyp_words_counts, correct_words_counts, all_words);
 
@@ -378,8 +380,10 @@ void CalculatePrecisionRecall(spWERA &topAlignment, int threshold) {
     if (all_words.find(word) == all_words.end()) all_words.insert(word);
   }
   for (auto &word : topAlignment->sub_words) {
-    subst_words_counts[word.first] += 1;
+    subst_fn_words_counts[word.first] += 1;
+    subst_fp_words_counts[word.second] += 1;
     if (all_words.find(word.first) == all_words.end()) all_words.insert(word.first);
+    if (all_words.find(word.second) == all_words.end()) all_words.insert(word.second);
   }
   for (auto &word : topAlignment->ins_words) {
     ins_words_counts[word] += 1;
@@ -389,20 +393,21 @@ void CalculatePrecisionRecall(spWERA &topAlignment, int threshold) {
   }
 
   for (auto &w : all_words) {
-    correct = del = subst = ins = 0;
+    correct = del = subst_fp = subst_fn = ins = 0;
 
     if (correct_words_counts.find(w) != correct_words_counts.end()) correct = correct_words_counts.find(w)->second;
     if (del_words_counts.find(w) != del_words_counts.end()) del = del_words_counts.find(w)->second;
-    if (subst_words_counts.find(w) != subst_words_counts.end()) subst = subst_words_counts.find(w)->second;
+    if (subst_fn_words_counts.find(w) != subst_fn_words_counts.end()) subst_fn = subst_fn_words_counts.find(w)->second;
+    if (subst_fp_words_counts.find(w) != subst_fp_words_counts.end()) subst_fp = subst_fp_words_counts.find(w)->second;
     if (ins_words_counts.find(w) != ins_words_counts.end()) ins = ins_words_counts.find(w)->second;
 
-    gram_error_counter error_counter(correct, del, subst, ins);
-    if (correct + ins + subst != 0)
-      error_counter.precision = (float)((float)correct / (float)(correct + ins + subst)) * 100;
-    if ((correct + del + subst) != 0)
-      error_counter.recall = (float)((float)correct / (float)(correct + del + subst)) * 100;
+    gram_error_counter error_counter(correct, del, subst_fp, subst_fn, ins);
+    if (correct + ins + subst_fp != 0)
+      error_counter.precision = (float)((float)correct / (float)(correct + ins + subst_fp)) * 100;
+    if ((correct + del + subst_fn) != 0)
+      error_counter.recall = (float)((float)correct / (float)(correct + del + subst_fn)) * 100;
 
-    if ((correct + ins + del + subst) >= threshold) {
+    if ((correct + ins + del + subst_fp + subst_fn) >= threshold) {
       topAlignment->unigram_stats.push_back(std::make_pair(w, error_counter));
     }
   }
@@ -425,7 +430,8 @@ void CalculatePrecisionRecall(spWERA &topAlignment, int threshold) {
   map<string, uint64_t> correct_bigram_counts;
   map<string, uint64_t> del_bigram_counts;
   map<string, uint64_t> ins_bigram_counts;
-  map<string, uint64_t> subst_bigram_counts;
+  map<string, uint64_t> subst_fn_bigram_counts;
+  map<string, uint64_t> subst_fp_bigram_counts;
 
   for (auto &bigram_tokens : topAlignment->bigram_tokens) {
     auto bigram_ref = bigram_tokens.first;
@@ -434,7 +440,8 @@ void CalculatePrecisionRecall(spWERA &topAlignment, int threshold) {
     if (bigram_ref == bigram_hyp) {
       correct_bigram_counts[bigram_ref] += 1;
     } else if (isValidNgram(bigram_ref) && isValidNgram(bigram_hyp)) {
-      subst_bigram_counts[bigram_ref] += 1;
+      subst_fn_bigram_counts[bigram_ref] += 1;
+      subst_fp_bigram_counts[bigram_hyp] += 1;
     }
     if (bigram_hyp.find(DEL) != string::npos) {
       del_bigram_counts[bigram_ref] += 1;
@@ -445,7 +452,7 @@ void CalculatePrecisionRecall(spWERA &topAlignment, int threshold) {
   }
   // parse words, get bigrams and get its p&r
   for (auto &b : all_bigrams) {
-    correct = del = subst = ins = 0;
+    correct = del = subst_fn = subst_fp = ins = 0;
 
     if (correct_bigram_counts.find(b) != correct_bigram_counts.end()) {
       correct = correct_bigram_counts[b];
@@ -456,15 +463,18 @@ void CalculatePrecisionRecall(spWERA &topAlignment, int threshold) {
     if (ins_bigram_counts.find(b) != ins_bigram_counts.end()) {
       ins = ins_bigram_counts[b];
     }
-    if (subst_bigram_counts.find(b) != subst_bigram_counts.end()) {
-      subst = subst_bigram_counts[b];
+    if (subst_fn_bigram_counts.find(b) != subst_fn_bigram_counts.end()) {
+      subst_fn = subst_fn_bigram_counts[b];
+    }
+    if (subst_fp_bigram_counts.find(b) != subst_fp_bigram_counts.end()) {
+      subst_fp = subst_fp_bigram_counts[b];
     }
 
-    gram_error_counter error_counter(correct, del, subst, ins);
+    gram_error_counter error_counter(correct, del, subst_fp, subst_fn, ins);
 
-    if (correct + ins + subst != 0) error_counter.precision = ((float)correct / (float)(correct + ins + subst)) * 100;
-    if ((correct + del + subst) != 0) error_counter.recall = ((float)correct / (float)(correct + del + subst)) * 100;
-    if ((correct + ins + del + subst) >= threshold) {
+    if (correct + ins + subst_fp != 0) error_counter.precision = ((float)correct / (float)(correct + ins + subst_fp)) * 100;
+    if ((correct + del + subst_fn) != 0) error_counter.recall = ((float)correct / (float)(correct + del + subst_fn)) * 100;
+    if ((correct + ins + del + subst_fn + subst_fp) >= threshold) {
       topAlignment->bigrams_stats.push_back(std::make_pair(b, error_counter));
     }
   }
@@ -572,7 +582,8 @@ void WriteSbs(spWERA topAlignment, string sbs_filename) {
     jsonLogger::JsonLogger::getLogger().root["wer"]["unigrams"][word]["correct"] = u.correct;
     jsonLogger::JsonLogger::getLogger().root["wer"]["unigrams"][word]["insertions"] = u.ins;
     jsonLogger::JsonLogger::getLogger().root["wer"]["unigrams"][word]["deletions"] = u.del;
-    jsonLogger::JsonLogger::getLogger().root["wer"]["unigrams"][word]["substitutions"] = u.subst;
+    jsonLogger::JsonLogger::getLogger().root["wer"]["unigrams"][word]["substitutions_fp"] = u.subst_fp;
+    jsonLogger::JsonLogger::getLogger().root["wer"]["unigrams"][word]["substitutions_fn"] = u.subst_fn;
     jsonLogger::JsonLogger::getLogger().root["wer"]["unigrams"][word]["precision"] = u.precision;
     jsonLogger::JsonLogger::getLogger().root["wer"]["unigrams"][word]["recall"] = u.recall;
   }
@@ -582,7 +593,7 @@ void WriteSbs(spWERA topAlignment, string sbs_filename) {
     string word = a.first;
     gram_error_counter u = a.second;
     myfile << fmt::format("{0:>20}\t{1}/{2} ({3:.1f} %)\t{4}/{5} ({6:.1f} %)", word, u.correct,
-                          (u.correct + u.ins + u.subst), (float)u.precision, u.correct, (u.correct + u.del + u.subst),
+                          (u.correct + u.ins + u.subst_fp), (float)u.precision, u.correct, (u.correct + u.del + u.subst_fn),
                           (float)u.recall)
            << endl;
   }
@@ -595,7 +606,8 @@ void WriteSbs(spWERA topAlignment, string sbs_filename) {
     jsonLogger::JsonLogger::getLogger().root["wer"]["bigrams"][word]["correct"] = u.correct;
     jsonLogger::JsonLogger::getLogger().root["wer"]["bigrams"][word]["insertions"] = u.ins;
     jsonLogger::JsonLogger::getLogger().root["wer"]["bigrams"][word]["deletions"] = u.del;
-    jsonLogger::JsonLogger::getLogger().root["wer"]["bigrams"][word]["substitutions"] = u.subst;
+    jsonLogger::JsonLogger::getLogger().root["wer"]["bigrams"][word]["substitutions_fp"] = u.subst_fp;
+    jsonLogger::JsonLogger::getLogger().root["wer"]["bigrams"][word]["substitutions_fn"] = u.subst_fn;
     jsonLogger::JsonLogger::getLogger().root["wer"]["bigrams"][word]["precision"] = u.precision;
     jsonLogger::JsonLogger::getLogger().root["wer"]["bigrams"][word]["recall"] = u.recall;
   }
@@ -603,7 +615,7 @@ void WriteSbs(spWERA topAlignment, string sbs_filename) {
     string word = a.first;
     gram_error_counter u = a.second;
     myfile << fmt::format("{0:>20}\t{1}/{2} ({3:.1f} %)\t{4}/{5} ({6:.1f} %)", word, u.correct,
-                          (u.correct + u.ins + u.subst), (float)u.precision, u.correct, (u.correct + u.del + u.subst),
+                          (u.correct + u.ins + u.subst_fp), (float)u.precision, u.correct, (u.correct + u.del + u.subst_fn),
                           (float)u.recall)
            << endl;
   }
