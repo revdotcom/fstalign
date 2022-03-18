@@ -53,11 +53,12 @@ typedef unordered_map<string, uint64_t> bigrams;
 typedef struct gram_error_counter {
   int correct = 0;
   int del = 0;
-  int subst = 0;
+  int subst_fp = 0;
+  int subst_fn = 0;
   int ins = 0;
   precision_t precision = 0.0f;
   recall_t recall = 0.0f;
-  gram_error_counter(int c, int d, int s, int i) : correct(c), del(d), subst(s), ins(i) {}
+  gram_error_counter(int c, int d, int sfp, int sfn, int i) : correct(c), del(d), subst_fp(sfp), subst_fn(sfn), ins(i) {}
 } gram_error_counter;
 
 struct wer_alignment {
