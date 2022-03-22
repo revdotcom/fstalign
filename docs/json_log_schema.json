@@ -72,8 +72,12 @@
                     "title": "Deletions",
                     "type": "integer"
                 },
-                "substitutions": {
-                    "title": "Substitutions",
+                "substitutions_fp": {
+                    "title": "Substitutions that were false positives.",
+                    "type": "integer"
+                },
+                "substitutions_fn": {
+                    "title": "Substitutions that were false negatives.",
                     "type": "integer"
                 },
                 "correct": {
