@@ -1,7 +1,7 @@
 token|speaker|ts|endTs|punctuation|prepunctuation|case|tags|wer_tags|oldTs|oldEndTs|ali_comment
 <crosstalk>|2|0.0000|0.0000|||LC|[]|[]|||
-Yeah|1|0.0000|0.0000|,||UC|[]|[]|||
-yeah|1|||,||LC|[]|[]|||del
+Yeah|1|||,||UC|[]|[]|||del
+yeah|1|0.0000|0.0000|,||LC|[]|[]|||
 right|1|0.0000|0.0000|.||LC|[]|[]|||
 Yeah|1|||,||UC|[]|[]|||del
 alright|1|0.0000|0.0000|,||LC|[]|[]|||sub(i'll),split_worst

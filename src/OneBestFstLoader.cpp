@@ -92,7 +92,7 @@ std::vector<int> OneBestFstLoader::convertToIntVector(fst::SymbolTable &symbol) 
 
   FstAlignOption options;
   for (TokenType::const_iterator i = mToken.begin(); i != mToken.end(); ++i) {
-    std::string token = *i;
+    std::string token = UnicodeLowercase(*i);
     int token_sym = symbol.Find(token);
     if (token_sym == -1) {
       token_sym = symbol.Find(options.symUnk);
