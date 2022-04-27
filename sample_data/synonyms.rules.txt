@@ -123,3 +123,28 @@ out of | outta
 outta | out of
 what are you | whatcha
 whatcha | what are you
+
+<barking>                  |  <unk>  
+<cheer>                    |  <unk>          
+<clap>                     |  <unk>         
+<clear_throat>             |  <unk>                 
+<cough>                    |  <unk>          
+<crosstalk>                |  <unk>              
+<cry>                      |  <unk>        
+<finger_snap>              |  <unk>                
+<foreign>                  |  <unk>            
+<groan>                    |  <unk>          
+<grunt>                    |  <unk>          
+<inaudible>                |  <unk> 
+<laugh>                    |  <unk>          
+<mumble>                   |  <unk>           
+<murmur>                   |  <unk>           
+<phonetic>                 |  <unk>             
+<scream>                   |  <unk>           
+<sigh>                     |  <unk>         
+<silence>                  |  <unk>            
+<sing>                     |  <unk>         
+<siren>                    |  <unk>          
+<unk>                      |  <unk>        
+<visual>                   |  <unk>           
+<yawn>                     |  <unk>
