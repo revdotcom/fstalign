@@ -101,7 +101,6 @@ they have | they've
 you've | you have
 you have | you've
 
-# TODO: which other contractions?
 
 'cause | cause ; because
 because | 'cause ; cause
@@ -124,42 +123,3 @@ out of | outta
 outta | out of
 what are you | whatcha
 whatcha | what are you
-
-# handling comments/annotations in the nlp files
-# note: anything after a : is ignored for now
-# how to mimig deletions... ε or <del>?
-# both options cause problems right now, so we'll avoid that for now
-<barking>                  |  <del> ; <unk>  
-<cheer>                    |  <del> ; <unk>          
-<clap>                     |  <del> ; <unk>         
-<clear_throat>             |  <del> ; <unk>                 
-<cough>                    |  <del> ; <unk>          
-<crosstalk>                |  <del> ; <unk>              
-<cry>                      |  <del> ; <unk>        
-<finger_snap>              |  <del> ; <unk>                
-<foreign>                  |  <del> ; <unk>            
-# <foreign:{note}>           |  <del> ; <unk>                     
-<groan>                    |  <del> ; <unk>          
-<grunt>                    |  <del> ; <unk>          
-<inaudible>                |  <del> ; <unk> 
-<laugh>                    |  <del> ; <unk>          
-# <laugh:chuckle>            |  <del> ; <unk>                    
-# <laugh:{note}>             |  <del> ; <unk>                   
-<mumble>                   |  <del> ; <unk>           
-<murmur>                   |  <del> ; <unk>           
-<phonetic>                 |  <del> ; <unk>             
-<scream>                   |  <del> ; <unk>           
-<sigh>                     |  <del> ; <unk>         
-<silence>                  |  <del> ; <unk>            
-# <silence:blank_audio>      |  <del> ; <unk>                          
-# <silence:pause>            |  <del> ; <unk>                    
-# <silence:pause>            |  <del> ; <unk>                    
-<sing>                     |  <del> ; <unk>         
-<siren>                    |  <del> ; <unk>          
-<unk>                      |  <del> ; <unk>        
-<visual>                   |  <del> ; <unk>           
-# <visual:{note}>            |  <del> ; <unk>                    
-<yawn>                     |  <del> ; <unk>         
-
-# anything not explicitly handled will be ignored from the graph
-#<{note}> | <del>
