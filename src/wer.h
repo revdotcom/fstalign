@@ -48,4 +48,4 @@ void CalculatePrecisionRecall(spWERA &topAlignment, int threshold);
 typedef vector<pair<size_t, string>> ErrorGroups;
 
 void AddErrorGroup(ErrorGroups &groups, size_t &line, string &ref, string &hyp);
-void WriteSbs(spWERA topAlignment, string sbs_filename);
+void WriteSbs(spWERA topAlignment, vector<shared_ptr<Stitching>> stitches, string sbs_filename);

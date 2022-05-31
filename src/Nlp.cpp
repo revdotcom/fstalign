@@ -15,21 +15,36 @@
 /***********************************
    NLP FstLoader class start
  ************************************/
-NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value normalization)
-    : NlpFstLoader(records, normalization, true) {}
+NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value normalization,
+    Json::Value wer_sidecar)
+    : NlpFstLoader(records, normalization, wer_sidecar, true) {}
 
-NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value normalization, bool processLabels)
+NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value normalization, 
+    Json::Value wer_sidecar, bool processLabels)
     : FstLoader() {
   mNlpRows = records;
   mJsonNorm = normalization;
+  mWerSidecar = wer_sidecar;
   std::string last_label;
   bool firstTk = true;
+
 
   // fuse multiple rows that have the same id/label into one entry only
   for (auto &row : mNlpRows) {
     auto curr_tk = row.token;
     auto curr_label = row.best_label;
     auto curr_label_id = row.best_label_id;
+    auto curr_row_tags = row.wer_tags;
+    // Update wer tags in records to real string labels
+    vector<string> real_wer_tags;
+    for (auto &tag: curr_row_tags) {
+      auto real_tag = tag;
+      if (mWerSidecar != Json::nullValue) {
+        real_tag = "###"+ real_tag + "_" + mWerSidecar[real_tag]["entity_type"].asString() + "###";
+      }
+      real_wer_tags.push_back(real_tag);
+    }
+    row.wer_tags = real_wer_tags;
     std::string speaker = row.speakerId;
 
     if (processLabels && curr_label != "") {

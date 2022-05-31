@@ -1,28 +1,28 @@
            ref_token	hyp_token           	IsErr	Class
-                  we	<del>               	ERR	
-                will	we'll               	ERR	
-                have	have                		
-                   a	a                   		
-                nice	nice                		
-             evening	evening             		
-               <ins>	um                  	ERR	
-                  no	no                  		
-              matter	matter              		
-                what	what                		
-                will	will                		
-              happen	happen              		
-               <ins>	it                  	ERR	
-                  um	is                  	ERR	
-                it's	uh                  	ERR	
-                   a	a                   		
-                good	good                		
-         opportunity	opportunity         		
-                  to	to                  		
-                  do	<del>               	ERR	
-                this	this                		
-              you'll	you'll              		
-               <ins>	uh                  	ERR	
-                 see	see                 		
+                  we	<del>               	ERR		
+                will	we'll               	ERR		
+                have	have                			
+                   a	a                   			
+                nice	nice                			
+             evening	evening             			
+               <ins>	um                  	ERR		
+                  no	no                  			
+              matter	matter              			
+                what	what                			
+                will	will                			
+              happen	happen              			
+               <ins>	it                  	ERR		
+                  um	is                  	ERR		
+                it's	uh                  	ERR		
+                   a	a                   			
+                good	good                			
+         opportunity	opportunity         			
+                  to	to                  			
+                  do	<del>               	ERR		
+                this	this                			
+              you'll	you'll              			
+               <ins>	uh                  	ERR		
+                 see	see                 			
 ------------------------------------------------------------
                 Line	Group               
                    2	we will <-> we'll
