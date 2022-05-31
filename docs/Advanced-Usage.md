@@ -72,6 +72,13 @@ Normalizations are a similar concept to synonyms. They allow a token or group of
 }
 ```
 
+### WER Sidecar
+
+CLI flag: `--wer-sidecar`
+
+Only usable for NLP format reference files. This passes a [WER sidecar](https://github.com/revdotcom/fstalign/blob/develop/docs//NLP-Format.md#WER%20tag%20sidecar) file to
+add extra information to some outputs. Optional.
+
 ## Outputs
 
 ### Text Log
