@@ -1,4 +1,4 @@
-           ref_token	hyp_token           	IsErr	Class
+           ref_token	hyp_token           	IsErr	Class	Wer_Tag_Entities
                   20	<del>               	ERR	___1_CARDINAL___	
                   in	in                  			
               twenty	twenty              		___2_YEAR___	

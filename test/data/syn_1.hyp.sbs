@@ -1,4 +1,4 @@
-           ref_token	hyp_token           	IsErr	Class
+           ref_token	hyp_token           	IsErr	Class	Wer_Tag_Entities
                   we	<del>               	ERR		
                 will	we'll               	ERR		
                 have	have                			
