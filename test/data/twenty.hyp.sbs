@@ -1,13 +1,13 @@
-           ref_token	hyp_token           	IsErr	Class
-              twenty	<del>               	ERR	___1_CARDINAL___
-                  in	in                  		
-              twenty	twenty              		___2_YEAR___
-              twenty	thirty              	ERR	___2_YEAR___
-                  is	is                  		
-                 one	one                 		___3_CARDINAL___
-              twenty	twenty              		___3_CARDINAL___
-               <ins>	two                 	ERR	___3_CARDINAL___
-               three	three               		___3_CARDINAL___
+           ref_token	hyp_token           	IsErr	Class	Wer_Tag_Entities
+              twenty	<del>               	ERR	___1_CARDINAL___	
+                  in	in                  			
+              twenty	twenty              		___2_YEAR___	
+              twenty	thirty              	ERR	___2_YEAR___	
+                  is	is                  			
+                 one	one                 		___3_CARDINAL___	
+              twenty	twenty              		___3_CARDINAL___	
+               <ins>	two                 	ERR	___3_CARDINAL___	
+               three	three               		___3_CARDINAL___	
 ------------------------------------------------------------
                 Line	Group               
                    2	twenty <-> ***

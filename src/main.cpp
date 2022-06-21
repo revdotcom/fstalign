@@ -16,6 +16,7 @@ int main(int argc, char **argv) {
   setlocale(LC_ALL, "en_US.UTF-8");
   string ref_filename;
   string json_norm_filename;
+  string wer_sidecar_filename;
   string hyp_filename;
   string log_filename = "";
   string output_nlp = "";
@@ -94,6 +95,8 @@ int main(int argc, char **argv) {
     c->add_option("--composition-approach", composition_approach,
                   "Desired composition logic. Choices are 'standard' or 'adapted'");
   }
+  get_wer->add_option("--wer-sidecar", wer_sidecar_filename,
+                "WER sidecar json file.");
 
   get_wer->add_option("--speaker-switch-context", speaker_switch_context_size,
                       "Amount of context (in each direction) around "
@@ -166,6 +169,27 @@ int main(int argc, char **argv) {
     Json::parseFromStream(builder, ss, &obj, &errs);
   }
 
+  Json::Value wer_sidecar_obj;
+  if (!wer_sidecar_filename.empty()) {
+    console->info("reading wer sidecar info from {}", wer_sidecar_filename);
+    ifstream ifs(wer_sidecar_filename);
+
+    Json::CharReaderBuilder builder;
+    builder["collectComments"] = false;
+
+    JSONCPP_STRING errs;
+    Json::parseFromStream(builder, ifs, &wer_sidecar_obj, &errs);
+
+    console->info("The json we just read [{}] has {} elements from its root", wer_sidecar_filename, wer_sidecar_obj.size());
+  } else {
+    stringstream ss;
+    ss << "{}";
+
+    Json::CharReaderBuilder builder;
+    JSONCPP_STRING errs;
+    Json::parseFromStream(builder, ss, &wer_sidecar_obj, &errs);
+  }
+
   Json::Value hyp_json_obj;
   if (!hyp_json_norm_filename.empty()) {
     console->info("reading hypothesis json norm info from {}", hyp_json_norm_filename);
@@ -194,7 +218,7 @@ int main(int argc, char **argv) {
     NlpReader nlpReader = NlpReader();
     console->info("reading reference nlp from {}", ref_filename);
     auto vec = nlpReader.read_from_disk(ref_filename);
-    NlpFstLoader *nlpFst = new NlpFstLoader(vec, obj, true);
+    NlpFstLoader *nlpFst = new NlpFstLoader(vec, obj, wer_sidecar_obj, true);
     ref = nlpFst;
   } else if (EndsWithCaseInsensitive(ref_filename, string(".ctm"))) {
     console->info("reading reference ctm from {}", ref_filename);
@@ -212,11 +236,19 @@ int main(int argc, char **argv) {
   // loading "hypothesis" inputs
   if (EndsWithCaseInsensitive(hyp_filename, string(".nlp"))) {
     console->info("reading hypothesis nlp from {}", hyp_filename);
+    // Make empty json for wer sidecar
+    Json::Value hyp_empty_json;
+    stringstream ss;
+    ss << "{}";
+
+    Json::CharReaderBuilder builder;
+    JSONCPP_STRING errs;
+    Json::parseFromStream(builder, ss, &hyp_empty_json, &errs);
     NlpReader nlpReader = NlpReader();
     auto vec = nlpReader.read_from_disk(hyp_filename);
     // for now, nlp files passed as hypothesis won't have their labels handled as such
     // this also mean that json normalization will be ignored
-    NlpFstLoader *nlpFst = new NlpFstLoader(vec, hyp_json_obj, false);
+    NlpFstLoader *nlpFst = new NlpFstLoader(vec, hyp_json_obj, hyp_empty_json, false);
     hyp = nlpFst;
   } else if (EndsWithCaseInsensitive(hyp_filename, string(".ctm"))) {
     console->info("reading hypothesis ctm from {}", hyp_filename);

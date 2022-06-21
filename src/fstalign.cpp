@@ -636,34 +636,29 @@ void HandleWer(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engine
   CalculatePrecisionRecall(topAlignment, alignerOptions.pr_threshold);
 
   RecordWer(topAlignment);
-  if (!output_sbs.empty()) {
-    logger->info("output_sbs = {}", output_sbs);
-    WriteSbs(topAlignment, output_sbs);
+  vector<shared_ptr<Stitching>> stitches;
+  CtmFstLoader *ctm_hyp_loader = dynamic_cast<CtmFstLoader *>(hypLoader);
+  NlpFstLoader *nlp_hyp_loader = dynamic_cast<NlpFstLoader *>(hypLoader);
+  OneBestFstLoader *best_loader = dynamic_cast<OneBestFstLoader *>(hypLoader);
+  if (ctm_hyp_loader) {
+    stitches = make_stitches(topAlignment, ctm_hyp_loader->mCtmRows, {});
+  } else if (nlp_hyp_loader) {
+    stitches = make_stitches(topAlignment, {}, nlp_hyp_loader->mNlpRows);
+  } else if (best_loader) {
+    vector<string> tokens;
+    tokens.reserve(best_loader->TokensSize());
+    for (int i = 0; i < best_loader->TokensSize(); i++) {
+      string token = best_loader->getToken(i);
+      tokens.push_back(token);
+    }
+    stitches = make_stitches(topAlignment, {}, {}, tokens);
+  } else {
+    stitches = make_stitches(topAlignment);
   }
 
   NlpFstLoader *nlp_ref_loader = dynamic_cast<NlpFstLoader *>(refLoader);
   if (nlp_ref_loader) {
     // We have an NLP reference, more metadata (e.g. speaker info) is available
-    vector<shared_ptr<Stitching>> stitches;
-    CtmFstLoader *ctm_hyp_loader = dynamic_cast<CtmFstLoader *>(hypLoader);
-    NlpFstLoader *nlp_hyp_loader = dynamic_cast<NlpFstLoader *>(hypLoader);
-    OneBestFstLoader *best_loader = dynamic_cast<OneBestFstLoader *>(hypLoader);
-    if (ctm_hyp_loader) {
-      stitches = make_stitches(topAlignment, ctm_hyp_loader->mCtmRows, {});
-    } else if (nlp_hyp_loader) {
-      stitches = make_stitches(topAlignment, {}, nlp_hyp_loader->mNlpRows);
-    } else if (best_loader) {
-      vector<string> tokens;
-      tokens.reserve(best_loader->TokensSize());
-      for (int i = 0; i < best_loader->TokensSize(); i++) {
-        string token = best_loader->getToken(i);
-        tokens.push_back(token);
-      }
-      stitches = make_stitches(topAlignment, {}, {}, tokens);
-    } else {
-      stitches = make_stitches(topAlignment);
-    }
-
     // Align stitches to the NLP, so stitches can access metadata
     try {
       align_stitches_to_nlp(nlp_ref_loader, &stitches);
@@ -691,6 +686,11 @@ void HandleWer(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engine
       ofstream nlp_ostream(output_nlp);
       write_stitches_to_nlp(stitches, nlp_ostream, nlp_ref_loader->mJsonNorm);
     }
+  }
+
+  if (!output_sbs.empty()) {
+    logger->info("output_sbs = {}", output_sbs);
+    WriteSbs(topAlignment, stitches, output_sbs);
   }
 
   if (!output_nlp.empty() && !nlp_ref_loader) {

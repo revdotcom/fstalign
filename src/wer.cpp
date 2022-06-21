@@ -327,16 +327,19 @@ void RecordTagWer(vector<shared_ptr<Stitching>> stitches) {
   for (auto &stitch : stitches) {
     if (!stitch->nlpRow.wer_tags.empty()) {
       for (auto wer_tag : stitch->nlpRow.wer_tags) {
-        wer_results.insert(std::pair<std::string, WerResult>(wer_tag, {0, 0, 0, 0, 0}));
+        int tag_start = wer_tag.find_first_not_of('#');
+        int tag_end = wer_tag.find('_');
+        string wer_tag_id = wer_tag.substr(tag_start, tag_end - tag_start);
+        wer_results.insert(std::pair<std::string, WerResult>(wer_tag_id, {0, 0, 0, 0, 0}));
         // Check with rfind since other comments can be there
         bool del = stitch->comment.rfind("del", 0) == 0;
         bool ins = stitch->comment.rfind("ins", 0) == 0;
         bool sub = stitch->comment.rfind("sub", 0) == 0;
-        wer_results[wer_tag].insertions += ins;
-        wer_results[wer_tag].deletions += del;
-        wer_results[wer_tag].substitutions += sub;
+        wer_results[wer_tag_id].insertions += ins;
+        wer_results[wer_tag_id].deletions += del;
+        wer_results[wer_tag_id].substitutions += sub;
         if (!ins) {
-          wer_results[wer_tag].numWordsInReference += 1;
+          wer_results[wer_tag_id].numWordsInReference += 1;
         }
       }
     }
@@ -503,7 +506,7 @@ void AddErrorGroup(ErrorGroups &groups, size_t &line, string &ref, string &hyp) 
   hyp = "";
 }
 
-void WriteSbs(spWERA topAlignment, string sbs_filename) {
+void WriteSbs(spWERA topAlignment, vector<shared_ptr<Stitching>> stitches, string sbs_filename) {
   auto logger = logger::GetOrCreateLogger("wer");
   logger->set_level(spdlog::level::info);
 
@@ -514,7 +517,7 @@ void WriteSbs(spWERA topAlignment, string sbs_filename) {
   triple *tk_pair = new triple();
   string prev_tk_classLabel = "";
   logger->info("Side-by-Side alignment info going into {}", sbs_filename);
-  myfile << fmt::format("{0:>20}\t{1:20}\t{2}\t{3}", "ref_token", "hyp_token", "IsErr", "Class") << endl;
+  myfile << fmt::format("{0:>20}\t{1:20}\t{2}\t{3}\t{4}", "ref_token", "hyp_token", "IsErr", "Class", "Wer_Tag_Entities") << endl;
 
   // keep track of error groupings
   ErrorGroups groups_err;
@@ -525,10 +528,15 @@ void WriteSbs(spWERA topAlignment, string sbs_filename) {
   std::set<std::string> op_set = {"<ins>", "<del>", "<sub>"};
 
   size_t offset = 2;  // line number in output file where first triple starts
-  while (visitor.NextTriple(tk_pair)) {
-    string tk_classLabel = tk_pair->classLabel;
-    string ref_tk = tk_pair->ref;
-    string hyp_tk = tk_pair->hyp;
+  for (auto p_stitch: stitches) {
+    string tk_classLabel = p_stitch->classLabel;
+    string tk_wer_tags = "";
+    auto wer_tags = p_stitch->nlpRow.wer_tags;
+    for (auto wer_tag: wer_tags) {
+      tk_wer_tags = tk_wer_tags + wer_tag + "|";
+    }
+    string ref_tk = p_stitch->reftk;
+    string hyp_tk = p_stitch->hyptk;
     string tag = "";
 
     if (ref_tk == NOOP) {
@@ -560,7 +568,7 @@ void WriteSbs(spWERA topAlignment, string sbs_filename) {
       eff_class = tk_classLabel;
     }
 
-    myfile << fmt::format("{0:>20}\t{1:20}\t{2}\t{3}", ref_tk, hyp_tk, tag, eff_class) << endl;
+    myfile << fmt::format("{0:>20}\t{1:20}\t{2}\t{3}\t{4}", ref_tk, hyp_tk, tag, eff_class, tk_wer_tags) << endl;
     offset++;
   }
 
