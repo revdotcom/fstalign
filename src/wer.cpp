@@ -517,7 +517,7 @@ void WriteSbs(spWERA topAlignment, vector<shared_ptr<Stitching>> stitches, strin
   triple *tk_pair = new triple();
   string prev_tk_classLabel = "";
   logger->info("Side-by-Side alignment info going into {}", sbs_filename);
-  myfile << fmt::format("{0:>20}\t{1:20}\t{2}\t{3}", "ref_token", "hyp_token", "IsErr", "Class") << endl;
+  myfile << fmt::format("{0:>20}\t{1:20}\t{2}\t{3}\t{4}", "ref_token", "hyp_token", "IsErr", "Class", "Wer_Tag_Entities") << endl;
 
   // keep track of error groupings
   ErrorGroups groups_err;
@@ -528,7 +528,6 @@ void WriteSbs(spWERA topAlignment, vector<shared_ptr<Stitching>> stitches, strin
   std::set<std::string> op_set = {"<ins>", "<del>", "<sub>"};
 
   size_t offset = 2;  // line number in output file where first triple starts
-  /* while (visitor.NextTriple(tk_pair)) { */
   for (auto p_stitch: stitches) {
     string tk_classLabel = p_stitch->classLabel;
     string tk_wer_tags = "";
