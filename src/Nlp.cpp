@@ -324,8 +324,9 @@ std::vector<RawNlpRecord> NlpReader::read_from_disk(const std::string &filename)
   std::vector<RawNlpRecord> vect;
   io::CSVReader<12, io::trim_chars<' ', '\t'>, io::no_quote_escape<'|'>> input_nlp(filename);
   // token|speaker|ts|endTs|punctuation|prepunctuation|case|tags|wer_tags|ali_comment|oldTs|oldEndTs
-  input_nlp.read_header(io::ignore_missing_column, "token", "speaker", "ts", "endTs", "punctuation", "prepunctuation", "case", "tags",
-                        "wer_tags", "ali_comment", "oldTs", "oldEndTs");
+  input_nlp.read_header(io::ignore_missing_column | io::ignore_extra_column,
+      "token", "speaker", "ts", "endTs", "punctuation", "prepunctuation",
+      "case", "tags", "wer_tags", "ali_comment", "oldTs", "oldEndTs");
 
   std::string token, speaker, ts, endTs, punctuation, prepunctuation, casing, tags, wer_tags, ali_comment, oldTs, oldEndTs;
   while (input_nlp.read_row(token, speaker, ts, endTs, punctuation, prepunctuation, casing, tags, wer_tags, ali_comment, oldTs,
