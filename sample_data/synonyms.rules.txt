@@ -115,6 +115,7 @@ got to | gotta
 'em | them
 them | 'em
 all right | alright
+alright | all right
 
 give me | gimme
 gimme | give me
