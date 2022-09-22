@@ -74,6 +74,34 @@ void RecordWer(spWERA topAlignment) {
   }
 }
 
+void RecordSentenceWer(vector<shared_ptr<Stitching>> stitches) {
+  std::set<std::string> eos_punc{".", "?", "!"};
+  vector<WerResult> sentence_wers;
+  WerResult curr_wer = {0, 0, 0, 0, 0};
+  for (auto &stitch : stitches) {
+      curr_wer.deletions += stitch->comment.rfind("del", 0) == 0;
+      curr_wer.insertions += stitch->comment.rfind("ins", 0) == 0;
+      curr_wer.substitutions += stitch->comment.rfind("sub", 0) == 0;
+      curr_wer.numWordsInReference += stitch->comment.rfind("ins", 0) != 0;
+
+      // Check if we hit EOS
+      if (eos_punc.find(stitch->nlpRow.punctuation) != eos_punc.end()) {
+        sentence_wers.push_back(curr_wer);
+        curr_wer = {0, 0, 0, 0, 0};
+      }
+  }
+  // Add last one if its empty case
+  if (curr_wer.numWordsInReference > 0) {
+    sentence_wers.push_back(curr_wer);
+  }
+
+  // Add to log
+  for (int i=0; i < sentence_wers.size(); i++) {
+    RecordWerResult(jsonLogger::JsonLogger::getLogger().root["wer"]["sentenceWer"][i], sentence_wers[i]);
+  }
+}
+
+
 void RecordSpeakerWer(vector<shared_ptr<Stitching>> stitches) {
   // Note: stitches must have already been aligned to NLP rows
   // Logic for segment boundaries copied from speaker switch WER code

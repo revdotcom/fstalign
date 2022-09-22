@@ -678,9 +678,10 @@ void HandleWer(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engine
       RecordSpeakerSwitchWer(stitches, alignerOptions.speaker_switch_context_size);
     }
 
-    // Calculate and record per-speaker WER
+    // Calculate and record supplementary WER
     RecordSpeakerWer(stitches);
     RecordTagWer(stitches);
+    RecordSentenceWer(stitches);
 
     if (!output_nlp.empty()) {
       ofstream nlp_ostream(output_nlp);
