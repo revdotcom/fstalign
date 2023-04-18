@@ -17,7 +17,7 @@ Much of the advanced features for fstalign come from providing [NLP file inputs]
 ### CTM
 Time-marked conversations (CTM) are typical outputs for ASR systems. The format of CTMs that fstalign assumes is that each token is on a new line separated by spaces with the following fields.
 ```
-<recording_id> <channel_id> <token_start_ts> <token_end_ts> <token_value>
+<recording_id> <channel_id> <token_start_ts> <token_duration_ts> <token_value>
 ```
 Moreover, there is an optional sixth field `<confidence_score>` that is read in if provided. The field does not affect the WER calculation and is primarily there just to support the parsing the common alteration to the basic CTM format.
 
@@ -39,8 +39,13 @@ test.wav 1 15.0 1.0 g
 ### FST
 OpenFST FST files can only be passed to the `--hyp` parameter. fstalign will directly use this FST as the hypothesis during alignment. This is useful for something like oracle lattice analysis, where the reference is aligned to the most accurate path present in a lattice.
 
+Please note that FST inputs require using the standard composition approach,
+which can be set using `--composition-approach standard`.
+
 ### Synonyms
 Synonyms allow for reference words to be equivalent to similar forms (determined by the user) for error counting. They are accepted for any input formats and passed into the tool via the `--syn <path_to_synonym_file>` flag. For details see [Synonyms Format](https://github.com/revdotcom/fstalign/blob/develop/docs/Synonyms-Format.md). A standard set of synonyms we use at Rev.ai is available in the repository under `sample_data/synonyms.rules.txt`.
+
+In addition to allowing for custom synonyms to be passed in via CLI, fstalign also automatically generates synonyms based on the reference and hypothesis text. Currently, it does this for two cases: cutoff words (hello-) and compound hyphenated words (long-term). In both cases, a synonym is dynamically generated with the hyphen removed. Both of these synonym types can be disabled through the CLI by passing in `--disable-cutoffs` and `--disable-hyphen-ignore`, respectively.
 
 ### Normalizations
 Normalizations are a similar concept to synonyms. They allow a token or group of tokens to be represented by alternatives when calculating the WER alignment. Unlike synonyms, they are only accepted for NLP file inputs where the tokens are tagged with a unique ID. The normalizations are specified in a JSON format, with the unique ID as keys. Example to illustrate the schema:
@@ -69,6 +74,13 @@ Normalizations are a similar concept to synonyms. They allow a token or group of
     }
 }
 ```
+
+### WER Sidecar
+
+CLI flag: `--wer-sidecar`
+
+Only usable for NLP format reference files. This passes a [WER sidecar](https://github.com/revdotcom/fstalign/blob/develop/docs//NLP-Format.md#wer-tag-sidecar) file to
+add extra information to some outputs. Optional.
 
 ## Outputs
 

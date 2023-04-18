@@ -20,6 +20,7 @@ struct RawNlpRecord {
   string token;
   string speakerId;
   string punctuation;
+  string prepunctuation;
   string ts;
   string endTs;
   string casing;
@@ -41,16 +42,18 @@ class NlpReader {
 
 class NlpFstLoader : public FstLoader {
  public:
-  NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value normalization, bool processLabels,
-               bool use_punctuation = false);
-  NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value normalization);
+  NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value normalization, Json::Value wer_sidecar, bool processLabels, bool use_punctuation = false);
+  NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value normalization, Json::Value wer_sidecar);
   virtual ~NlpFstLoader();
   virtual void addToSymbolTable(fst::SymbolTable &symbol) const;
-  virtual fst::StdVectorFst convertToFst(const fst::SymbolTable &symbol) const;
+  virtual fst::StdVectorFst convertToFst(const fst::SymbolTable &symbol, std::vector<int> map) const;
+  virtual std::vector<int> convertToIntVector(fst::SymbolTable &symbol) const;
+
   int GetProperSymbolId(const fst::SymbolTable &symbol, string token, string symUnk) const;
   vector<RawNlpRecord> mNlpRows;
   vector<std::string> mSpeakers;
   Json::Value mJsonNorm;
+  Json::Value mWerSidecar;
   virtual const std::string &getToken(int index) const { return mToken.at(index); }
 };
 

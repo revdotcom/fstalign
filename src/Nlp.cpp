@@ -10,18 +10,23 @@
 #include <fstream>
 
 #include <csv/csv.h>
+#include "utilities.h"
 
 /***********************************
    NLP FstLoader class start
  ************************************/
-NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value normalization)
-    : NlpFstLoader(records, normalization, true) {}
+NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value normalization,
+    Json::Value wer_sidecar)
+    : NlpFstLoader(records, normalization, wer_sidecar, true) {}
 
-NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value normalization, bool processLabels, bool use_punctuation)
+NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value normalization, 
+    Json::Value wer_sidecar, bool processLabels, bool use_punctuation)
     : FstLoader() {
   mJsonNorm = normalization;
+  mWerSidecar = wer_sidecar;
   std::string last_label;
   bool firstTk = true;
+
 
   // fuse multiple rows that have the same id/label into one entry only
   for (auto &row : records) {
@@ -30,6 +35,17 @@ NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value norma
     auto curr_label = row.best_label;
     auto curr_label_id = row.best_label_id;
     auto punctuation = row.punctuation;
+    auto curr_row_tags = row.wer_tags;
+    // Update wer tags in records to real string labels
+    vector<string> real_wer_tags;
+    for (auto &tag: curr_row_tags) {
+      auto real_tag = tag;
+      if (mWerSidecar != Json::nullValue) {
+        real_tag = "###"+ real_tag + "_" + mWerSidecar[real_tag]["entity_type"].asString() + "###";
+      }
+      real_wer_tags.push_back(real_tag);
+    }
+    row.wer_tags = real_wer_tags;
     std::string speaker = row.speakerId;
 
     if (processLabels && curr_label != "") {
@@ -43,7 +59,7 @@ NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value norma
         // mToken.push_back("___" + curr_label_id + "___");
         // mToken.push_back("___" + curr_label + "___");
         //
-        if (mJsonNorm != NULL && mJsonNorm != Json::nullValue) {
+        if (mJsonNorm != Json::nullValue) {
           // todo: add a new "candidate" where this token and the following (if
           // from the same label id) will also be available in the norm
           // candidates.  Right now, if we have 10$ marked as MONEY, the '10$' itself
@@ -65,8 +81,8 @@ NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value norma
         mJsonNorm[curr_label_id]["candidates"][last_idx]["verbalization"].append(curr_tk);
       }
     } else {
-      std::transform(curr_tk.begin(), curr_tk.end(), curr_tk.begin(), ::tolower);
-      mToken.push_back(curr_tk);
+      std::string lower_cased = UnicodeLowercase(curr_tk);
+      mToken.push_back(lower_cased);
       mSpeakers.push_back(speaker);
       if (use_punctuation && punctuation != "") {
         mToken.push_back(punctuation);
@@ -94,7 +110,7 @@ void NlpFstLoader::addToSymbolTable(fst::SymbolTable &symbol) const {
       AddSymbolIfNeeded(symbol, tk);
       std::string label_id = getLabelIdFromToken(tk);
 
-      if (mJsonNorm != NULL && mJsonNorm != Json::nullValue) {
+      if (mJsonNorm != Json::nullValue) {
         auto candidates = mJsonNorm[label_id]["candidates"];
         logger->trace("for tk [{}] we have label_id [{}] and {} candidates", tk, label_id, candidates.size());
         for (Json::Value::ArrayIndex i = 0; i != candidates.size(); i++) {
@@ -102,8 +118,8 @@ void NlpFstLoader::addToSymbolTable(fst::SymbolTable &symbol) const {
           auto candidate = candidates[i]["verbalization"];
           for (auto tk_itr : candidate) {
             std::string token = tk_itr.asString();
-            std::transform(token.begin(), token.end(), token.begin(), ::tolower);
-            AddSymbolIfNeeded(symbol, token);
+            std::string lower_cased = UnicodeLowercase(token);
+            AddSymbolIfNeeded(symbol, lower_cased);
           }
         }
       }
@@ -125,7 +141,29 @@ void NlpFstLoader::addToSymbolTable(fst::SymbolTable &symbol) const {
   }
 }
 
-fst::StdVectorFst NlpFstLoader::convertToFst(const fst::SymbolTable &symbol) const {
+std::vector<int> NlpFstLoader::convertToIntVector(fst::SymbolTable &symbol) const {
+  auto logger = logger::GetOrCreateLogger("NlpFstLoader");
+  std::vector<int> vect;
+  logger->info("convertToIntVector() Building a std::vector<int> from NLP rows");
+  addToSymbolTable(symbol);
+  int sz = mToken.size();
+  vect.reserve(sz);
+
+  FstAlignOption options;
+  for (TokenType::const_iterator i = mToken.begin(); i != mToken.end(); ++i) {
+    std::string token = *i;
+    int token_sym = symbol.Find(token);
+    if (token_sym == -1) {
+      token_sym = symbol.Find(options.symUnk);
+    }
+    vect.emplace_back(token_sym);
+  }
+
+  return vect;
+  // return std::move(vect);
+}
+
+fst::StdVectorFst NlpFstLoader::convertToFst(const fst::SymbolTable &symbol, std::vector<int> map) const {
   auto logger = logger::GetOrCreateLogger("NlpFstLoader");
   fst::StdVectorFst transducer;
 
@@ -150,6 +188,8 @@ fst::StdVectorFst NlpFstLoader::convertToFst(const fst::SymbolTable &symbol) con
 
   int prevState = 0;
   int nextState = 1;
+  int map_sz = map.size();
+  int wc = 0;
   for (TokenType::const_iterator i = mToken.begin(); i != mToken.end(); ++i) {
     transducer.AddState();
 
@@ -159,7 +199,13 @@ fst::StdVectorFst NlpFstLoader::convertToFst(const fst::SymbolTable &symbol) con
       token_sym = symbol.Find(options.symUnk);
     }
 
-    transducer.AddArc(prevState, fst::StdArc(token_sym, token_sym, 0.0f, nextState));
+    // logger->info("wc {}, token {}, map[wc] = {}, map_sz = {}", wc, token, map[wc], map_sz);
+    if (map_sz > wc && map[wc] > 0) {
+      transducer.AddArc(prevState, fst::StdArc(token_sym, token_sym, 1.0f, nextState));
+    } else {
+      transducer.AddArc(prevState, fst::StdArc(token_sym, token_sym, 0.0f, nextState));
+    }
+    wc++;
 
     if (isEntityLabel(token)) {
       /*
@@ -204,11 +250,11 @@ so we add 2 states
         auto candidate = candidates[i]["verbalization"];
         for (auto tk_itr : candidate) {
           std::string ltoken = std::string(tk_itr.asString());
-          std::transform(ltoken.begin(), ltoken.end(), ltoken.begin(), ::tolower);
+          std::string lower_cased = UnicodeLowercase(ltoken);
           transducer.AddState();
           nextState++;
 
-          int token_sym = symbol.Find(ltoken);
+          int token_sym = symbol.Find(lower_cased);
           if (token_sym == -1) {
             token_sym = symbol.Find(options.symUnk);
           }
@@ -285,18 +331,22 @@ NlpReader::~NlpReader() {
 
 std::vector<RawNlpRecord> NlpReader::read_from_disk(const std::string &filename) {
   std::vector<RawNlpRecord> vect;
-  io::CSVReader<11, io::trim_chars<' ', '\t'>, io::no_quote_escape<'|'>> input_nlp(filename);
-  // token|speaker|ts|endTs|punctuation|case|tags|wer_tags|ali_comment|oldTs|oldEndTs
-  input_nlp.read_header(io::ignore_missing_column, "token", "speaker", "ts", "endTs", "punctuation", "case", "tags",
-                        "wer_tags", "ali_comment", "oldTs", "oldEndTs");
+  io::CSVReader<12, io::trim_chars<' ', '\t'>, io::no_quote_escape<'|'>> input_nlp(filename);
+  // token|speaker|ts|endTs|punctuation|prepunctuation|case|tags|wer_tags|ali_comment|oldTs|oldEndTs
+  input_nlp.read_header(io::ignore_missing_column | io::ignore_extra_column,
+      "token", "speaker", "ts", "endTs", "punctuation", "prepunctuation",
+      "case", "tags", "wer_tags", "ali_comment", "oldTs", "oldEndTs");
 
-  std::string token, speaker, ts, endTs, punctuation, casing, tags, wer_tags, ali_comment, oldTs, oldEndTs;
-  while (input_nlp.read_row(token, speaker, ts, endTs, punctuation, casing, tags, wer_tags, ali_comment, oldTs,
+  std::string token, speaker, ts, endTs, punctuation, prepunctuation, casing, tags, wer_tags, ali_comment, oldTs, oldEndTs;
+  while (input_nlp.read_row(token, speaker, ts, endTs, punctuation, prepunctuation, casing, tags, wer_tags, ali_comment, oldTs,
                             oldEndTs)) {
     RawNlpRecord record;
     record.speakerId = speaker;
     record.casing = casing;
     record.punctuation = punctuation;
+    if (input_nlp.has_column("prepunctuation")) {
+        record.prepunctuation = prepunctuation;
+    }
     record.ts = ts;
     record.endTs = endTs;
     record.best_label = GetBestLabel(tags);

@@ -112,7 +112,7 @@ vector<shared_ptr<wer_alignment>> Walker::walkComposed(IComposition &fst, Symbol
     if (heapB->size() > 0) {
       if (loopSinceLastPruning >= numberOfLoopsBeforePruning) {
         SLE a = heapB->GetBestWerCandidate().get();
-        heapB->prune(20);
+        heapB->prune(this->pruningHeapSizeTarget); 
         SLE b = heapB->GetBestWerCandidate().get();
 
         if (logger->should_log(spdlog::level::debug)) {

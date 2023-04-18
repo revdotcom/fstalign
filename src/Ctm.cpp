@@ -21,9 +21,8 @@ CtmFstLoader::CtmFstLoader(vector<RawCtmRecord> &records) : FstLoader() {
   {
     mCtmRows = records;
     for (auto &row : mCtmRows) {
-      string token = string(row.word);
-      std::transform(token.begin(), token.end(), token.begin(), ::tolower);
-      mToken.push_back(token);
+      std::string lower_cased = UnicodeLowercase(row.word);
+      mToken.push_back(lower_cased);
     }
   }
 }
@@ -37,7 +36,7 @@ void CtmFstLoader::addToSymbolTable(SymbolTable &symbol) const {
   }
 }
 
-StdVectorFst CtmFstLoader::convertToFst(const SymbolTable &symbol) const {
+StdVectorFst CtmFstLoader::convertToFst(const SymbolTable &symbol, std::vector<int> map) const {
   auto logger = logger::GetOrCreateLogger("ctmloader");
   //
   StdVectorFst transducer;
@@ -48,18 +47,47 @@ StdVectorFst CtmFstLoader::convertToFst(const SymbolTable &symbol) const {
 
   int prevState = 0;
   int nextState = 1;
+  int wc = 0;
+  int map_sz = map.size();
   for (TokenType::const_iterator i = mToken.begin(); i != mToken.end(); ++i) {
     std::string token = *i;
-    std::transform(token.begin(), token.end(), token.begin(), ::tolower);
+    std::string lower_cased = UnicodeLowercase(token);
     transducer.AddState();
 
-    transducer.AddArc(prevState, StdArc(symbol.Find(token), symbol.Find(token), 0.0f, nextState));
+    if (map_sz > wc && map[wc] > 0) {
+      transducer.AddArc(prevState, StdArc(symbol.Find(lower_cased), symbol.Find(lower_cased), 1.0f, nextState));
+    } else {
+      transducer.AddArc(prevState, StdArc(symbol.Find(lower_cased), symbol.Find(lower_cased), 0.0f, nextState));
+    }
+
     prevState = nextState;
     nextState++;
+    wc++;
   }
 
   transducer.SetFinal(prevState, 0.0f);
   return transducer;
+}
+
+std::vector<int> CtmFstLoader::convertToIntVector(fst::SymbolTable &symbol) const {
+  auto logger = logger::GetOrCreateLogger("ctmloader");
+  std::vector<int> vect;
+  addToSymbolTable(symbol);
+  int sz = mToken.size();
+  logger->info("creating std::vector<int> for CTM for {} tokens", sz);
+  vect.reserve(sz);
+
+  FstAlignOption options;
+  for (TokenType::const_iterator i = mToken.begin(); i != mToken.end(); ++i) {
+    std::string token = *i;
+    int token_sym = symbol.Find(token);
+    if (token_sym == -1) {
+      token_sym = symbol.Find(options.symUnk);
+    }
+    vect.emplace_back(token_sym);
+  }
+
+  return vect;
 }
 
 /***************************************

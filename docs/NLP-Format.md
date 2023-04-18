@@ -26,3 +26,18 @@ quarter|0||||LC|['6:DATE']|['6']
 2020|0||||CA|['0:YEAR']|['0', '1', '6']
 NexGEn|0||||MC|['7:ORG']|['7']
 ```
+
+## WER tag sidecar
+
+WER tag sidecar files contain accompanying info for tokens in an NLP file. The
+keys are IDs corresponding to tokens in the NLP file `wer_tags` column. The
+objects under the keys are information about the token.
+
+Example:
+```
+{
+ '0': {'entity_type': 'YEAR'},
+ '1': {'entity_type': 'CARDINAL'},
+ '6': {'entity_type': 'SPACY>TIME'},
+}
+```

@@ -11,7 +11,8 @@ ARG JOBS=4
 RUN apt-get update && \
     apt-get -y install \
     cmake \
-    g++
+    g++ \
+    libicu-dev
 
 RUN mkdir /fstalign
 COPY CMakeLists.txt /fstalign/CMakeLists.txt
@@ -30,3 +31,9 @@ RUN mkdir -p /fstalign/build && \
     mkdir -p /fstalign/bin && \
     cp /fstalign/build/fstalign /fstalign/bin && \
     strip /fstalign/bin/*
+
+COPY tools /fstalign/tools
+
+ENV PATH \
+    /fstalign/bin/:\
+    $PATH

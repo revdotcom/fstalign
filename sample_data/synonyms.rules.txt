@@ -41,14 +41,66 @@ they will |they'll
 they'll   |they will
 
 
-okay    | ok
-ok      | okay
+okay    | ok ; 'kay
+ok      | okay ; 'kay
+'kay    | okay ; ok
 
-i'd     |i had ; i would
+til     | until ; 'til
+'til    | until ; til
+until   | 'til ; til
+
+awhile | a while
+a while | awhile
+
+lotta    | lot of
+lot of | lotta
+sorta    | sort of
+sort of  | sorta
+
+dunno | don't know ; do not know
+don't know | dunno
+do not know | dunno
+
+lemme | let me
+let me | lemme
+
+let's | let us
+let us | let's
 
 # TODO: can't -> cannot ?
 # TODO: To Have ?
-# TODO: which other contractions?
+must've   | must have
+must have | must've
+would've | would have
+would have | would've
+should've | should have
+should have | should've ; shoulda
+might've | might have
+might have | might've
+could've | could have
+could have | could've
+i'd     | i had ; i would
+i had | i'd
+i would | i'd
+you'd | you had  ; you would
+you had | you'd
+you would | you'd
+he'd | he had ; he would
+he had | he'd
+he would | he'd
+she'd | she had ; she would
+she had | she'd
+she would | she'd
+they'd | they had ; they would
+they had | they'd
+they would | they'd
+i've | i have
+i have | i've
+they've | they have
+they have | they've
+you've | you have
+you have | you've
+
 
 'cause | cause ; because
 because | 'cause ; cause
@@ -62,44 +114,38 @@ gotta | got to
 got to | gotta
 'em | them
 them | 'em
-would've | would have
-would have | would've
+all right | alright
+alright | all right
 
-# handling comments/annotations in the nlp files
-# note: anything after a : is ignored for now
-# how to mimig deletions... ε or <del>?
-# both options cause problems right now, so we'll avoid that for now
-<barking>                  |  <del> ; <unk>  
-<cheer>                    |  <del> ; <unk>          
-<clap>                     |  <del> ; <unk>         
-<clear_throat>             |  <del> ; <unk>                 
-<cough>                    |  <del> ; <unk>          
-<crosstalk>                |  <del> ; <unk>              
-<cry>                      |  <del> ; <unk>        
-<finger_snap>              |  <del> ; <unk>                
-<foreign>                  |  <del> ; <unk>            
-# <foreign:{note}>           |  <del> ; <unk>                     
-<groan>                    |  <del> ; <unk>          
-<grunt>                    |  <del> ; <unk>          
-<inaudible>                |  <del> ; <unk> 
-<laugh>                    |  <del> ; <unk>          
-# <laugh:chuckle>            |  <del> ; <unk>                    
-# <laugh:{note}>             |  <del> ; <unk>                   
-<mumble>                   |  <del> ; <unk>           
-<murmur>                   |  <del> ; <unk>           
-<phonetic>                 |  <del> ; <unk>             
-<scream>                   |  <del> ; <unk>           
-<sigh>                     |  <del> ; <unk>         
-<silence>                  |  <del> ; <unk>            
-# <silence:blank_audio>      |  <del> ; <unk>                          
-# <silence:pause>            |  <del> ; <unk>                    
-# <silence:pause>            |  <del> ; <unk>                    
-<sing>                     |  <del> ; <unk>         
-<siren>                    |  <del> ; <unk>          
-<unk>                      |  <del> ; <unk>        
-<visual>                   |  <del> ; <unk>           
-# <visual:{note}>            |  <del> ; <unk>                    
-<yawn>                     |  <del> ; <unk>         
+give me | gimme
+gimme | give me
+shoulda | should have
+out of | outta
+outta | out of
+what are you | whatcha
+whatcha | what are you
 
-# anything not explicitly handled will be ignored from the graph
-#<{note}> | <del>
+<barking>                  |  <unk>  
+<cheer>                    |  <unk>          
+<clap>                     |  <unk>         
+<clear_throat>             |  <unk>                 
+<cough>                    |  <unk>          
+<crosstalk>                |  <unk>              
+<cry>                      |  <unk>        
+<finger_snap>              |  <unk>                
+<foreign>                  |  <unk>            
+<groan>                    |  <unk>          
+<grunt>                    |  <unk>          
+<inaudible>                |  <unk> 
+<laugh>                    |  <unk>          
+<mumble>                   |  <unk>           
+<murmur>                   |  <unk>           
+<phonetic>                 |  <unk>             
+<scream>                   |  <unk>           
+<sigh>                     |  <unk>         
+<silence>                  |  <unk>            
+<sing>                     |  <unk>         
+<siren>                    |  <unk>          
+<unk>                      |  <unk>        
+<visual>                   |  <unk>           
+<yawn>                     |  <unk>

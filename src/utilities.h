@@ -8,6 +8,9 @@
 #ifndef UTILITIES_H_
 #define UTILITIES_H_
 
+#include <unicode/locid.h>
+#include <unicode/unistr.h>
+#include <unicode/ustream.h>
 #include <algorithm>
 #include <cctype>
 #include <codecvt>
@@ -50,11 +53,12 @@ typedef unordered_map<string, uint64_t> bigrams;
 typedef struct gram_error_counter {
   int correct = 0;
   int del = 0;
-  int subst = 0;
+  int subst_fp = 0;
+  int subst_fn = 0;
   int ins = 0;
   precision_t precision = 0.0f;
   recall_t recall = 0.0f;
-  gram_error_counter(int c, int d, int s, int i) : correct(c), del(d), subst(s), ins(i) {}
+  gram_error_counter(int c, int d, int sfp, int sfn, int i) : correct(c), del(d), subst_fp(sfp), subst_fn(sfn), ins(i) {}
 } gram_error_counter;
 
 struct wer_alignment {
@@ -208,14 +212,7 @@ void printFst(string loggerName, const fst::StdFst *fst, const fst::SymbolTable 
 template <typename StringFunction>
 void splitString(const string &str, char delimiter, StringFunction f);
 
-static bool EndsWithCaseInsensitive(const string &value, const string &ending) {
-  if (ending.size() > value.size()) {
-    return false;
-  }
-  return equal(ending.rbegin(), ending.rend(), value.rbegin(),
-               [](const char a, const char b) { return tolower(a) == tolower(b); });
-}
-
+bool EndsWithCaseInsensitive(const string &value, const string &ending);
 bool iequals(const std::string &, const std::string &);
 
 // string manip
@@ -241,5 +238,7 @@ std::string GetEnv(const std::string &var, const std::string default_value);
 string GetLabelNameFromClassLabel(string classLabel);
 
 string GetClassLabel(string best_label);
+
+string UnicodeLowercase(string token);
 
 #endif  // UTILITIES_H_

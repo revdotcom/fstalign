@@ -3,8 +3,10 @@
 
 #include "FstFileLoader.h"
 #include "OneBestFstLoader.h"
+#include "fast-d.h"
 #include "fstalign.h"
 #include "json_logging.h"
+#include "utilities.h"
 #include "version.h"
 
 using namespace std;
@@ -14,6 +16,7 @@ int main(int argc, char **argv) {
   setlocale(LC_ALL, "en_US.UTF-8");
   string ref_filename;
   string json_norm_filename;
+  string wer_sidecar_filename;
   string hyp_filename;
   string log_filename = "";
   string output_nlp = "";
@@ -23,13 +26,17 @@ int main(int argc, char **argv) {
   string output_json_log;
   string symbols_filename = "";
   int pr_threshold = 0;
-  bool disable_cutoffs;
   bool version;
   string composition_approach = "adapted";
   int speaker_switch_context_size = 5;
   int numBests = 100;
+  int levenstein_maximum_error_streak = 100;
   bool record_case_stats = false;
   bool use_punctuation = false;
+  bool disable_approximate_alignment = false;
+
+  bool disable_cutoffs = false;
+  bool disable_hyphen_ignore = false;
 
   CLI::App app("Rev FST Align");
   app.set_help_all_flag("--help-all", "Expand all help");
@@ -54,6 +61,11 @@ int main(int argc, char **argv) {
     c->add_flag("--disable-cutoffs", disable_cutoffs,
                 "Prevents the synonym engine from adding synonyms of cutoff "
                 "words (e.g. the-)");
+    c->add_flag("--disable-hyphen-ignore", disable_hyphen_ignore,
+                "Prevents the synonym engine from adding synonyms of hyphenated "
+                "compound words (e.g. best-ever <-> best ever)");
+    c->add_flag("--disable-approx-alignment", disable_approximate_alignment,
+                "Disable getting a first approximate alignment/WER before the more exhaustive search happens");
 
     // NOTE: we can't have -h as a synonym for --hyp as it collides with --help
     c->add_option("--hyp", hyp_filename, "Hypothesis filename (same rules as for --ref handling.)");
@@ -71,6 +83,9 @@ int main(int argc, char **argv) {
     c->add_option("--numbests", numBests,
                   "The maximum number of minimum error paths through the alignment graph. Defaults to 100.");
 
+    c->add_option("--levenstein-max-error-streak", levenstein_maximum_error_streak,
+                  "The maximum number of consecutive errors supported by levenstein approximation. Defaults to 100.");
+
     c->add_option("--pr_threshold", pr_threshold,
                   "Threshold of occurrences that will be output in"
                   "Precision and Recall listings");
@@ -81,6 +96,8 @@ int main(int argc, char **argv) {
     c->add_option("--composition-approach", composition_approach,
                   "Desired composition logic. Choices are 'standard' or 'adapted'");
   }
+  get_wer->add_option("--wer-sidecar", wer_sidecar_filename,
+                "WER sidecar json file.");
 
   get_wer->add_option("--speaker-switch-context", speaker_switch_context_size,
                       "Amount of context (in each direction) around "
@@ -101,7 +118,8 @@ int main(int argc, char **argv) {
                             }\n\
                         }");
 
-  get_wer->add_flag("--record-case-stats", record_case_stats, "Record precision/recall for how well the hypothesis"
+  get_wer->add_flag("--record-case-stats", record_case_stats,
+                    "Record precision/recall for how well the hypothesis"
                     "casing matches the reference.");
   get_wer->add_flag("--use-punctuation", use_punctuation, "Treat punctuation from nlp rows as separate tokens");
 
@@ -153,6 +171,27 @@ int main(int argc, char **argv) {
     Json::parseFromStream(builder, ss, &obj, &errs);
   }
 
+  Json::Value wer_sidecar_obj;
+  if (!wer_sidecar_filename.empty()) {
+    console->info("reading wer sidecar info from {}", wer_sidecar_filename);
+    ifstream ifs(wer_sidecar_filename);
+
+    Json::CharReaderBuilder builder;
+    builder["collectComments"] = false;
+
+    JSONCPP_STRING errs;
+    Json::parseFromStream(builder, ifs, &wer_sidecar_obj, &errs);
+
+    console->info("The json we just read [{}] has {} elements from its root", wer_sidecar_filename, wer_sidecar_obj.size());
+  } else {
+    stringstream ss;
+    ss << "{}";
+
+    Json::CharReaderBuilder builder;
+    JSONCPP_STRING errs;
+    Json::parseFromStream(builder, ss, &wer_sidecar_obj, &errs);
+  }
+
   Json::Value hyp_json_obj;
   if (!hyp_json_norm_filename.empty()) {
     console->info("reading hypothesis json norm info from {}", hyp_json_norm_filename);
@@ -181,7 +220,7 @@ int main(int argc, char **argv) {
     NlpReader nlpReader = NlpReader();
     console->info("reading reference nlp from {}", ref_filename);
     auto vec = nlpReader.read_from_disk(ref_filename);
-    NlpFstLoader *nlpFst = new NlpFstLoader(vec, obj, true, use_punctuation);
+    NlpFstLoader *nlpFst = new NlpFstLoader(vec, obj, wer_sidecar_obj, true, use_punctuation);
     ref = nlpFst;
   } else if (EndsWithCaseInsensitive(ref_filename, string(".ctm"))) {
     console->info("reading reference ctm from {}", ref_filename);
@@ -199,11 +238,19 @@ int main(int argc, char **argv) {
   // loading "hypothesis" inputs
   if (EndsWithCaseInsensitive(hyp_filename, string(".nlp"))) {
     console->info("reading hypothesis nlp from {}", hyp_filename);
+    // Make empty json for wer sidecar
+    Json::Value hyp_empty_json;
+    stringstream ss;
+    ss << "{}";
+
+    Json::CharReaderBuilder builder;
+    JSONCPP_STRING errs;
+    Json::parseFromStream(builder, ss, &hyp_empty_json, &errs);
     NlpReader nlpReader = NlpReader();
     auto vec = nlpReader.read_from_disk(hyp_filename);
     // for now, nlp files passed as hypothesis won't have their labels handled as such
     // this also mean that json normalization will be ignored
-    NlpFstLoader *nlpFst = new NlpFstLoader(vec, hyp_json_obj, false, use_punctuation);
+    NlpFstLoader *nlpFst = new NlpFstLoader(vec, hyp_json_obj, hyp_empty_json, false, use_punctuation);
     hyp = nlpFst;
   } else if (EndsWithCaseInsensitive(hyp_filename, string(".ctm"))) {
     console->info("reading hypothesis ctm from {}", hyp_filename);
@@ -225,15 +272,27 @@ int main(int argc, char **argv) {
     hyp = hypOneBest;
   }
 
-  SynonymEngine *engine = nullptr;
+  SynonymOptions syn_opts;
+  syn_opts.disable_cutoffs = disable_cutoffs;
+  syn_opts.disable_hyphen_ignore = disable_hyphen_ignore;
+
+  SynonymEngine *engine = new SynonymEngine(syn_opts);
   if (synonyms_filename.size() > 0) {
-    engine = new SynonymEngine(disable_cutoffs);
-    engine->load_file(synonyms_filename);
+    engine->LoadFile(synonyms_filename);
   }
 
+  AlignerOptions alignerOptions;
+  alignerOptions.speaker_switch_context_size = speaker_switch_context_size;
+  alignerOptions.levenstein_first_pass = !disable_approximate_alignment;
+  alignerOptions.numBests = numBests;
+  alignerOptions.levenstein_maximum_error_streak = levenstein_maximum_error_streak;
+  alignerOptions.pr_threshold = pr_threshold;
+  alignerOptions.record_case_stats = record_case_stats;
+  alignerOptions.symbols_filename = symbols_filename;
+  alignerOptions.composition_approach = composition_approach;
+
   if (command == "wer") {
-    HandleWer(ref, hyp, engine, output_sbs, output_nlp, speaker_switch_context_size, numBests, pr_threshold,
-              symbols_filename, composition_approach, record_case_stats);
+    HandleWer(ref, hyp, engine, output_sbs, output_nlp, alignerOptions);
   } else if (command == "align") {
     if (output_nlp.empty()) {
       console->error("the output nlp file must be specified");
@@ -248,7 +307,7 @@ int main(int argc, char **argv) {
     NlpFstLoader *nlpRef = dynamic_cast<NlpFstLoader *>(ref);
     CtmFstLoader *ctmHyp = dynamic_cast<CtmFstLoader *>(hyp);
 
-    HandleAlign(nlpRef, ctmHyp, engine, output_nlp_file, numBests, symbols_filename, composition_approach);
+    HandleAlign(nlpRef, ctmHyp, engine, output_nlp_file, alignerOptions);
 
     output_nlp_file.flush();
     output_nlp_file.close();

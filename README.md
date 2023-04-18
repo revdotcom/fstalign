@@ -1,3 +1,5 @@
+<div align="left"><img src="https://i.imgur.com/CJpeJPa.png" width="550"/></div>
+
 ![CI](https://github.com/revdotcom/fstalign/workflows/CI/badge.svg)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
@@ -118,7 +120,7 @@ When run, fstalign will dump a log to STDOUT with summary WER information at the
 [+++] [20:37:10] [wer] best WER: Precision:0.600000 Recall:0.600000
 ```
 
-Note that in addition to general WER, the insertion/deletion/substitution breakdown is also printed. fstalign also has other useful outputs, including a JSON log for downstream machine parsing, and a side-by-side view of the alignment and errors generated. For more details, see the [Output](#Output) section below.
+Note that in addition to general WER, the insertion/deletion/substitution breakdown is also printed. fstalign also has other useful outputs, including a JSON log for downstream machine parsing, and a side-by-side view of the alignment and errors generated. For more details, see the [Outputs](https://github.com/revdotcom/fstalign/blob/develop/docs/Advanced-Usage.md#outputs) section in the [Advanced Usage](https://github.com/revdotcom/fstalign/blob/develop/docs/Advanced-Usage.md) doc.
 
 ### Align Subcommand
 Usage of the `align` subcommand is almost identical to the `wer` subcommand. The exception is that `align` can only be run if the provided reference is a NLP and the provided hypothesis is a CTM. This is because the core function of the subcommand is to align an NLP without timestamps to a CTM that has timestamps, producing an output of tokens from the reference with timings from the hypothesis.

@@ -48,7 +48,7 @@ TEST_CASE("composition()") {
     bool ret_status = composer.TryGetArcsAtState(s, &arcs);
 
     REQUIRE(ret_status);
-    REQUIRE(arcs.size() == 1);
+    REQUIRE(arcs.size() == 3);
 
     REQUIRE(true);
   }
@@ -88,7 +88,11 @@ TEST_CASE("composition()") {
         logger->info("({}) we expect composed state id {} to have a weight one One()", i, current_state);
         REQUIRE(composer.Final(current_state) == StdFst::Weight::One());
       } else {
-        REQUIRE(arcs_leaving_state.size() == 1);
+        if (i >= 4) {
+          REQUIRE(arcs_leaving_state.size() == 1);
+        } else {
+          REQUIRE(arcs_leaving_state.size() == 3);
+        }
         for (vector<StdArc>::iterator iter = arcs_leaving_state.begin(); iter != arcs_leaving_state.end(); ++iter) {
           const fst::StdArc arc = *iter;
           logger->info("({}) arc leaving state {} to {} with label {}/{} ({}/{})", i, current_state, arc.nextstate,

@@ -1,13 +1,13 @@
-           ref_token	hyp_token           	IsErr	Class
-              twenty	<del>               	ERR	___1_CARDINAL___
-                  in	in                  		
-              twenty	twenty              		___2_YEAR___
-              twenty	thirty              	ERR	___2_YEAR___
-                  is	is                  		
-                 one	one                 		___3_CARDINAL___
-              twenty	twenty              		___3_CARDINAL___
-               <ins>	two                 	ERR	___3_CARDINAL___
-               three	three               		___3_CARDINAL___
+           ref_token	hyp_token           	IsErr	Class	Wer_Tag_Entities
+              twenty	<del>               	ERR	___1_CARDINAL___	
+                  in	in                  			
+              twenty	twenty              		___2_YEAR___	
+              twenty	thirty              	ERR	___2_YEAR___	
+                  is	is                  			
+                 one	one                 		___3_CARDINAL___	
+              twenty	twenty              		___3_CARDINAL___	
+               <ins>	two                 	ERR	___3_CARDINAL___	
+               three	three               		___3_CARDINAL___	
 ------------------------------------------------------------
                 Line	Group               
                    2	twenty <-> ***
@@ -15,17 +15,20 @@
                    9	*** <-> two
 ------------------------------------------------------------
              Unigram	Prec.     	Recall    
+              thirty	0/1 (0.0 %)	0/0 (0.0 %)
                  two	0/1 (0.0 %)	0/0 (0.0 %)
-              twenty	2/3 (66.7 %)	2/4 (50.0 %)
+              twenty	2/2 (100.0 %)	2/4 (50.0 %)
                   in	1/1 (100.0 %)	1/1 (100.0 %)
                   is	1/1 (100.0 %)	1/1 (100.0 %)
                  one	1/1 (100.0 %)	1/1 (100.0 %)
                three	1/1 (100.0 %)	1/1 (100.0 %)
 ------------------------------------------------------------
               Bigram	Precision           	Recall              
+           thirty is	0/1 (0.0 %)	0/0 (0.0 %)
            twenty in	0/0 (0.0 %)	0/1 (0.0 %)
-           twenty is	0/1 (0.0 %)	0/1 (0.0 %)
-       twenty twenty	0/1 (0.0 %)	0/1 (0.0 %)
+           twenty is	0/0 (0.0 %)	0/1 (0.0 %)
+       twenty thirty	0/1 (0.0 %)	0/0 (0.0 %)
+       twenty twenty	0/0 (0.0 %)	0/1 (0.0 %)
           twenty two	0/1 (0.0 %)	0/0 (0.0 %)
            two three	0/1 (0.0 %)	0/0 (0.0 %)
            in twenty	1/1 (100.0 %)	1/1 (100.0 %)

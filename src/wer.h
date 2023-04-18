@@ -39,6 +39,7 @@ void RecordWerResult(Json::Value &json, WerResult wr);
 void RecordWer(spWERA topAlignment);
 void RecordSpeakerWer(vector<shared_ptr<Stitching>> stitches);
 void RecordSpeakerSwitchWer(vector<shared_ptr<Stitching>> stitches, int speaker_switch_context_size);
+void RecordSentenceWer(vector<shared_ptr<Stitching>> stitches);
 void RecordTagWer(vector<shared_ptr<Stitching>> stitches);
 void RecordCaseWer(vector<shared_ptr<Stitching>> aligned_stitches);
 
@@ -48,4 +49,4 @@ void CalculatePrecisionRecall(spWERA &topAlignment, int threshold);
 typedef vector<pair<size_t, string>> ErrorGroups;
 
 void AddErrorGroup(ErrorGroups &groups, size_t &line, string &ref, string &hyp);
-void WriteSbs(spWERA topAlignment, string sbs_filename);
+void WriteSbs(spWERA topAlignment, vector<shared_ptr<Stitching>> stitches, string sbs_filename);

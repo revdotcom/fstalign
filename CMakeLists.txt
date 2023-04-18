@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.7)
 
 project(fstalign LANGUAGES CXX C)
 
@@ -52,6 +52,7 @@ endif()
 add_library(fstaligner-common
   src/fstalign.cpp
   src/wer.cpp
+  src/fast-d.cpp
   src/AdaptedComposition.cpp
   src/StandardComposition.cpp
   src/AlignmentTraversor.cpp
@@ -68,10 +69,14 @@ add_library(fstaligner-common
   third-party/inih/cpp/INIReader.cpp
 )
 
+list(APPEND CMAKE_PREFIX_PATH "/usr/local/opt/icu4c") # for Mac users
+find_package(ICU REQUIRED COMPONENTS uc)
+
 target_link_libraries(fstaligner-common
   Threads::Threads
   ${FSTALIGN_LIBRARIES}
   ${FST_KALDI_LIBRARIES}
+  ${ICU_LIBRARIES}
 )
 
 add_subdirectory(third-party/jsoncpp)
@@ -82,6 +87,7 @@ add_executable(fstalign src/main.cpp)
 include_directories(fstalign 
   ${FSTALIGN_INCLUDES}
   ${OPENFST_INCLUDES}
+  ${ICU_INCLUDE_DIRS}
 )
 
 target_link_libraries(fstalign
