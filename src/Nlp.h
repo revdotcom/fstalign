@@ -28,6 +28,7 @@ struct RawNlpRecord {
   string best_label;
   string best_label_id;
   vector<string> wer_tags;
+  string confidence;
 };
 
 class NlpReader {

@@ -559,7 +559,7 @@ void write_stitches_to_nlp(vector<shared_ptr<Stitching>> stitches, ofstream &out
   // write header; 'comment' is there to store information about how well the alignment went
   // for this word
   output_nlp_file << "token|speaker|ts|endTs|punctuation|prepunctuation|case|tags|wer_tags|oldTs|"
-                     "oldEndTs|ali_comment"
+                     "oldEndTs|ali_comment|confidence"
                   << endl;
   for (auto &stitch : stitches) {
     // if the comment starts with 'ins'
@@ -621,7 +621,7 @@ void write_stitches_to_nlp(vector<shared_ptr<Stitching>> stitches, ofstream &out
     output_nlp_file << "]|";
     // leaving old timings intact
     output_nlp_file << stitch->nlpRow.ts << "|" << stitch->nlpRow.endTs << "|";
-    output_nlp_file << stitch->comment << endl;
+    output_nlp_file << stitch->comment << "|" << stitch->nlpRow.confidence << endl;
   }
 }
 
