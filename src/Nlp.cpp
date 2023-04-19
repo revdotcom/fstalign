@@ -322,15 +322,15 @@ NlpReader::~NlpReader() {
 
 std::vector<RawNlpRecord> NlpReader::read_from_disk(const std::string &filename) {
   std::vector<RawNlpRecord> vect;
-  io::CSVReader<12, io::trim_chars<' ', '\t'>, io::no_quote_escape<'|'>> input_nlp(filename);
+  io::CSVReader<13, io::trim_chars<' ', '\t'>, io::no_quote_escape<'|'>> input_nlp(filename);
   // token|speaker|ts|endTs|punctuation|prepunctuation|case|tags|wer_tags|ali_comment|oldTs|oldEndTs
   input_nlp.read_header(io::ignore_missing_column | io::ignore_extra_column,
       "token", "speaker", "ts", "endTs", "punctuation", "prepunctuation",
-      "case", "tags", "wer_tags", "ali_comment", "oldTs", "oldEndTs");
+      "case", "tags", "wer_tags", "ali_comment", "oldTs", "oldEndTs", "confidence");
 
-  std::string token, speaker, ts, endTs, punctuation, prepunctuation, casing, tags, wer_tags, ali_comment, oldTs, oldEndTs;
+  std::string token, speaker, ts, endTs, punctuation, prepunctuation, casing, tags, wer_tags, ali_comment, oldTs, oldEndTs, confidence;
   while (input_nlp.read_row(token, speaker, ts, endTs, punctuation, prepunctuation, casing, tags, wer_tags, ali_comment, oldTs,
-                            oldEndTs)) {
+                            oldEndTs, confidence)) {
     RawNlpRecord record;
     record.speakerId = speaker;
     record.casing = casing;
@@ -346,6 +346,9 @@ std::vector<RawNlpRecord> NlpReader::read_from_disk(const std::string &filename)
     record.token = token;
     if (input_nlp.has_column("wer_tags")) {
       record.wer_tags = GetWerTags(wer_tags);
+    }
+    if (input_nlp.has_column("confidence")) {
+        record.confidence = confidence;
     }
     vect.push_back(record);
   }
