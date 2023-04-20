@@ -20,9 +20,8 @@ NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value norma
     : NlpFstLoader(records, normalization, wer_sidecar, true) {}
 
 NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value normalization, 
-    Json::Value wer_sidecar, bool processLabels)
+    Json::Value wer_sidecar, bool processLabels, bool use_punctuation)
     : FstLoader() {
-  mNlpRows = records;
   mJsonNorm = normalization;
   mWerSidecar = wer_sidecar;
   std::string last_label;
@@ -30,10 +29,12 @@ NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value norma
 
 
   // fuse multiple rows that have the same id/label into one entry only
-  for (auto &row : mNlpRows) {
+  for (auto &row : records) {
+    mNlpRows.push_back(row);
     auto curr_tk = row.token;
     auto curr_label = row.best_label;
     auto curr_label_id = row.best_label_id;
+    auto punctuation = row.punctuation;
     auto curr_row_tags = row.wer_tags;
     // Update wer tags in records to real string labels
     vector<string> real_wer_tags;
@@ -83,6 +84,14 @@ NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value norma
       std::string lower_cased = UnicodeLowercase(curr_tk);
       mToken.push_back(lower_cased);
       mSpeakers.push_back(speaker);
+      if (use_punctuation && punctuation != "") {
+        mToken.push_back(punctuation);
+        mSpeakers.push_back(speaker);
+        RawNlpRecord nlp_row = row;
+        nlp_row.token = nlp_row.punctuation;
+        nlp_row.punctuation = "";
+        mNlpRows.push_back(nlp_row);
+      }
     }
 
     firstTk = false;

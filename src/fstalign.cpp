@@ -367,6 +367,10 @@ void align_stitches_to_nlp(NlpFstLoader *refLoader, vector<shared_ptr<Stitching>
       continue;
     }
 
+    if (nlpRowIndex >= nlpMaxRow) {
+        logger->warn("Ran out of nlp rows. {} rows, {} stitches", nlpMaxRow, numStitches);
+        break;
+    }
     auto nlpPart = nlpRows[nlpRowIndex];
     string nlp_classLabel = GetClassLabel(nlpPart.best_label);
 

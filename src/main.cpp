@@ -32,6 +32,7 @@ int main(int argc, char **argv) {
   int numBests = 100;
   int levenstein_maximum_error_streak = 100;
   bool record_case_stats = false;
+  bool use_punctuation = false;
   bool disable_approximate_alignment = false;
 
   bool disable_cutoffs = false;
@@ -120,6 +121,7 @@ int main(int argc, char **argv) {
   get_wer->add_flag("--record-case-stats", record_case_stats,
                     "Record precision/recall for how well the hypothesis"
                     "casing matches the reference.");
+  get_wer->add_flag("--use-punctuation", use_punctuation, "Treat punctuation from nlp rows as separate tokens");
 
   // CLI11_PARSE(app, argc, argv);
   try {
@@ -218,7 +220,7 @@ int main(int argc, char **argv) {
     NlpReader nlpReader = NlpReader();
     console->info("reading reference nlp from {}", ref_filename);
     auto vec = nlpReader.read_from_disk(ref_filename);
-    NlpFstLoader *nlpFst = new NlpFstLoader(vec, obj, wer_sidecar_obj, true);
+    NlpFstLoader *nlpFst = new NlpFstLoader(vec, obj, wer_sidecar_obj, true, use_punctuation);
     ref = nlpFst;
   } else if (EndsWithCaseInsensitive(ref_filename, string(".ctm"))) {
     console->info("reading reference ctm from {}", ref_filename);
@@ -248,7 +250,7 @@ int main(int argc, char **argv) {
     auto vec = nlpReader.read_from_disk(hyp_filename);
     // for now, nlp files passed as hypothesis won't have their labels handled as such
     // this also mean that json normalization will be ignored
-    NlpFstLoader *nlpFst = new NlpFstLoader(vec, hyp_json_obj, hyp_empty_json, false);
+    NlpFstLoader *nlpFst = new NlpFstLoader(vec, hyp_json_obj, hyp_empty_json, false, use_punctuation);
     hyp = nlpFst;
   } else if (EndsWithCaseInsensitive(hyp_filename, string(".ctm"))) {
     console->info("reading hypothesis ctm from {}", hyp_filename);
