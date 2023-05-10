@@ -19,6 +19,7 @@ fstalign.cpp
 #include "json_logging.h"
 #include "utilities.h"
 #include "wer.h"
+#include "FstFileLoader.h"
 
 using namespace std;
 using namespace fst;
@@ -169,8 +170,10 @@ spWERA Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engin
     refFst = refLoader->convertToFst(symbol, mapA);
     hypFst = hypLoader->convertToFst(symbol, mapB);
   }
-
-  if (engine != nullptr) {
+  
+  FstFileLoader* fstFileLoader = dynamic_cast< FstFileLoader*>(refLoader);
+  
+  if (fstFileLoader != nullptr && engine != nullptr) {
     logger->info("generating ref synonyms from symbol table");
     engine->GenerateSynFromSymbolTable(symbol);
     logger->info("applying ref synonyms on ref fst");
