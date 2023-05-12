@@ -42,9 +42,9 @@ class ReverseOLabelCompare {
 
 using StdReverseOlabelCompare = ReverseOLabelCompare<StdArc>;
 
-bool sort_alignment(spWERA a, spWERA b) { return a->WER() < b->WER(); }
+bool sort_alignment(const wer_alignment& a, const wer_alignment &b) { return a.WER() < b.WER(); }
 
-spWERA Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engine, AlignerOptions alignerOptions) {
+wer_alignment Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engine, AlignerOptions alignerOptions) {
   //  int numBests, string symbols_filename, string composition_approach, bool levenstein_first_pass) {
   auto logger = logger::GetOrCreateLogger("fstalign");
   FstAlignOption options;
@@ -192,7 +192,7 @@ spWERA Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engin
     printFst("fstalign", &hypFst, &symbol);
   }
 
-  vector<shared_ptr<wer_alignment>> best_alignments;
+  vector<wer_alignment> best_alignments;
   Walker walker;
   walker.pruningHeapSizeTarget = alignerOptions.heapPruningTarget;
   if (alignerOptions.composition_approach == "standard") {
@@ -218,7 +218,7 @@ spWERA Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engin
   throw std::runtime_error("no alignment produced");
 }
 
-vector<shared_ptr<Stitching>> make_stitches(spWERA alignment, vector<RawCtmRecord> hyp_ctm_rows = {},
+vector<shared_ptr<Stitching>> make_stitches(wer_alignment &alignment, vector<RawCtmRecord> hyp_ctm_rows = {},
                                             vector<RawNlpRecord> hyp_nlp_rows = {},
                                             vector<string> one_best_tokens = {}) {
   auto logger = logger::GetOrCreateLogger("fstalign");
@@ -226,18 +226,18 @@ vector<shared_ptr<Stitching>> make_stitches(spWERA alignment, vector<RawCtmRecor
   // Go through top alignment and create stitches
   vector<shared_ptr<Stitching>> stitches;
   AlignmentTraversor visitor(alignment);
-  triple *tk_pair = new triple();
+  triple tk_pair;
 
   int alignedTokensIndex = 0;
-  int alignedTokensMaxRow = alignment->tokens.size();
+  int alignedTokensMaxRow = alignment.tokens.size();
 
   int hypRowIndex = 0;
 
   string prev_tk_classLabel = "";
   while (visitor.NextTriple(tk_pair)) {
-    string tk_classLabel = tk_pair->classLabel;
-    string ref_tk = tk_pair->ref;
-    string hyp_tk = tk_pair->hyp;
+    string tk_classLabel = tk_pair.classLabel;
+    string ref_tk = tk_pair.ref;
+    string hyp_tk = tk_pair.hyp;
 
     // next turn, we want to process the next token pair...
     shared_ptr<Stitching> part(new Stitching());
@@ -636,7 +636,7 @@ void HandleWer(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engine
   auto logger = logger::GetOrCreateLogger("fstalign");
   logger->set_level(spdlog::level::info);
 
-  spWERA topAlignment = Fstalign(refLoader, hypLoader, engine, alignerOptions);
+  wer_alignment topAlignment = Fstalign(refLoader, hypLoader, engine, alignerOptions);
   CalculatePrecisionRecall(topAlignment, alignerOptions.pr_threshold);
 
   RecordWer(topAlignment);
@@ -713,10 +713,6 @@ void HandleAlign(NlpFstLoader *refLoader, CtmFstLoader *hypLoader, SynonymEngine
   auto logger = logger::GetOrCreateLogger("fstalign");
   logger->set_level(spdlog::level::info);
 
-  if (topAlignment == nullptr) {
-    logger->warn("No alignment produced, can't compute WER statistics or alignments");
-    return;
-  }
   auto stitches = make_stitches(topAlignment, hypLoader->mCtmRows);
   align_stitches_to_nlp(refLoader, &stitches);
   write_stitches_to_nlp(stitches, output_nlp_file, refLoader->mJsonNorm);

@@ -11,24 +11,15 @@ Walker.cpp
 using namespace std;
 using namespace fst;
 
-Walker::Walker() {
-  logbook = new map<int, float>();
-
-  heapA = new PathHeap();
-  heapB = new PathHeap();
+Walker::Walker() : heapA(&_heapA), heapB(&_heapB) {
   logger = logger::GetOrCreateLogger("walker");
 }
 
-Walker::~Walker() {
-  delete heapA;
-  delete heapB;
-}
-
-vector<shared_ptr<wer_alignment>> Walker::walkComposed(IComposition &fst, SymbolTable &symbol, FstAlignOption &options,
+vector<wer_alignment> Walker::walkComposed(IComposition &fst, SymbolTable &symbol, FstAlignOption &options,
                                                        int numBests) {
   logger->info("starting a walk in the park");
 
-  vector<spWERA> topAlignments;
+  vector<wer_alignment> topAlignments;
   // initialize internal stores.  if we don't initialize the state iterator
   // (even if we don't really use it) then any call to ArcIterator(fst,
   // state_no) or fst.Final() will throw an exception
@@ -164,8 +155,8 @@ std::shared_ptr<ShortlistEntry> Walker::enqueueIfNeeded(std::shared_ptr<Shortlis
   }
 
   bool enqueue = false;
-  auto found = logbook->find(target_state);
-  if (found == logbook->end()) {
+  auto found = logbook.find(target_state);
+  if (found == logbook.end()) {
     // we couldn't find a shortlist entry in the logbook, we'll have to create
     // one
     enqueue = true;
@@ -212,12 +203,12 @@ std::shared_ptr<ShortlistEntry> Walker::enqueueIfNeeded(std::shared_ptr<Shortlis
   // let's be mindfull of how allocations are made
   enqueued->local_arc = arc_ptr;
 
-  (*logbook)[enqueued->currentState] = enqueued->costSoFar;
+  logbook[enqueued->currentState] = enqueued->costSoFar;
 
   return enqueued;
 }
 
-shared_ptr<wer_alignment> Walker::GetDetailsFromTopCandidates(ShortlistEntry &currentState, SymbolTable &symbol,
+wer_alignment Walker::GetDetailsFromTopCandidates(ShortlistEntry &currentState, SymbolTable &symbol,
                                                               FstAlignOption &options) {
   logger->debug("GetDetailsFromTopCandidates()");
   // it's an approx wer because numWords is actually the number of arcs we
@@ -227,7 +218,7 @@ shared_ptr<wer_alignment> Walker::GetDetailsFromTopCandidates(ShortlistEntry &cu
   // we'll try to recover the exact amount of words chosen
   int numWordsInReference = 0;
 
-  auto global_wer_alignment = shared_ptr<wer_alignment>(new wer_alignment());
+  wer_alignment global_wer_alignment;
 
   // could be ambiguous if we have a lattice instead of a
   // flat list of words from CTM for example
@@ -259,8 +250,8 @@ shared_ptr<wer_alignment> Walker::GetDetailsFromTopCandidates(ShortlistEntry &cu
         // we are entring a class label
         class_label_wer_info = shared_ptr<wer_alignment>(new wer_alignment());
         class_label_wer_info->classLabel = ilabel;
-        global_wer_alignment->label_alignments.push_back(class_label_wer_info);
-        global_wer_alignment->tokens.push_back(make_pair(ilabel, olabel));
+        global_wer_alignment.label_alignments.emplace_back(std::move(*class_label_wer_info));
+        global_wer_alignment.tokens.push_back(make_pair(ilabel, olabel));
       } else if (ilabel == class_label_wer_info->classLabel) {
         // we're leaving a class label section
         class_label_wer_info = nullptr;
@@ -284,14 +275,14 @@ olabel was in hyp
 
     if (local_arc.ilabel != local_arc.olabel) {
       if (local_arc.ilabel == 0) {
-        global_wer_alignment->insertions++;
-        global_wer_alignment->numWordsInHypothesis++;
+        global_wer_alignment.insertions++;
+        global_wer_alignment.numWordsInHypothesis++;
 
-        global_wer_alignment->hyp_words.push_back(olabel);
-        global_wer_alignment->ref_words.push_back(INS);
+        global_wer_alignment.hyp_words.push_back(olabel);
+        global_wer_alignment.ref_words.push_back(INS);
 
         // keep track of the attractors
-        global_wer_alignment->ins_words.push_back(olabel);
+        global_wer_alignment.ins_words.push_back(olabel);
 
         if (class_label_wer_info != nullptr) {
           class_label_wer_info->insertions++;
@@ -304,16 +295,16 @@ olabel was in hyp
           class_label_wer_info->ins_words.push_back(olabel);
           class_label_wer_info->tokens.push_back(make_pair(INS, olabel));
         } else {
-          global_wer_alignment->tokens.push_back(make_pair(INS, olabel));
+          global_wer_alignment.tokens.push_back(make_pair(INS, olabel));
         }
       } else if (local_arc.olabel == 0) {
-        global_wer_alignment->deletions++;
-        global_wer_alignment->numWordsInReference++;
-        global_wer_alignment->ref_words.push_back(ilabel);
-        global_wer_alignment->hyp_words.push_back(DEL);
+        global_wer_alignment.deletions++;
+        global_wer_alignment.numWordsInReference++;
+        global_wer_alignment.ref_words.push_back(ilabel);
+        global_wer_alignment.hyp_words.push_back(DEL);
 
         // keep track of the repellant words
-        global_wer_alignment->del_words.push_back(ilabel);
+        global_wer_alignment.del_words.push_back(ilabel);
 
         if (class_label_wer_info != nullptr) {
           class_label_wer_info->deletions++;
@@ -325,19 +316,19 @@ olabel was in hyp
           class_label_wer_info->del_words.push_back(ilabel);
           class_label_wer_info->tokens.push_back(make_pair(ilabel, DEL));
         } else {
-          global_wer_alignment->tokens.push_back(make_pair(ilabel, DEL));
+          global_wer_alignment.tokens.push_back(make_pair(ilabel, DEL));
         }
       } else {
-        global_wer_alignment->substitutions++;
-        global_wer_alignment->numWordsInReference++;
-        global_wer_alignment->numWordsInHypothesis++;
+        global_wer_alignment.substitutions++;
+        global_wer_alignment.numWordsInReference++;
+        global_wer_alignment.numWordsInHypothesis++;
 
-        global_wer_alignment->ref_words.push_back(ilabel);
-        global_wer_alignment->hyp_words.push_back(olabel);
+        global_wer_alignment.ref_words.push_back(ilabel);
+        global_wer_alignment.hyp_words.push_back(olabel);
 
         std::pair<string, string> pair;
         pair = std::make_pair(ilabel, olabel);
-        global_wer_alignment->sub_words.push_back(pair);
+        global_wer_alignment.sub_words.push_back(pair);
 
         if (class_label_wer_info != nullptr) {
           class_label_wer_info->substitutions++;
@@ -350,18 +341,18 @@ olabel was in hyp
           class_label_wer_info->sub_words.push_back(pair);
           class_label_wer_info->tokens.push_back(pair);
         } else {
-          global_wer_alignment->tokens.push_back(pair);
+          global_wer_alignment.tokens.push_back(pair);
         }
       }
     } else if (!isClassLabel_i && special_symbols.find(local_arc.ilabel) == special_symbols.end() &&
                special_symbols.find(local_arc.olabel) == special_symbols.end()) {
       std::pair<string, string> pair;
       pair = std::make_pair(ilabel, olabel);
-      global_wer_alignment->numWordsInHypothesis++;
-      global_wer_alignment->numWordsInReference++;
+      global_wer_alignment.numWordsInHypothesis++;
+      global_wer_alignment.numWordsInReference++;
 
-      global_wer_alignment->ref_words.push_back(ilabel);
-      global_wer_alignment->hyp_words.push_back(olabel);
+      global_wer_alignment.ref_words.push_back(ilabel);
+      global_wer_alignment.hyp_words.push_back(olabel);
 
       if (class_label_wer_info != nullptr) {
         class_label_wer_info->numWordsInHypothesis++;
@@ -372,7 +363,7 @@ olabel was in hyp
 
         class_label_wer_info->tokens.push_back(pair);
       } else {
-        global_wer_alignment->tokens.push_back(pair);
+        global_wer_alignment.tokens.push_back(pair);
       }
     }
 
@@ -380,13 +371,13 @@ olabel was in hyp
   }
 
   logger->info("approx WER was {}, real WER is {}", approx_wer,
-               (float)(global_wer_alignment->insertions + global_wer_alignment->deletions +
-                       global_wer_alignment->substitutions) /
-                   (float)global_wer_alignment->numWordsInReference);
+               (float)(global_wer_alignment.insertions + global_wer_alignment.deletions +
+                       global_wer_alignment.substitutions) /
+                   (float)global_wer_alignment.numWordsInReference);
 
   // for now, everything is backward, let's proceed to reverse all vectors so that we are returning texts in the natural
   // order
 
-  global_wer_alignment->Reverse();
+  global_wer_alignment.Reverse();
   return global_wer_alignment;
 }

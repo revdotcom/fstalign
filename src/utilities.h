@@ -90,10 +90,10 @@ struct wer_alignment {
   vector<pair<string, string>> bigram_tokens;
 
   vector<pair<string, string>> tokens;
-  vector<spWERA> label_alignments;
+  vector<wer_alignment> label_alignments;
   int NumErrors() { return insertions + substitutions + deletions; }
   /* can return infinity if numWordsInReference == 0 and numWordsInHypothesis > 0 */
-  float WER() {
+  float WER() const {
     if (numWordsInReference > 0) {
       return (float)(insertions + deletions + substitutions) / (float)numWordsInReference;
     }
@@ -113,7 +113,7 @@ struct wer_alignment {
     std::reverse(sub_words.begin(), sub_words.end());
     std::reverse(tokens.begin(), tokens.end());
     for (auto &a : label_alignments) {
-      a->Reverse();
+      a.Reverse();
     }
   }
 };
@@ -226,7 +226,7 @@ Iter splitStringIter(const std::string &s, const std::string &delim, Iter out);
 
 std::string string_join(const std::vector<std::string> &elements, const char *const separator);
 
-unordered_set<string> get_bigrams(const spWERA &topAlignment);
+unordered_set<string> get_bigrams(wer_alignment &topAlignment);
 bool isValidNgram(const string &token);
 bool isEntityLabel(const string &token);
 bool isSynonymLabel(const string &token);

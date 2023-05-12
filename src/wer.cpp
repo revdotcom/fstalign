@@ -13,40 +13,35 @@ void RecordWerResult(Json::Value &json, WerResult wr) {
   json["wer"] = wr.WER();
 }
 
-void RecordWer(spWERA topAlignment) {
+void RecordWer(wer_alignment &topAlignment) {
   auto logger = logger::GetOrCreateLogger("wer");
   logger->set_level(spdlog::level::info);
 
-  if (topAlignment == nullptr) {
-    logger->warn("No alignment produced, can't compute WER statistics");
-    return;
-  }
+  logger->info("best WER: {0}/{1} = {2:.4f} (Total words in reference: {1})", topAlignment.NumErrors(),
+               topAlignment.numWordsInReference, topAlignment.WER());
+  logger->info("best WER: INS:{} DEL:{} SUB:{}", topAlignment.insertions, topAlignment.deletions,
+               topAlignment.substitutions);
+  logger->info("best WER: Precision:{:01.6f} Recall:{:01.6f}", topAlignment.precision, topAlignment.recall);
 
-  logger->info("best WER: {0}/{1} = {2:.4f} (Total words in reference: {1})", topAlignment->NumErrors(),
-               topAlignment->numWordsInReference, topAlignment->WER());
-  logger->info("best WER: INS:{} DEL:{} SUB:{}", topAlignment->insertions, topAlignment->deletions,
-               topAlignment->substitutions);
-  logger->info("best WER: Precision:{:01.6f} Recall:{:01.6f}", topAlignment->precision, topAlignment->recall);
-
-  jsonLogger::JsonLogger::getLogger().root["wer"]["bestWER"]["wer"] = topAlignment->WER();
-  jsonLogger::JsonLogger::getLogger().root["wer"]["bestWER"]["numErrors"] = topAlignment->NumErrors();
-  jsonLogger::JsonLogger::getLogger().root["wer"]["bestWER"]["numWordsInReference"] = topAlignment->numWordsInReference;
-  jsonLogger::JsonLogger::getLogger().root["wer"]["bestWER"]["insertions"] = topAlignment->insertions;
-  jsonLogger::JsonLogger::getLogger().root["wer"]["bestWER"]["deletions"] = topAlignment->deletions;
-  jsonLogger::JsonLogger::getLogger().root["wer"]["bestWER"]["substitutions"] = topAlignment->substitutions;
-  jsonLogger::JsonLogger::getLogger().root["wer"]["bestWER"]["precision"] = topAlignment->precision;
-  jsonLogger::JsonLogger::getLogger().root["wer"]["bestWER"]["recall"] = topAlignment->recall;
+  jsonLogger::JsonLogger::getLogger().root["wer"]["bestWER"]["wer"] = topAlignment.WER();
+  jsonLogger::JsonLogger::getLogger().root["wer"]["bestWER"]["numErrors"] = topAlignment.NumErrors();
+  jsonLogger::JsonLogger::getLogger().root["wer"]["bestWER"]["numWordsInReference"] = topAlignment.numWordsInReference;
+  jsonLogger::JsonLogger::getLogger().root["wer"]["bestWER"]["insertions"] = topAlignment.insertions;
+  jsonLogger::JsonLogger::getLogger().root["wer"]["bestWER"]["deletions"] = topAlignment.deletions;
+  jsonLogger::JsonLogger::getLogger().root["wer"]["bestWER"]["substitutions"] = topAlignment.substitutions;
+  jsonLogger::JsonLogger::getLogger().root["wer"]["bestWER"]["precision"] = topAlignment.precision;
+  jsonLogger::JsonLogger::getLogger().root["wer"]["bestWER"]["recall"] = topAlignment.recall;
   jsonLogger::JsonLogger::getLogger().root["wer"]["bestWER"]["meta"] = Json::objectValue;
   jsonLogger::JsonLogger::getLogger().root["wer"]["classWER"] = Json::objectValue;
 
-  if (topAlignment->label_alignments.size() > 0) {
+  if (topAlignment.label_alignments.size() > 0) {
     logger->info(" -- class label information found --");
     // Maps label classes (CARDINAL, ORDINAL, etc.) to accumulated WER
     unordered_map<string, WerResult> class_results;
     int largestClassNameSize = 0;
 
-    for (auto &a : topAlignment->label_alignments) {
-      string class_label_id = a->classLabel;
+    for (auto &a : topAlignment.label_alignments) {
+      string class_label_id = a.classLabel;
       string label = GetLabelNameFromClassLabel(class_label_id);
       int numStitches = label.size();
       largestClassNameSize = std::max(largestClassNameSize, numStitches);
@@ -55,10 +50,10 @@ void RecordWer(spWERA topAlignment) {
         class_results[label] = {0, 0, 0, 0, 0};
       }
 
-      class_results[label].numWordsInReference += a->numWordsInReference;
-      class_results[label].insertions += a->insertions;
-      class_results[label].deletions += a->deletions;
-      class_results[label].substitutions += a->substitutions;
+      class_results[label].numWordsInReference += a.numWordsInReference;
+      class_results[label].insertions += a.insertions;
+      class_results[label].deletions += a.deletions;
+      class_results[label].substitutions += a.substitutions;
     }
 
     for (auto &a : class_results) {
@@ -159,9 +154,9 @@ void RecordSpeakerWer(vector<shared_ptr<Stitching>> stitches) {
   }
 }
 
-void UpdateHypCorrectAndAllwords(const spWERA &topAlignment, map<string, uint64_t> &hyp_words_counts,
+void UpdateHypCorrectAndAllwords(wer_alignment &topAlignment, map<string, uint64_t> &hyp_words_counts,
                                  map<string, uint64_t> &correct_words_counts, set<string> &all_words) {
-  for (auto &tokens : topAlignment->tokens) {
+  for (auto &tokens : topAlignment.tokens) {
     bool bigram_valid = isValidNgram(tokens.second);
     if ((tokens.first == tokens.second) && bigram_valid) {
       correct_words_counts[tokens.first] += 1;
@@ -177,8 +172,8 @@ void UpdateHypCorrectAndAllwords(const spWERA &topAlignment, map<string, uint64_
     if (isEntityLabel(tokens.first)) {
       auto class_label = tokens.first;
 
-      for (auto &label_alignment : topAlignment->label_alignments) {
-        if (label_alignment->classLabel == class_label) {
+      for (auto &label_alignment : topAlignment.label_alignments) {
+        if (label_alignment.classLabel == class_label) {
           UpdateHypCorrectAndAllwords(label_alignment, hyp_words_counts, correct_words_counts, all_words);
           break;
         }
@@ -381,13 +376,13 @@ void RecordTagWer(vector<shared_ptr<Stitching>> stitches) {
   }
 }
 
-void CalculatePrecisionRecall(spWERA &topAlignment, int threshold) {
-  int correct = topAlignment->numWordsInReference - topAlignment->deletions - topAlignment->substitutions;
-  topAlignment->precision = (float)correct / (correct + topAlignment->insertions + topAlignment->substitutions);
-  topAlignment->recall = (float)correct /  // Recall = C /(C + S + D)
-                         (correct + topAlignment->substitutions + topAlignment->deletions);
+void CalculatePrecisionRecall(wer_alignment &topAlignment, int threshold) {
+  int correct = topAlignment.numWordsInReference - topAlignment.deletions - topAlignment.substitutions;
+  topAlignment.precision = (float)correct / (correct + topAlignment.insertions + topAlignment.substitutions);
+  topAlignment.recall = (float)correct /  // Recall = C /(C + S + D)
+                         (correct + topAlignment.substitutions + topAlignment.deletions);
 
-  int total = 0;  //= topAlignment->ref_words.size();
+  int total = 0;  //= topAlignment.ref_words.size();
   correct = 0;
   int del = 0;
   int subst_fp = 0;
@@ -406,17 +401,17 @@ void CalculatePrecisionRecall(spWERA &topAlignment, int threshold) {
   map<string, uint64_t> ins_words_counts;
   UpdateHypCorrectAndAllwords(topAlignment, hyp_words_counts, correct_words_counts, all_words);
 
-  for (auto &word : topAlignment->del_words) {
+  for (auto &word : topAlignment.del_words) {
     del_words_counts[word] += 1;
     if (all_words.find(word) == all_words.end()) all_words.insert(word);
   }
-  for (auto &word : topAlignment->sub_words) {
+  for (auto &word : topAlignment.sub_words) {
     subst_fn_words_counts[word.first] += 1;
     subst_fp_words_counts[word.second] += 1;
     if (all_words.find(word.first) == all_words.end()) all_words.insert(word.first);
     if (all_words.find(word.second) == all_words.end()) all_words.insert(word.second);
   }
-  for (auto &word : topAlignment->ins_words) {
+  for (auto &word : topAlignment.ins_words) {
     ins_words_counts[word] += 1;
     if (all_words.find(word) == all_words.end()) {
       all_words.insert(word);
@@ -439,7 +434,7 @@ void CalculatePrecisionRecall(spWERA &topAlignment, int threshold) {
       error_counter.recall = (float)((float)correct / (float)(correct + del + subst_fn)) * 100;
 
     if ((correct + ins + del + subst_fp + subst_fn) >= threshold) {
-      topAlignment->unigram_stats.push_back(std::make_pair(w, error_counter));
+      topAlignment.unigram_stats.push_back(std::make_pair(w, error_counter));
     }
   }
 
@@ -455,7 +450,7 @@ void CalculatePrecisionRecall(spWERA &topAlignment, int threshold) {
     }
   };
 
-  std::sort(topAlignment->unigram_stats.begin(), topAlignment->unigram_stats.end(), precision_recall_compare);
+  std::sort(topAlignment.unigram_stats.begin(), topAlignment.unigram_stats.end(), precision_recall_compare);
 
   unordered_set<string> all_bigrams = get_bigrams(topAlignment);
   map<string, uint64_t> correct_bigram_counts;
@@ -464,7 +459,7 @@ void CalculatePrecisionRecall(spWERA &topAlignment, int threshold) {
   map<string, uint64_t> subst_fn_bigram_counts;
   map<string, uint64_t> subst_fp_bigram_counts;
 
-  for (auto &bigram_tokens : topAlignment->bigram_tokens) {
+  for (auto &bigram_tokens : topAlignment.bigram_tokens) {
     auto bigram_ref = bigram_tokens.first;
     auto bigram_hyp = bigram_tokens.second;
 
@@ -506,12 +501,12 @@ void CalculatePrecisionRecall(spWERA &topAlignment, int threshold) {
     if (correct + ins + subst_fp != 0) error_counter.precision = ((float)correct / (float)(correct + ins + subst_fp)) * 100;
     if ((correct + del + subst_fn) != 0) error_counter.recall = ((float)correct / (float)(correct + del + subst_fn)) * 100;
     if ((correct + ins + del + subst_fn + subst_fp) >= threshold) {
-      topAlignment->bigrams_stats.push_back(std::make_pair(b, error_counter));
+      topAlignment.bigrams_stats.push_back(std::make_pair(b, error_counter));
     }
   }
 
   // sort in asceding order with precision then recall
-  std::sort(topAlignment->bigrams_stats.begin(), topAlignment->bigrams_stats.end(), precision_recall_compare);
+  std::sort(topAlignment.bigrams_stats.begin(), topAlignment.bigrams_stats.end(), precision_recall_compare);
 
   return;
 }
@@ -534,7 +529,7 @@ void AddErrorGroup(ErrorGroups &groups, size_t &line, string &ref, string &hyp) 
   hyp = "";
 }
 
-void WriteSbs(spWERA topAlignment, vector<shared_ptr<Stitching>> stitches, string sbs_filename) {
+void WriteSbs(wer_alignment &topAlignment, vector<shared_ptr<Stitching>> stitches, string sbs_filename) {
   auto logger = logger::GetOrCreateLogger("wer");
   logger->set_level(spdlog::level::info);
 
@@ -612,7 +607,7 @@ void WriteSbs(spWERA topAlignment, vector<shared_ptr<Stitching>> stitches, strin
     myfile << fmt::format("{0:>20}\t{1}", group.first, group.second) << endl;
   }
 
-  for (const auto &a : topAlignment->unigram_stats) {
+  for (const auto &a : topAlignment.unigram_stats) {
     string word = a.first;
     gram_error_counter u = a.second;
     jsonLogger::JsonLogger::getLogger().root["wer"]["unigrams"][word]["correct"] = u.correct;
@@ -625,7 +620,7 @@ void WriteSbs(spWERA topAlignment, vector<shared_ptr<Stitching>> stitches, strin
   }
   // output error unigrams
   myfile << string(60, '-') << endl << fmt::format("{0:>20}\t{1:10}\t{2:10}", "Unigram", "Prec.", "Recall") << endl;
-  for (const auto &a : topAlignment->unigram_stats) {
+  for (const auto &a : topAlignment.unigram_stats) {
     string word = a.first;
     gram_error_counter u = a.second;
     myfile << fmt::format("{0:>20}\t{1}/{2} ({3:.1f} %)\t{4}/{5} ({6:.1f} %)", word, u.correct,
@@ -636,7 +631,7 @@ void WriteSbs(spWERA topAlignment, vector<shared_ptr<Stitching>> stitches, strin
 
   myfile << string(60, '-') << endl << fmt::format("{0:>20}\t{1:20}\t{2:20}", "Bigram", "Precision", "Recall") << endl;
 
-  for (const auto &a : topAlignment->bigrams_stats) {
+  for (const auto &a : topAlignment.bigrams_stats) {
     string word = a.first;
     gram_error_counter u = a.second;
     jsonLogger::JsonLogger::getLogger().root["wer"]["bigrams"][word]["correct"] = u.correct;
@@ -647,7 +642,7 @@ void WriteSbs(spWERA topAlignment, vector<shared_ptr<Stitching>> stitches, strin
     jsonLogger::JsonLogger::getLogger().root["wer"]["bigrams"][word]["precision"] = u.precision;
     jsonLogger::JsonLogger::getLogger().root["wer"]["bigrams"][word]["recall"] = u.recall;
   }
-  for (const auto &a : topAlignment->bigrams_stats) {
+  for (const auto &a : topAlignment.bigrams_stats) {
     string word = a.first;
     gram_error_counter u = a.second;
     myfile << fmt::format("{0:>20}\t{1}/{2} ({3:.1f} %)\t{4}/{5} ({6:.1f} %)", word, u.correct,
