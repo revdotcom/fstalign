@@ -15,5 +15,6 @@ jobs:
         with:
           args: --verbose --no-progress './**/*.md' './**/*.json' './**/*.cpp' './**/*.h' './**/*.cc'
           fail: true
+          cache: true
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
