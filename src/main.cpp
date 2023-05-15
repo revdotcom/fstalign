@@ -1,6 +1,5 @@
 #include <CLI/CLI.hpp>
 #include <fstream>
-#include <memory>
 
 #include "FstFileLoader.h"
 #include "OneBestFstLoader.h"
@@ -15,7 +14,7 @@ using namespace fst;
 
 int main(int argc, char **argv) {
   setlocale(LC_ALL, "en_US.UTF-8");
-  std::vector<string> ref_filenames;
+  string ref_filename;
   string json_norm_filename;
   string wer_sidecar_filename;
   string hyp_filename;
@@ -50,7 +49,7 @@ int main(int argc, char **argv) {
   // adding common options.  It's fine to reuse the ref_filename since we
   // require exactly one subcommand to be defined
   for (auto &c : {get_wer, get_alignment}) {
-    c->add_option("-r,--ref", ref_filenames,
+    c->add_option("-r,--ref", ref_filename,
                   "Reference filename (.nlp & .ctm have special handling, "
                   "everything else is handled as a plain text)");
     c->add_option("--ref-json", json_norm_filename,
@@ -216,31 +215,32 @@ int main(int argc, char **argv) {
 
   // loading "reference" inputs
   FstLoader *hyp;
-  std::vector<std::unique_ptr<FstLoader>> refs;
-  for (const std::string& ref_filename : ref_filenames) {
-    if (EndsWithCaseInsensitive(ref_filename, string(".nlp"))) {
-      NlpReader nlpReader = NlpReader();
-      console->info("reading reference nlp from {}", ref_filename);
-      auto vec = nlpReader.read_from_disk(ref_filename);
-      refs.emplace_back(std::move(std::make_unique<NlpFstLoader>(vec, obj, wer_sidecar_obj, true, use_punctuation)));
-    } else if (EndsWithCaseInsensitive(ref_filename, string(".ctm"))) {
-      console->info("reading reference ctm from {}", ref_filename);
-      CtmReader ctmReader = CtmReader();
-      auto vect = ctmReader.read_from_disk(ref_filename);
-      refs.emplace_back(std::move(std::make_unique<CtmFstLoader>(vect)));
-    } else if (EndsWithCaseInsensitive(ref_filename, string(".fst"))) {
-      if (symbols_filename.empty()) {
-        console->error("a symbols file must be specified if reading an FST.");
-      }
-      console->info("reading reference fst from {}", ref_filename);
-      refs.emplace_back(std::move(std::make_unique<FstFileLoader>(ref_filename)));
-    } else {
-      console->info("reading reference plain text from {}", ref_filename);
-      auto oneBestFst = std::make_unique<OneBestFstLoader>();
-      oneBestFst->LoadTextFile(ref_filename);
-      refs.emplace_back(std::move(oneBestFst));
+  FstLoader *ref;
+  if (EndsWithCaseInsensitive(ref_filename, string(".nlp"))) {
+    NlpReader nlpReader = NlpReader();
+    console->info("reading reference nlp from {}", ref_filename);
+    auto vec = nlpReader.read_from_disk(ref_filename);
+    NlpFstLoader *nlpFst = new NlpFstLoader(vec, obj, wer_sidecar_obj, true, use_punctuation);
+    ref = nlpFst;
+  } else if (EndsWithCaseInsensitive(ref_filename, string(".ctm"))) {
+    console->info("reading reference ctm from {}", ref_filename);
+    CtmReader ctmReader = CtmReader();
+    auto vect = ctmReader.read_from_disk(ref_filename);
+    CtmFstLoader *ctmFst = new CtmFstLoader(vect);
+    ref = ctmFst;
+  } else if (EndsWithCaseInsensitive(ref_filename, string(".fst"))) {
+    if (symbols_filename.empty()) {
+      console->error("a symbols file must be specified if reading an FST.");
     }
-  } 
+    console->info("reading reference fst from {}", ref_filename);
+    FstFileLoader *archive_fst = new FstFileLoader(ref_filename);
+    ref = archive_fst;
+  } else {
+    console->info("reading reference plain text from {}", ref_filename);
+    auto *oneBestFst = new OneBestFstLoader();
+    oneBestFst->LoadTextFile(ref_filename);
+    ref = oneBestFst;
+  }
 
   // loading "hypothesis" inputs
   if (EndsWithCaseInsensitive(hyp_filename, string(".nlp"))) {
@@ -299,7 +299,7 @@ int main(int argc, char **argv) {
   alignerOptions.composition_approach = composition_approach;
 
   if (command == "wer") {
-    HandleWer(refs[0].get(), hyp, engine, output_sbs, output_nlp, alignerOptions);
+    HandleWer(ref, hyp, engine, output_sbs, output_nlp, alignerOptions);
   } else if (command == "align") {
     if (output_nlp.empty()) {
       console->error("the output nlp file must be specified");
@@ -311,7 +311,7 @@ int main(int argc, char **argv) {
     // TODO: We should instrument FstLoader base class
     // to have nlp rows and ctm rows and have a getCtmRows/getNlpRows
     // empty methods that throw exceptions if not implemented.
-    NlpFstLoader *nlpRef = dynamic_cast<NlpFstLoader *>(refs[0].get());
+    NlpFstLoader *nlpRef = dynamic_cast<NlpFstLoader *>(ref);
     CtmFstLoader *ctmHyp = dynamic_cast<CtmFstLoader *>(hyp);
 
     HandleAlign(nlpRef, ctmHyp, engine, output_nlp_file, alignerOptions);

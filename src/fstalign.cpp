@@ -724,6 +724,3 @@ void HandleAlign(NlpFstLoader *refLoader, CtmFstLoader *hypLoader, SynonymEngine
   align_stitches_to_nlp(refLoader, &stitches);
   write_stitches_to_nlp(stitches, output_nlp_file, refLoader->mJsonNorm);
 }
-
-void CombineReferences() {
-}
