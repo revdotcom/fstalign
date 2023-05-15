@@ -13,8 +13,7 @@ jobs:
       - name: Link Checker
         uses: lycheeverse/lychee-action@e1ef974431881438bf594f458e332b099fd33bb5 #v1.4.1 https://github.com/lycheeverse/lychee-action#security-tip
         with:
-          args: --verbose --no-progress './**/*.md' './**/*.json' './**/*.cpp' './**/*.h' './**/*.cc'
+          args: --cache --verbose --no-progress './**/*.md' './**/*.json' './**/*.cpp' './**/*.h' './**/*.cc'
           fail: true
-          cache: true
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
