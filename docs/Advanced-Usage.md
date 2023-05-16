@@ -40,7 +40,8 @@ test.wav 1 15.0 1.0 g
 OpenFST FST files can only be passed to the `--hyp` parameter. fstalign will directly use this FST as the hypothesis during alignment. This is useful for something like oracle lattice analysis, where the reference is aligned to the most accurate path present in a lattice.
 
 Please note that FST inputs require using the standard composition approach,
-which can be set using `--composition-approach standard`.
+which can be set using `--composition-approach standard`. Approximate alignment
+must also be disabled with `--disable-approx-alignment`.
 
 ### Synonyms
 Synonyms allow for reference words to be equivalent to similar forms (determined by the user) for error counting. They are accepted for any input formats and passed into the tool via the `--syn <path_to_synonym_file>` flag. For details see [Synonyms Format](https://github.com/revdotcom/fstalign/blob/develop/docs/Synonyms-Format.md). A standard set of synonyms we use at Rev.ai is available in the repository under `sample_data/synonyms.rules.txt`.

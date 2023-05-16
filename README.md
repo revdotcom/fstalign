@@ -98,7 +98,7 @@ The wer subcommand is the most frequent usage of this tool. Required are two arg
 | ----------- | ----------- | ----------- |
 | `.ctm`      | :white_check_mark: | :white_check_mark: |
 | `.nlp`      | :white_check_mark: | :white_check_mark: |
-| `.fst`      | :x: | :white_check_mark: |
+| `.fst`      | :white_check_mark: | :white_check_mark: |
 | All other file extensions, assumed to be plain text | :white_check_mark: | :white_check_mark: |
 
 Basic Example:
