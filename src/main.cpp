@@ -228,6 +228,13 @@ int main(int argc, char **argv) {
     auto vect = ctmReader.read_from_disk(ref_filename);
     CtmFstLoader *ctmFst = new CtmFstLoader(vect);
     ref = ctmFst;
+  } else if (EndsWithCaseInsensitive(ref_filename, string(".fst"))) {
+    if (symbols_filename.empty()) {
+      console->error("a symbols file must be specified if reading an FST.");
+    }
+    console->info("reading reference fst from {}", ref_filename);
+    FstFileLoader *archive_fst = new FstFileLoader(ref_filename);
+    ref = archive_fst;
   } else {
     console->info("reading reference plain text from {}", ref_filename);
     auto *oneBestFst = new OneBestFstLoader();
