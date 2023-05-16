@@ -171,9 +171,7 @@ spWERA Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engin
     hypFst = hypLoader->convertToFst(symbol, mapB);
   }
   
-  FstFileLoader* fstFileLoader = dynamic_cast< FstFileLoader*>(refLoader);
-  
-  if (fstFileLoader != nullptr && engine != nullptr) {
+  if (engine != nullptr) {
     logger->info("generating ref synonyms from symbol table");
     engine->GenerateSynFromSymbolTable(symbol);
     logger->info("applying ref synonyms on ref fst");
