@@ -1,4 +1,4 @@
-<div align="left"><img src="https://i.imgur.com/CJpeJPa.png" width="550"/></div>
+<div align="left"><img src="docs/fstalign_logo.png" width="550"/></div>
 
 ![CI](https://github.com/revdotcom/fstalign/workflows/CI/badge.svg)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -98,7 +98,7 @@ The wer subcommand is the most frequent usage of this tool. Required are two arg
 | ----------- | ----------- | ----------- |
 | `.ctm`      | :white_check_mark: | :white_check_mark: |
 | `.nlp`      | :white_check_mark: | :white_check_mark: |
-| `.fst`      | :x: | :white_check_mark: |
+| `.fst`      | :white_check_mark: | :white_check_mark: |
 | All other file extensions, assumed to be plain text | :white_check_mark: | :white_check_mark: |
 
 Basic Example:
