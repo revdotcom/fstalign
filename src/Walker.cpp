@@ -231,8 +231,7 @@ wer_alignment Walker::GetDetailsFromTopCandidates(ShortlistEntry &currentState, 
   std::unordered_set<int> special_symbols = {options.eps_idx, options.del_idx, options.ins_idx, options.sub_idx,
                                              options.oov_idx};
 
-  wer_alignment class_label_wer_info;
-  bool null = true;
+  spWERA class_label_wer_info = nullptr;
 
   while (now != nullptr && now->local_arc != nullptr) {
     auto local_arc = *(now->local_arc);
@@ -247,18 +246,15 @@ wer_alignment Walker::GetDetailsFromTopCandidates(ShortlistEntry &currentState, 
     }
 
     if (isClassLabel_i) {
-      if (null) {
+      if (class_label_wer_info == nullptr) {
         // we are entring a class label
-        class_label_wer_info = wer_alignment();
-        null = false;
-
-        class_label_wer_info.classLabel = ilabel;
-        global_wer_alignment.label_alignments.emplace_back(class_label_wer_info);
+        class_label_wer_info = shared_ptr<wer_alignment>(new wer_alignment());
+        class_label_wer_info->classLabel = ilabel;
+        global_wer_alignment.label_alignments.emplace_back(std::move(*class_label_wer_info));
         global_wer_alignment.tokens.push_back(make_pair(ilabel, olabel));
-      } else if (ilabel == class_label_wer_info.classLabel) {
+      } else if (ilabel == class_label_wer_info->classLabel) {
         // we're leaving a class label section
-        //class_label_wer_info = nullptr;
-        null = true;
+        class_label_wer_info = nullptr;
       }
       // Ignore nested classes.
       // Impossible to have overlap between synonyms and class labels, so we'll
@@ -288,16 +284,16 @@ olabel was in hyp
         // keep track of the attractors
         global_wer_alignment.ins_words.push_back(olabel);
 
-        if ( !null) {
-          class_label_wer_info.insertions++;
-          class_label_wer_info.numWordsInHypothesis++;
+        if (class_label_wer_info != nullptr) {
+          class_label_wer_info->insertions++;
+          class_label_wer_info->numWordsInHypothesis++;
 
-          class_label_wer_info.hyp_words.push_back(olabel);
-          class_label_wer_info.ref_words.push_back(INS);
+          class_label_wer_info->hyp_words.push_back(olabel);
+          class_label_wer_info->ref_words.push_back(INS);
 
           // keep track of the attractors
-          class_label_wer_info.ins_words.push_back(olabel);
-          class_label_wer_info.tokens.push_back(make_pair(INS, olabel));
+          class_label_wer_info->ins_words.push_back(olabel);
+          class_label_wer_info->tokens.push_back(make_pair(INS, olabel));
         } else {
           global_wer_alignment.tokens.push_back(make_pair(INS, olabel));
         }
@@ -310,15 +306,15 @@ olabel was in hyp
         // keep track of the repellant words
         global_wer_alignment.del_words.push_back(ilabel);
 
-        if (!null) {
-          class_label_wer_info.deletions++;
-          class_label_wer_info.numWordsInReference++;
-          class_label_wer_info.ref_words.push_back(ilabel);
-          class_label_wer_info.hyp_words.push_back(DEL);
+        if (class_label_wer_info != nullptr) {
+          class_label_wer_info->deletions++;
+          class_label_wer_info->numWordsInReference++;
+          class_label_wer_info->ref_words.push_back(ilabel);
+          class_label_wer_info->hyp_words.push_back(DEL);
 
           // keep track of the repellant words
-          class_label_wer_info.del_words.push_back(ilabel);
-          class_label_wer_info.tokens.push_back(make_pair(ilabel, DEL));
+          class_label_wer_info->del_words.push_back(ilabel);
+          class_label_wer_info->tokens.push_back(make_pair(ilabel, DEL));
         } else {
           global_wer_alignment.tokens.push_back(make_pair(ilabel, DEL));
         }
@@ -334,16 +330,16 @@ olabel was in hyp
         pair = std::make_pair(ilabel, olabel);
         global_wer_alignment.sub_words.push_back(pair);
 
-        if (!null) {
-          class_label_wer_info.substitutions++;
-          class_label_wer_info.numWordsInReference++;
-          class_label_wer_info.numWordsInHypothesis++;
+        if (class_label_wer_info != nullptr) {
+          class_label_wer_info->substitutions++;
+          class_label_wer_info->numWordsInReference++;
+          class_label_wer_info->numWordsInHypothesis++;
 
-          class_label_wer_info.ref_words.push_back(ilabel);
-          class_label_wer_info.hyp_words.push_back(olabel);
+          class_label_wer_info->ref_words.push_back(ilabel);
+          class_label_wer_info->hyp_words.push_back(olabel);
 
-          class_label_wer_info.sub_words.push_back(pair);
-          class_label_wer_info.tokens.push_back(pair);
+          class_label_wer_info->sub_words.push_back(pair);
+          class_label_wer_info->tokens.push_back(pair);
         } else {
           global_wer_alignment.tokens.push_back(pair);
         }
@@ -358,14 +354,14 @@ olabel was in hyp
       global_wer_alignment.ref_words.push_back(ilabel);
       global_wer_alignment.hyp_words.push_back(olabel);
 
-      if (!null) {
-        class_label_wer_info.numWordsInHypothesis++;
-        class_label_wer_info.numWordsInReference++;
+      if (class_label_wer_info != nullptr) {
+        class_label_wer_info->numWordsInHypothesis++;
+        class_label_wer_info->numWordsInReference++;
 
-        class_label_wer_info.ref_words.push_back(ilabel);
-        class_label_wer_info.hyp_words.push_back(olabel);
+        class_label_wer_info->ref_words.push_back(ilabel);
+        class_label_wer_info->hyp_words.push_back(olabel);
 
-        class_label_wer_info.tokens.push_back(pair);
+        class_label_wer_info->tokens.push_back(pair);
       } else {
         global_wer_alignment.tokens.push_back(pair);
       }
