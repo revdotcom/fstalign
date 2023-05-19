@@ -231,7 +231,7 @@ wer_alignment Walker::GetDetailsFromTopCandidates(ShortlistEntry &currentState, 
   std::unordered_set<int> special_symbols = {options.eps_idx, options.del_idx, options.ins_idx, options.sub_idx,
                                              options.oov_idx};
 
-  spWERA class_label_wer_info = nullptr;
+  wer_alignment *class_label_wer_info = nullptr;
 
   while (now != nullptr && now->local_arc != nullptr) {
     auto local_arc = *(now->local_arc);
@@ -248,9 +248,10 @@ wer_alignment Walker::GetDetailsFromTopCandidates(ShortlistEntry &currentState, 
     if (isClassLabel_i) {
       if (class_label_wer_info == nullptr) {
         // we are entring a class label
-        class_label_wer_info = shared_ptr<wer_alignment>(new wer_alignment());
+        global_wer_alignment.label_alignments.emplace_back();
+
+        class_label_wer_info = &global_wer_alignment.label_alignments.back();
         class_label_wer_info->classLabel = ilabel;
-        global_wer_alignment.label_alignments.emplace_back(std::move(*class_label_wer_info));
         global_wer_alignment.tokens.push_back(make_pair(ilabel, olabel));
       } else if (ilabel == class_label_wer_info->classLabel) {
         // we're leaving a class label section

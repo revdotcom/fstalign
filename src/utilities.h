@@ -64,11 +64,11 @@ typedef struct gram_error_counter {
 struct wer_alignment {
   string classLabel;
   // int numErrors;
-  int insertions;
-  int deletions;
-  int substitutions;
-  int numWordsInReference;
-  int numWordsInHypothesis;
+  int insertions = 0;
+  int deletions = 0;
+  int substitutions = 0;
+  int numWordsInReference = 0;
+  int numWordsInHypothesis = 0;
 
   vector<string> ref_words;
   vector<string> hyp_words;
