@@ -537,7 +537,6 @@ void WriteSbs(wer_alignment &topAlignment, vector<shared_ptr<Stitching>> stitche
   myfile.open(sbs_filename);
 
   AlignmentTraversor visitor(topAlignment);
-  triple *tk_pair = new triple();
   string prev_tk_classLabel = "";
   logger->info("Side-by-Side alignment info going into {}", sbs_filename);
   myfile << fmt::format("{0:>20}\t{1:20}\t{2}\t{3}\t{4}", "ref_token", "hyp_token", "IsErr", "Class", "Wer_Tag_Entities") << endl;

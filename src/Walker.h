@@ -31,7 +31,7 @@ class Walker {
   std::shared_ptr<spdlog::logger> logger;
 
   std::shared_ptr<ShortlistEntry> enqueueIfNeeded(std::shared_ptr<ShortlistEntry> currentStatePtr,
-                                                  shared_ptr<MyArc> arc_ptr, bool isAnchor);
+                                                  const MyArc& arc_ptr, bool isAnchor);
   wer_alignment GetDetailsFromTopCandidates(ShortlistEntry &currentState, SymbolTable &symbol,
                                                         FstAlignOption &options);
 };

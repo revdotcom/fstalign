@@ -74,14 +74,14 @@ vector<wer_alignment> Walker::walkComposed(IComposition &fst, SymbolTable &symbo
       arcsLeaving++;
 
       // let's reduce our dependency of fstarc objects
-      auto local_arc_ptr = make_shared<MyArc>();
-      local_arc_ptr->ilabel = arc.ilabel;
-      local_arc_ptr->olabel = arc.olabel;
-      local_arc_ptr->nextstate = arc.nextstate;
-      local_arc_ptr->weight = arc.weight.Value();
+      MyArc local_arc;
+      local_arc.ilabel = arc.ilabel;
+      local_arc.olabel = arc.olabel;
+      local_arc.nextstate = arc.nextstate;
+      local_arc.weight = arc.weight.Value();
 
       bool isAnchor = false;
-      auto pp = enqueueIfNeeded(currentState_ptr, local_arc_ptr, isAnchor);
+      auto pp = enqueueIfNeeded(currentState_ptr, local_arc, isAnchor);
 
       if (pp != nullptr) {
         heapB->insert(pp);
@@ -143,10 +143,9 @@ vector<wer_alignment> Walker::walkComposed(IComposition &fst, SymbolTable &symbo
 }
 
 std::shared_ptr<ShortlistEntry> Walker::enqueueIfNeeded(std::shared_ptr<ShortlistEntry> currentState,
-                                                        shared_ptr<MyArc> arc_ptr, bool isAnchor) {
+                                                        const MyArc& arc, bool isAnchor) {
   shared_ptr<ShortlistEntry> enqueued = nullptr;
 
-  auto arc = *arc_ptr;
   int target_state = arc.nextstate;
 
   if (target_state == currentState->currentState) {
@@ -201,7 +200,7 @@ std::shared_ptr<ShortlistEntry> Walker::enqueueIfNeeded(std::shared_ptr<Shortlis
   }
 
   // let's be mindfull of how allocations are made
-  enqueued->local_arc = arc_ptr;
+  enqueued->local_arc = arc;
 
   logbook[enqueued->currentState] = enqueued->costSoFar;
 
@@ -233,8 +232,8 @@ wer_alignment Walker::GetDetailsFromTopCandidates(ShortlistEntry &currentState, 
 
   wer_alignment *class_label_wer_info = nullptr;
 
-  while (now != nullptr && now->local_arc != nullptr) {
-    auto local_arc = *(now->local_arc);
+  while (now != nullptr) {
+    const MyArc& local_arc = now->local_arc;
     string ilabel = symbol.Find(local_arc.ilabel);
     string olabel = symbol.Find(local_arc.olabel);
 

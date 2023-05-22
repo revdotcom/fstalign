@@ -44,7 +44,7 @@ using StdReverseOlabelCompare = ReverseOLabelCompare<StdArc>;
 
 bool sort_alignment(const wer_alignment& a, const wer_alignment &b) { return a.WER() < b.WER(); }
 
-wer_alignment Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engine, AlignerOptions alignerOptions) {
+wer_alignment Fstalign(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine &engine, AlignerOptions alignerOptions) {
   //  int numBests, string symbols_filename, string composition_approach, bool levenstein_first_pass) {
   auto logger = logger::GetOrCreateLogger("fstalign");
   FstAlignOption options;
@@ -64,10 +64,10 @@ wer_alignment Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine
     fst::SymbolTable levensteinn_sym;
     logger->info("starting conversion to int vector");
     logger->info("converting ref to int vector");
-    std::vector<int> vA = refLoader->convertToIntVector(levensteinn_sym);
+    std::vector<int> vA = refLoader.convertToIntVector(levensteinn_sym);
 
     logger->info("converting hyp to int vector");
-    std::vector<int> vB = hypLoader->convertToIntVector(levensteinn_sym);
+    std::vector<int> vB = hypLoader.convertToIntVector(levensteinn_sym);
     logger->debug("vA size is {}, vB size is {}", vA.size(), vB.size());
 
     int dist = 0;
@@ -154,8 +154,8 @@ wer_alignment Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine
   logger->info("total good items: {}", good_match);
 #endif
 
-  refLoader->addToSymbolTable(symbol);
-  hypLoader->addToSymbolTable(symbol);
+  refLoader.addToSymbolTable(symbol);
+  hypLoader.addToSymbolTable(symbol);
 
   fst::StdVectorFst refFst;
   fst::StdVectorFst hypFst;
@@ -163,20 +163,18 @@ wer_alignment Fstalign(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine
     // Only use map if it is safe for composition, only checking hypothesis map for now
     logger->info("Not using levenshtein pre-computation - error streak longer than {}",
                  alignerOptions.levenstein_maximum_error_streak);
-    refFst = refLoader->convertToFst(symbol, {});
-    hypFst = hypLoader->convertToFst(symbol, {});
+    refFst = refLoader.convertToFst(symbol, {});
+    hypFst = hypLoader.convertToFst(symbol, {});
   } else {
-    refFst = refLoader->convertToFst(symbol, mapA);
-    hypFst = hypLoader->convertToFst(symbol, mapB);
+    refFst = refLoader.convertToFst(symbol, mapA);
+    hypFst = hypLoader.convertToFst(symbol, mapB);
   }
 
-  if (engine != nullptr) {
-    logger->info("generating ref synonyms from symbol table");
-    engine->GenerateSynFromSymbolTable(symbol);
-    logger->info("applying ref synonyms on ref fst");
-    engine->ApplyToFst(refFst, symbol);
-    ArcSort(&refFst, StdILabelCompare());
-  }
+  logger->info("generating ref synonyms from symbol table");
+  engine.GenerateSynFromSymbolTable(symbol);
+  logger->info("applying ref synonyms on ref fst");
+  engine.ApplyToFst(refFst, symbol);
+  ArcSort(&refFst, StdILabelCompare());
 
   logger->info("printing ref fst");
   if (refFst.NumStates() > 100) {
@@ -240,7 +238,7 @@ vector<shared_ptr<Stitching>> make_stitches(wer_alignment &alignment, vector<Raw
     string hyp_tk = tk_pair.hyp;
 
     // next turn, we want to process the next token pair...
-    shared_ptr<Stitching> part(new Stitching());
+    auto part = make_shared<Stitching>();
     stitches.push_back(part);
     part->classLabel = tk_classLabel;
     part->reftk = ref_tk;
@@ -348,12 +346,12 @@ vector<shared_ptr<Stitching>> make_stitches(wer_alignment &alignment, vector<Raw
   return stitches;
 }
 
-void align_stitches_to_nlp(NlpFstLoader *refLoader, vector<shared_ptr<Stitching>> *stitches) {
+void align_stitches_to_nlp(NlpFstLoader& refLoader, vector<shared_ptr<Stitching>> *stitches) {
   /* now, lets process NLP info */
   auto logger = logger::GetOrCreateLogger("fstalign");
   logger->set_level(spdlog::level::info);
 
-  auto nlpRows = refLoader->mNlpRows;
+  auto nlpRows = refLoader.mNlpRows;
   int alignedTokensIndex = 0;
   int nlpRowIndex = 0;
   int nlpMaxRow = nlpRows.size();
@@ -478,20 +476,20 @@ void align_stitches_to_nlp(NlpFstLoader *refLoader, vector<shared_ptr<Stitching>
     // Miguel's suggestion: put punct/case info on the last word
     // Revision: put case info on the 1st word and punct info on the last word
     if (classLabelRowsInNlp == 1) {
-      RawNlpRecord *newRecord = new RawNlpRecord();
-      newRecord->best_label = nlpPart.best_label;
-      newRecord->best_label_id = nlpPart.best_label_id;
-      newRecord->labels = nlpPart.labels;
-      newRecord->wer_tags = nlpPart.wer_tags;
-      newRecord->speakerId = nlpPart.speakerId;
-      newRecord->token = nlpPart.token;
-      newRecord->ts = nlpPart.ts;
-      newRecord->endTs = nlpPart.endTs;
-      newRecord->punctuation = "";
-      newRecord->prepunctuation = "";
-      newRecord->casing = "LC";
+      RawNlpRecord newRecord;
+      newRecord.best_label = nlpPart.best_label;
+      newRecord.best_label_id = nlpPart.best_label_id;
+      newRecord.labels = nlpPart.labels;
+      newRecord.wer_tags = nlpPart.wer_tags;
+      newRecord.speakerId = nlpPart.speakerId;
+      newRecord.token = nlpPart.token;
+      newRecord.ts = nlpPart.ts;
+      newRecord.endTs = nlpPart.endTs;
+      newRecord.punctuation = "";
+      newRecord.prepunctuation = "";
+      newRecord.casing = "LC";
 
-      stitch->nlpRow = *newRecord;
+      stitch->nlpRow = newRecord;
       // if we have a UC, we want that info to be transferred to the 1st word
       stitch->nlpRow.casing = nlpPart.casing;
       stitch->comment += ",push_last";
@@ -499,7 +497,7 @@ void align_stitches_to_nlp(NlpFstLoader *refLoader, vector<shared_ptr<Stitching>
 
       if (classLabelRowsInStitches > 2) {
         for (int i = 1; i < classLabelRowsInStitches - 1; i++) {
-          (*stitches)[alignedTokensIndex]->nlpRow = *newRecord;
+          (*stitches)[alignedTokensIndex]->nlpRow = newRecord;
           (*stitches)[alignedTokensIndex]->comment += ",push_last";
           alignedTokensIndex++;
         }
@@ -629,7 +627,7 @@ void write_stitches_to_nlp(vector<shared_ptr<Stitching>> stitches, ofstream &out
   }
 }
 
-void HandleWer(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engine, string output_sbs, string output_nlp,
+void HandleWer(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine &engine, string output_sbs, string output_nlp,
                AlignerOptions alignerOptions) {
   //  int speaker_switch_context_size, int numBests, int pr_threshold, string symbols_filename,
   //  string composition_approach, bool record_case_stats) {
@@ -641,9 +639,9 @@ void HandleWer(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engine
 
   RecordWer(topAlignment);
   vector<shared_ptr<Stitching>> stitches;
-  CtmFstLoader *ctm_hyp_loader = dynamic_cast<CtmFstLoader *>(hypLoader);
-  NlpFstLoader *nlp_hyp_loader = dynamic_cast<NlpFstLoader *>(hypLoader);
-  OneBestFstLoader *best_loader = dynamic_cast<OneBestFstLoader *>(hypLoader);
+  CtmFstLoader *ctm_hyp_loader = dynamic_cast<CtmFstLoader *>(&hypLoader);
+  NlpFstLoader *nlp_hyp_loader = dynamic_cast<NlpFstLoader *>(&hypLoader);
+  OneBestFstLoader *best_loader = dynamic_cast<OneBestFstLoader *>(&hypLoader);
   if (ctm_hyp_loader) {
     stitches = make_stitches(topAlignment, ctm_hyp_loader->mCtmRows, {});
   } else if (nlp_hyp_loader) {
@@ -660,12 +658,12 @@ void HandleWer(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engine
     stitches = make_stitches(topAlignment);
   }
 
-  NlpFstLoader *nlp_ref_loader = dynamic_cast<NlpFstLoader *>(refLoader);
+  NlpFstLoader *nlp_ref_loader = dynamic_cast<NlpFstLoader *>(&refLoader);
   if (nlp_ref_loader) {
     // We have an NLP reference, more metadata (e.g. speaker info) is available
     // Align stitches to the NLP, so stitches can access metadata
     try {
-      align_stitches_to_nlp(nlp_ref_loader, &stitches);
+      align_stitches_to_nlp(*nlp_ref_loader, &stitches);
     } catch (const std::bad_alloc &) {
       logger->error("Speaker switch diagnostics failed from memory error, likely due to overlapping class labels.");
     }
@@ -703,7 +701,7 @@ void HandleWer(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engine
   }
 }
 
-void HandleAlign(NlpFstLoader *refLoader, CtmFstLoader *hypLoader, SynonymEngine *engine, ofstream &output_nlp_file,
+void HandleAlign(NlpFstLoader& refLoader, CtmFstLoader& hypLoader, SynonymEngine &engine, ofstream &output_nlp_file,
                  AlignerOptions alignerOptions) {
   //  int numBests, string symbols_filename, string composition_approach) {
   auto topAlignment = Fstalign(refLoader, hypLoader, engine, alignerOptions);
@@ -713,7 +711,7 @@ void HandleAlign(NlpFstLoader *refLoader, CtmFstLoader *hypLoader, SynonymEngine
   auto logger = logger::GetOrCreateLogger("fstalign");
   logger->set_level(spdlog::level::info);
 
-  auto stitches = make_stitches(topAlignment, hypLoader->mCtmRows);
+  auto stitches = make_stitches(topAlignment, hypLoader.mCtmRows);
   align_stitches_to_nlp(refLoader, &stitches);
-  write_stitches_to_nlp(stitches, output_nlp_file, refLoader->mJsonNorm);
+  write_stitches_to_nlp(stitches, output_nlp_file, refLoader.mJsonNorm);
 }

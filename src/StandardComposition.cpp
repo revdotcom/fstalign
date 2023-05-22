@@ -107,7 +107,7 @@ StandardCompositionFst::StandardCompositionFst(const fst::StdFst &fstA, const fs
   }
 
   logger_->info("performing lazy composition");
-  fstC_ = new fst::StdComposeFst(halfCompose1, halfCompose2);
+  fstC_ = std::make_unique<fst::StdComposeFst>(halfCompose1, halfCompose2);
 
   // initialize internal stores.  if we don't initialize the state iterator
   // (even if we don't really use it) then any call to ArcIterator(fst,
@@ -130,11 +130,7 @@ bool StandardCompositionFst::TryGetArcsAtState(StateId fromStateId, vector<fst::
   return true;
 }
 
-StandardCompositionFst::~StandardCompositionFst() {
-  if (fstC_ != NULL) {
-    delete fstC_;
-  }
-}
+StandardCompositionFst::~StandardCompositionFst() {}
 
 void StandardCompositionFst::DebugComposedGraph(string debug_filename) {
   StdVectorFst composedFst(*fstC_);
