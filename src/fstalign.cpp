@@ -216,13 +216,13 @@ wer_alignment Fstalign(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine
   throw std::runtime_error("no alignment produced");
 }
 
-vector<shared_ptr<Stitching>> make_stitches(wer_alignment &alignment, vector<RawCtmRecord> hyp_ctm_rows = {},
+vector<Stitching> make_stitches(wer_alignment &alignment, vector<RawCtmRecord> hyp_ctm_rows = {},
                                             vector<RawNlpRecord> hyp_nlp_rows = {},
                                             vector<string> one_best_tokens = {}) {
   auto logger = logger::GetOrCreateLogger("fstalign");
 
   // Go through top alignment and create stitches
-  vector<shared_ptr<Stitching>> stitches;
+  vector<Stitching> stitches;
   AlignmentTraversor visitor(alignment);
   triple tk_pair;
 
@@ -238,18 +238,18 @@ vector<shared_ptr<Stitching>> make_stitches(wer_alignment &alignment, vector<Raw
     string hyp_tk = tk_pair.hyp;
 
     // next turn, we want to process the next token pair...
-    auto part = make_shared<Stitching>();
-    stitches.push_back(part);
-    part->classLabel = tk_classLabel;
-    part->reftk = ref_tk;
-    part->hyptk = hyp_tk;
+    stitches.emplace_back();
+    Stitching &part = stitches.back();
+    part.classLabel = tk_classLabel;
+    part.reftk = ref_tk;
+    part.hyptk = hyp_tk;
     bool del = false, ins = false, sub = false;
     if (ref_tk == INS) {
-      part->comment = "ins";
+      part.comment = "ins";
     } else if (hyp_tk == DEL) {
-      part->comment = "del";
+      part.comment = "del";
     } else if (hyp_tk != ref_tk) {
-      part->comment = "sub(" + part->hyptk + ")";
+      part.comment = "sub(" + part.hyptk + ")";
     }
 
     // for classes, we will have only one token in the global vector
@@ -269,7 +269,7 @@ vector<shared_ptr<Stitching>> make_stitches(wer_alignment &alignment, vector<Raw
 
     if (hyp_tk == DEL) {
       // this is a deletion, the CTM info won't be available
-      part->comment = "del";
+      part.comment = "del";
       continue;
     }
 
@@ -280,12 +280,12 @@ vector<shared_ptr<Stitching>> make_stitches(wer_alignment &alignment, vector<Raw
 
     if (!hyp_ctm_rows.empty()) {
       auto ctmPart = hyp_ctm_rows[hypRowIndex];
-      part->start_ts = ctmPart.start_time_secs;
-      part->duration = ctmPart.duration_secs;
-      part->end_ts = ctmPart.start_time_secs + ctmPart.duration_secs;
-      part->confidence = ctmPart.confidence;
+      part.start_ts = ctmPart.start_time_secs;
+      part.duration = ctmPart.duration_secs;
+      part.end_ts = ctmPart.start_time_secs + ctmPart.duration_secs;
+      part.confidence = ctmPart.confidence;
 
-      part->hyp_orig = ctmPart.word;
+      part.hyp_orig = ctmPart.word;
       // sanity check
       std::string ctmCopy = UnicodeLowercase(ctmPart.word);
       if (hyp_tk != ctmCopy) {
@@ -298,32 +298,32 @@ vector<shared_ptr<Stitching>> make_stitches(wer_alignment &alignment, vector<Raw
 
     if (!hyp_nlp_rows.empty()) {
       auto hypNlpPart = hyp_nlp_rows[hypRowIndex];
-      part->hyp_orig = hypNlpPart.token;
+      part.hyp_orig = hypNlpPart.token;
       if (!hypNlpPart.ts.empty() && !hypNlpPart.endTs.empty()) {
         float ts = stof(hypNlpPart.ts);
         float endTs = stof(hypNlpPart.endTs);
 
-        part->start_ts = ts;
-        part->end_ts = endTs;
-        part->duration = endTs - ts;
+        part.start_ts = ts;
+        part.end_ts = endTs;
+        part.duration = endTs - ts;
       } else if (!hypNlpPart.ts.empty()) {
         float ts = stof(hypNlpPart.ts);
 
-        part->start_ts = ts;
-        part->end_ts = ts;
-        part->duration = 0.0;
+        part.start_ts = ts;
+        part.end_ts = ts;
+        part.duration = 0.0;
       } else if (!hypNlpPart.endTs.empty()) {
         float endTs = stof(hypNlpPart.endTs);
 
-        part->start_ts = endTs;
-        part->end_ts = endTs;
-        part->duration = 0.0;
+        part.start_ts = endTs;
+        part.end_ts = endTs;
+        part.duration = 0.0;
       }
     }
 
     if (!one_best_tokens.empty()) {
       auto token = one_best_tokens[hypRowIndex];
-      part->hyp_orig = token;
+      part.hyp_orig = token;
 
       // sanity check
       std::string token_copy = UnicodeLowercase(token);
@@ -346,7 +346,7 @@ vector<shared_ptr<Stitching>> make_stitches(wer_alignment &alignment, vector<Raw
   return stitches;
 }
 
-void align_stitches_to_nlp(NlpFstLoader& refLoader, vector<shared_ptr<Stitching>> *stitches) {
+void align_stitches_to_nlp(NlpFstLoader& refLoader, vector<Stitching> &stitches) {
   /* now, lets process NLP info */
   auto logger = logger::GetOrCreateLogger("fstalign");
   logger->set_level(spdlog::level::info);
@@ -355,11 +355,11 @@ void align_stitches_to_nlp(NlpFstLoader& refLoader, vector<shared_ptr<Stitching>
   int alignedTokensIndex = 0;
   int nlpRowIndex = 0;
   int nlpMaxRow = nlpRows.size();
-  int numStitches = stitches->size();
+  int numStitches = stitches.size();
   while (alignedTokensIndex < numStitches) {
-    auto stitch = (*stitches)[alignedTokensIndex];
+    auto &stitch = stitches[alignedTokensIndex];
 
-    if (stitch->comment.find("ins") == 0) {
+    if (stitch.comment.find("ins") == 0) {
       // there's no nlp row info for such case, let's skip over it
       alignedTokensIndex++;
       continue;
@@ -377,13 +377,13 @@ void align_stitches_to_nlp(NlpFstLoader& refLoader, vector<shared_ptr<Stitching>
     bool inClassLabel = false;
     bool inSynonymPath = false;
 
-    if (stitch->classLabel.find("_SYN_") != string::npos) {
+    if (stitch.classLabel.find("_SYN_") != string::npos) {
       // logger->trace("for class label {}, the _SYN_ was found at {}", stitch->classLabel,
       // stitch->classLabel.find("_SYN_"));
       inSynonymPath = true;
-    } else if (stitch->classLabel != TK_GLOBAL_CLASS) {
+    } else if (stitch.classLabel != TK_GLOBAL_CLASS) {
       inClassLabel = true;
-      if (nlp_classLabel != stitch->classLabel) {
+      if (nlp_classLabel != stitch.classLabel) {
         labelsMatch = false;
       }
     } else if (nlp_classLabel != "") {
@@ -396,12 +396,12 @@ void align_stitches_to_nlp(NlpFstLoader& refLoader, vector<shared_ptr<Stitching>
           "NLP stitching problem: the stitch has a class of [{}] and the nlp "
           "part "
           "has [{}]",
-          stitch->classLabel, nlpPart.best_label);
+          stitch.classLabel, nlpPart.best_label);
     }
 
     // if we're not in a class, just attach the nlp row and move on
     if (inClassLabel == false && inSynonymPath == false) {
-      stitch->nlpRow = nlpPart;
+      stitch.nlpRow = nlpPart;
       alignedTokensIndex++;
       nlpRowIndex++;
       continue;
@@ -412,11 +412,11 @@ void align_stitches_to_nlp(NlpFstLoader& refLoader, vector<shared_ptr<Stitching>
 
     if (inSynonymPath) {
       int tmpid;
-      sscanf(stitch->classLabel.c_str(), "___%d_SYN_%d-%d___", &tmpid, &classLabelRowsInNlp, &classLabelRowsInStitches);
+      sscanf(stitch.classLabel.c_str(), "___%d_SYN_%d-%d___", &tmpid, &classLabelRowsInNlp, &classLabelRowsInStitches);
       // We need the logic below in case there were insertions in the stitches
       while (alignedTokensIndex + classLabelRowsInStitches < numStitches) {
         int p = alignedTokensIndex + classLabelRowsInStitches;
-        if (stitch->classLabel == (*stitches)[p]->classLabel) {
+        if (stitch.classLabel == stitches[p].classLabel) {
           classLabelRowsInStitches++;
           continue;
         }
@@ -426,7 +426,7 @@ void align_stitches_to_nlp(NlpFstLoader& refLoader, vector<shared_ptr<Stitching>
     } else {
       while (alignedTokensIndex + classLabelRowsInStitches < numStitches) {
         int p = alignedTokensIndex + classLabelRowsInStitches;
-        if (stitch->classLabel == (*stitches)[p]->classLabel) {
+        if (stitch.classLabel == stitches[p].classLabel) {
           classLabelRowsInStitches++;
           continue;
         }
@@ -449,7 +449,7 @@ void align_stitches_to_nlp(NlpFstLoader& refLoader, vector<shared_ptr<Stitching>
 
     // one row for both, easy peasy...
     if (classLabelRowsInNlp == classLabelRowsInStitches && classLabelRowsInStitches == 1) {
-      stitch->nlpRow = nlpPart;
+      stitch.nlpRow = nlpPart;
       alignedTokensIndex++;
       nlpRowIndex++;
       continue;
@@ -458,14 +458,14 @@ void align_stitches_to_nlp(NlpFstLoader& refLoader, vector<shared_ptr<Stitching>
     // same number of rows.  We'll make the /assumption/ that a
     // direct alignment make sense
     if (classLabelRowsInNlp == classLabelRowsInStitches) {
-      stitch->nlpRow = nlpPart;
-      stitch->comment += ",direct";
+      stitch.nlpRow = nlpPart;
+      stitch.comment += ",direct";
       alignedTokensIndex++;
       nlpRowIndex++;
 
       for (int i = 1; i < classLabelRowsInNlp; i++) {
-        (*stitches)[alignedTokensIndex]->nlpRow = nlpRows[nlpRowIndex];
-        (*stitches)[alignedTokensIndex]->comment += ",direct";
+        stitches[alignedTokensIndex].nlpRow = nlpRows[nlpRowIndex];
+        stitches[alignedTokensIndex].comment += ",direct";
         alignedTokensIndex++;
         nlpRowIndex++;
       }
@@ -489,24 +489,24 @@ void align_stitches_to_nlp(NlpFstLoader& refLoader, vector<shared_ptr<Stitching>
       newRecord.prepunctuation = "";
       newRecord.casing = "LC";
 
-      stitch->nlpRow = newRecord;
+      stitch.nlpRow = newRecord;
       // if we have a UC, we want that info to be transferred to the 1st word
-      stitch->nlpRow.casing = nlpPart.casing;
-      stitch->comment += ",push_last";
+      stitch.nlpRow.casing = nlpPart.casing;
+      stitch.comment += ",push_last";
       alignedTokensIndex++;
 
       if (classLabelRowsInStitches > 2) {
         for (int i = 1; i < classLabelRowsInStitches - 1; i++) {
-          (*stitches)[alignedTokensIndex]->nlpRow = newRecord;
-          (*stitches)[alignedTokensIndex]->comment += ",push_last";
+          stitches[alignedTokensIndex].nlpRow = newRecord;
+          stitches[alignedTokensIndex].comment += ",push_last";
           alignedTokensIndex++;
         }
       }
 
-      (*stitches)[alignedTokensIndex]->nlpRow = nlpPart;
+      stitches[alignedTokensIndex].nlpRow = nlpPart;
       // setting last word casing to LC
-      (*stitches)[alignedTokensIndex]->nlpRow.casing = "LC";
-      (*stitches)[alignedTokensIndex]->comment += ",push_last";
+      stitches[alignedTokensIndex].nlpRow.casing = "LC";
+      stitches[alignedTokensIndex].comment += ",push_last";
       alignedTokensIndex++;
       nlpRowIndex++;
       continue;
@@ -516,8 +516,8 @@ void align_stitches_to_nlp(NlpFstLoader& refLoader, vector<shared_ptr<Stitching>
     // Miguel's suggestion: first nlp to the first word
     //                      last nlp to the last word...
     // I guess we could try to be smart and align tokens with reco/ref words...
-    stitch->nlpRow = nlpPart;
-    stitch->comment += ",split_worst";
+    stitch.nlpRow = nlpPart;
+    stitch.comment += ",split_worst";
 
     auto lastNlpPartInClass = nlpRows[nlpRowIndex + classLabelRowsInNlp - 1];
     // setting the index properly for the next turn...
@@ -528,7 +528,7 @@ void align_stitches_to_nlp(NlpFstLoader& refLoader, vector<shared_ptr<Stitching>
       // so we have > 1 nlp row but one single row in the ctm...
       // let's use the punctuation info of the last nlp row
       // and call it good
-      stitch->nlpRow.punctuation = lastNlpPartInClass.punctuation;
+      stitch.nlpRow.punctuation = lastNlpPartInClass.punctuation;
       alignedTokensIndex++;
       continue;
     }
@@ -537,25 +537,25 @@ void align_stitches_to_nlp(NlpFstLoader& refLoader, vector<shared_ptr<Stitching>
 
     alignedTokensIndex++;
     for (int i = 1; i < classLabelRowsInStitches - 1; i++) {
-      (*stitches)[alignedTokensIndex]->nlpRow = RawNlpRecord();
-      (*stitches)[alignedTokensIndex]->nlpRow.speakerId = nlpPart.speakerId;
-      (*stitches)[alignedTokensIndex]->nlpRow.punctuation = "";
-      (*stitches)[alignedTokensIndex]->nlpRow.casing = "LC";
-      (*stitches)[alignedTokensIndex]->nlpRow.labels = nlpPart.labels;
-      (*stitches)[alignedTokensIndex]->nlpRow.wer_tags = nlpPart.wer_tags;
-      (*stitches)[alignedTokensIndex]->comment += ",split_worst";
+      stitches[alignedTokensIndex].nlpRow = RawNlpRecord();
+      stitches[alignedTokensIndex].nlpRow.speakerId = nlpPart.speakerId;
+      stitches[alignedTokensIndex].nlpRow.punctuation = "";
+      stitches[alignedTokensIndex].nlpRow.casing = "LC";
+      stitches[alignedTokensIndex].nlpRow.labels = nlpPart.labels;
+      stitches[alignedTokensIndex].nlpRow.wer_tags = nlpPart.wer_tags;
+      stitches[alignedTokensIndex].comment += ",split_worst";
       alignedTokensIndex++;
     }
 
-    (*stitches)[alignedTokensIndex]->nlpRow = lastNlpPartInClass;
-    (*stitches)[alignedTokensIndex]->comment += ",split_worst";
+    stitches[alignedTokensIndex].nlpRow = lastNlpPartInClass;
+    stitches[alignedTokensIndex].comment += ",split_worst";
     alignedTokensIndex++;
 
     /* end of special handling of nlp rows vs stitches  */
   }
 }
 
-void write_stitches_to_nlp(vector<shared_ptr<Stitching>> stitches, ofstream &output_nlp_file, Json::Value norm_json) {
+void write_stitches_to_nlp(vector<Stitching>& stitches, ofstream &output_nlp_file, Json::Value norm_json) {
   auto logger = logger::GetOrCreateLogger("fstalign");
   logger->info("Writing nlp output");
   // write header; 'comment' is there to store information about how well the alignment went
@@ -565,33 +565,33 @@ void write_stitches_to_nlp(vector<shared_ptr<Stitching>> stitches, ofstream &out
                   << endl;
   for (auto &stitch : stitches) {
     // if the comment starts with 'ins'
-    if (stitch->comment.find("ins") == 0) {
+    if (stitch.comment.find("ins") == 0) {
       // there's no nlp row info for such case, let's skip over it
-      if (stitch->confidence >= 1) {
-        logger->warn("an insertion with high confidence was found for {}@{}", stitch->hyptk, stitch->start_ts);
+      if (stitch.confidence >= 1) {
+        logger->warn("an insertion with high confidence was found for {}@{}", stitch.hyptk, stitch.start_ts);
       }
 
       continue;
     }
 
-    string original_nlp_token = stitch->nlpRow.token;
-    string ref_tk = stitch->reftk;
+    string original_nlp_token = stitch.nlpRow.token;
+    string ref_tk = stitch.reftk;
 
     // trying to salvage some of the original punctuation in a relatively safe manner
     if (iequals(ref_tk, original_nlp_token)) {
       // Get the original casing
       ref_tk = original_nlp_token;
-      auto curr_label_id = stitch->nlpRow.best_label_id;
+      auto curr_label_id = stitch.nlpRow.best_label_id;
       if (norm_json[curr_label_id]["candidates"].size() > 0) {
         logger->warn("an unnormalized token was found: {}", ref_tk);
       }
     } else if (IsNoisecodeToken(original_nlp_token)) {
       // if we have a noisecode  <.*> in the nlp token, we inject it here
-      if (stitch->comment.length() == 0) {
+      if (stitch.comment.length() == 0) {
         if (ref_tk == DEL || ref_tk == "") {
-          stitch->comment = "sub(<eps>)";
+          stitch.comment = "sub(<eps>)";
         } else {
-          stitch->comment = "sub(" + ref_tk + ")";
+          stitch.comment = "sub(" + ref_tk + ")";
         }
       }
 
@@ -602,28 +602,28 @@ void write_stitches_to_nlp(vector<shared_ptr<Stitching>> stitches, ofstream &out
       continue;
     }
 
-    output_nlp_file << ref_tk << "|" << stitch->nlpRow.speakerId << "|";
-    if (stitch->hyptk == DEL) {
+    output_nlp_file << ref_tk << "|" << stitch.nlpRow.speakerId << "|";
+    if (stitch.hyptk == DEL) {
       // we have no ts/endTs data to put...
       output_nlp_file << "||";
     } else {
-      output_nlp_file << fmt::format("{0:.4f}", stitch->start_ts) << "|" << fmt::format("{0:.4f}", stitch->end_ts)
+      output_nlp_file << fmt::format("{0:.4f}", stitch.start_ts) << "|" << fmt::format("{0:.4f}", stitch.end_ts)
                       << "|";
     }
 
-    output_nlp_file << stitch->nlpRow.punctuation << "|" << stitch->nlpRow.prepunctuation << "|" << stitch->nlpRow.casing << "|" << stitch->nlpRow.labels << "|"
+    output_nlp_file << stitch.nlpRow.punctuation << "|" << stitch.nlpRow.prepunctuation << "|" << stitch.nlpRow.casing << "|" << stitch.nlpRow.labels << "|"
                     << "[";
     /* for (auto wer_tag : nlpRow.wer_tags) { */
-    for (auto it = stitch->nlpRow.wer_tags.begin(); it != stitch->nlpRow.wer_tags.end(); ++it) {
+    for (auto it = stitch.nlpRow.wer_tags.begin(); it != stitch.nlpRow.wer_tags.end(); ++it) {
       output_nlp_file << "'" << *it << "'";
-      if (std::next(it) != stitch->nlpRow.wer_tags.end()) {
+      if (std::next(it) != stitch.nlpRow.wer_tags.end()) {
         output_nlp_file << ", ";
       }
     }
     output_nlp_file << "]|";
     // leaving old timings intact
-    output_nlp_file << stitch->nlpRow.ts << "|" << stitch->nlpRow.endTs << "|";
-    output_nlp_file << stitch->comment << "|" << stitch->nlpRow.confidence << endl;
+    output_nlp_file << stitch.nlpRow.ts << "|" << stitch.nlpRow.endTs << "|";
+    output_nlp_file << stitch.comment << "|" << stitch.nlpRow.confidence << endl;
   }
 }
 
@@ -638,7 +638,7 @@ void HandleWer(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine &engine
   CalculatePrecisionRecall(topAlignment, alignerOptions.pr_threshold);
 
   RecordWer(topAlignment);
-  vector<shared_ptr<Stitching>> stitches;
+  vector<Stitching> stitches;
   CtmFstLoader *ctm_hyp_loader = dynamic_cast<CtmFstLoader *>(&hypLoader);
   NlpFstLoader *nlp_hyp_loader = dynamic_cast<NlpFstLoader *>(&hypLoader);
   OneBestFstLoader *best_loader = dynamic_cast<OneBestFstLoader *>(&hypLoader);
@@ -663,7 +663,7 @@ void HandleWer(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine &engine
     // We have an NLP reference, more metadata (e.g. speaker info) is available
     // Align stitches to the NLP, so stitches can access metadata
     try {
-      align_stitches_to_nlp(*nlp_ref_loader, &stitches);
+      align_stitches_to_nlp(*nlp_ref_loader, stitches);
     } catch (const std::bad_alloc &) {
       logger->error("Speaker switch diagnostics failed from memory error, likely due to overlapping class labels.");
     }
@@ -712,6 +712,6 @@ void HandleAlign(NlpFstLoader& refLoader, CtmFstLoader& hypLoader, SynonymEngine
   logger->set_level(spdlog::level::info);
 
   auto stitches = make_stitches(topAlignment, hypLoader.mCtmRows);
-  align_stitches_to_nlp(refLoader, &stitches);
+  align_stitches_to_nlp(refLoader, stitches);
   write_stitches_to_nlp(stitches, output_nlp_file, refLoader.mJsonNorm);
 }

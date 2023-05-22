@@ -69,18 +69,18 @@ void RecordWer(wer_alignment &topAlignment) {
   }
 }
 
-void RecordSentenceWer(vector<shared_ptr<Stitching>> stitches) {
+void RecordSentenceWer(const vector<Stitching> &stitches) {
   std::set<std::string> eos_punc{".", "?", "!"};
   vector<WerResult> sentence_wers;
   WerResult curr_wer = {0, 0, 0, 0, 0};
-  for (auto &stitch : stitches) {
-      curr_wer.deletions += stitch->comment.rfind("del", 0) == 0;
-      curr_wer.insertions += stitch->comment.rfind("ins", 0) == 0;
-      curr_wer.substitutions += stitch->comment.rfind("sub", 0) == 0;
-      curr_wer.numWordsInReference += stitch->comment.rfind("ins", 0) != 0;
+  for (const auto &stitch : stitches) {
+      curr_wer.deletions += stitch.comment.rfind("del", 0) == 0;
+      curr_wer.insertions += stitch.comment.rfind("ins", 0) == 0;
+      curr_wer.substitutions += stitch.comment.rfind("sub", 0) == 0;
+      curr_wer.numWordsInReference += stitch.comment.rfind("ins", 0) != 0;
 
       // Check if we hit EOS
-      if (eos_punc.find(stitch->nlpRow.punctuation) != eos_punc.end()) {
+      if (eos_punc.find(stitch.nlpRow.punctuation) != eos_punc.end()) {
         sentence_wers.push_back(curr_wer);
         curr_wer = {0, 0, 0, 0, 0};
       }
@@ -97,7 +97,7 @@ void RecordSentenceWer(vector<shared_ptr<Stitching>> stitches) {
 }
 
 
-void RecordSpeakerWer(vector<shared_ptr<Stitching>> stitches) {
+void RecordSpeakerWer(const vector<Stitching> &stitches) {
   // Note: stitches must have already been aligned to NLP rows
   // Logic for segment boundaries copied from speaker switch WER code
   auto logger = logger::GetOrCreateLogger("wer");
@@ -109,8 +109,8 @@ void RecordSpeakerWer(vector<shared_ptr<Stitching>> stitches) {
   int deletions = 0;
   int substitutions = 0;
   int num_words_in_reference = 0;
-  for (auto &stitch : stitches) {
-    string speaker_id = stitch->nlpRow.speakerId;
+  for (const auto &stitch : stitches) {
+    string speaker_id = stitch.nlpRow.speakerId;
     if (!speaker_id.empty() && speaker_id != last_speaker) {
       if (!last_speaker.empty()) {
         // Accumulated counts for this segment (speaker switch boundaries)
@@ -131,9 +131,9 @@ void RecordSpeakerWer(vector<shared_ptr<Stitching>> stitches) {
       last_speaker = speaker_id;
     }
 
-    insertions += stitch->comment.rfind("ins", 0) == 0;
-    deletions += stitch->comment.rfind("del", 0) == 0;
-    substitutions += stitch->comment.rfind("sub", 0) == 0;
+    insertions += stitch.comment.rfind("ins", 0) == 0;
+    deletions += stitch.comment.rfind("del", 0) == 0;
+    substitutions += stitch.comment.rfind("sub", 0) == 0;
     num_words_in_reference += speaker_id.empty() ? 0 : 1;
   }
 
@@ -182,27 +182,27 @@ void UpdateHypCorrectAndAllwords(wer_alignment &topAlignment, map<string, uint64
   }
 }
 
-vector<int> GetSpeakerSwitchIndices(vector<shared_ptr<Stitching>> stitches) {
+vector<int> GetSpeakerSwitchIndices(const vector<Stitching> &stitches) {
   // Note: stitches must have already been aligned to NLP rows
   vector<int> speakerSwitches;
   std::string lastSpeaker = "";
   int nlpRowIndex = 0;
-  for (auto &stitch : stitches) {
-    std::string speaker = stitch->nlpRow.speakerId;
+  for (const auto &stitch : stitches) {
+    std::string speaker = stitch.nlpRow.speakerId;
     if (!speaker.empty() && speaker != lastSpeaker) {
       if (!lastSpeaker.empty()) {
         speakerSwitches.push_back(nlpRowIndex);
       }
       lastSpeaker = speaker;
     }
-    if (stitch->comment.rfind("ins", 0) != 0) {
+    if (stitch.comment.rfind("ins", 0) != 0) {
       nlpRowIndex++;
     }
   }
   return speakerSwitches;
 }
 
-void RecordSpeakerSwitchWer(vector<shared_ptr<Stitching>> stitches, int speaker_switch_context_size) {
+void RecordSpeakerSwitchWer(const vector<Stitching> &stitches, int speaker_switch_context_size) {
   // Speaker switch WER is logged to logger and JSON logger
   auto logger = logger::GetOrCreateLogger("wer");
   logger->set_level(spdlog::level::info);
@@ -212,11 +212,11 @@ void RecordSpeakerSwitchWer(vector<shared_ptr<Stitching>> stitches, int speaker_
   int nlpRowIndex = 0;
   int switchNum = 0;
   WerResult wer = {0, 0, 0, 0, 0};
-  for (auto &stitch : stitches) {
+  for (const auto &stitch : stitches) {
     if (switchNum < switch_indices.size()) {
-      bool del = stitch->comment.rfind("del", 0) == 0;
-      bool ins = stitch->comment.rfind("ins", 0) == 0;
-      bool sub = stitch->comment.rfind("sub", 0) == 0;
+      bool del = stitch.comment.rfind("del", 0) == 0;
+      bool ins = stitch.comment.rfind("ins", 0) == 0;
+      bool sub = stitch.comment.rfind("sub", 0) == 0;
       if (nlpRowIndex >= switch_indices[switchNum] - speaker_switch_context_size &&
           nlpRowIndex < switch_indices[switchNum] + speaker_switch_context_size) {
         if (!ins) {
@@ -251,7 +251,7 @@ void RecordSpeakerSwitchWer(vector<shared_ptr<Stitching>> stitches, int speaker_
       speaker_switch_context_size;
 }
 
-void RecordCaseWer(vector<shared_ptr<Stitching>> aligned_stitches) {
+void RecordCaseWer(const vector<Stitching> &aligned_stitches) {
   auto logger = logger::GetOrCreateLogger("wer");
   logger->set_level(spdlog::level::info);
   int true_positive = 0;  // h is upper and r is upper
@@ -259,12 +259,12 @@ void RecordCaseWer(vector<shared_ptr<Stitching>> aligned_stitches) {
   int false_negative = 0;  // h is lower and r is upper
   int sub_tp(0), sub_fp(0), sub_fn(0);
 
-  for (auto &&stitch : aligned_stitches) {
-    string hyp = stitch->hyp_orig;
-    string ref = stitch->nlpRow.token;
-    string reftk = stitch->reftk;
-    string hyptk = stitch->hyptk;
-    string ref_casing = stitch->nlpRow.casing;
+  for (const auto &stitch : aligned_stitches) {
+    const string &hyp = stitch.hyp_orig;
+    const string &ref = stitch.nlpRow.token;
+    const string &reftk = stitch.reftk;
+    const string &hyptk = stitch.hyptk;
+    const string &ref_casing = stitch.nlpRow.casing;
 
     if (hyptk == DEL || reftk == INS) {
       continue;
@@ -277,7 +277,7 @@ void RecordCaseWer(vector<shared_ptr<Stitching>> aligned_stitches) {
     // A true positive matches
     if (reftk == hyptk) {
       if (ref_casing == "LC") {
-        for (auto &&c : hyp) {
+        for (const auto &c : hyp) {
           if (isupper(c)) {
             false_positive++;
             break;
@@ -341,23 +341,23 @@ void RecordCaseWer(vector<shared_ptr<Stitching>> aligned_stitches) {
   jsonLogger::JsonLogger::getLogger().root["wer"]["caseWER"]["all"]["false_negative"] = sub_fn + false_negative;
 }
 
-void RecordTagWer(vector<shared_ptr<Stitching>> stitches) {
+void RecordTagWer(const vector<Stitching>& stitches) {
   // Record per wer_tag ID stats
   auto logger = logger::GetOrCreateLogger("wer");
   logger->set_level(spdlog::level::info);
   std::map<std::string, WerResult> wer_results;
 
-  for (auto &stitch : stitches) {
-    if (!stitch->nlpRow.wer_tags.empty()) {
-      for (auto wer_tag : stitch->nlpRow.wer_tags) {
+  for (const auto &stitch : stitches) {
+    if (!stitch.nlpRow.wer_tags.empty()) {
+      for (auto wer_tag : stitch.nlpRow.wer_tags) {
         int tag_start = wer_tag.find_first_not_of('#');
         int tag_end = wer_tag.find('_');
         string wer_tag_id = wer_tag.substr(tag_start, tag_end - tag_start);
         wer_results.insert(std::pair<std::string, WerResult>(wer_tag_id, {0, 0, 0, 0, 0}));
         // Check with rfind since other comments can be there
-        bool del = stitch->comment.rfind("del", 0) == 0;
-        bool ins = stitch->comment.rfind("ins", 0) == 0;
-        bool sub = stitch->comment.rfind("sub", 0) == 0;
+        bool del = stitch.comment.rfind("del", 0) == 0;
+        bool ins = stitch.comment.rfind("ins", 0) == 0;
+        bool sub = stitch.comment.rfind("sub", 0) == 0;
         wer_results[wer_tag_id].insertions += ins;
         wer_results[wer_tag_id].deletions += del;
         wer_results[wer_tag_id].substitutions += sub;
@@ -529,7 +529,7 @@ void AddErrorGroup(ErrorGroups &groups, size_t &line, string &ref, string &hyp) 
   hyp = "";
 }
 
-void WriteSbs(wer_alignment &topAlignment, vector<shared_ptr<Stitching>> stitches, string sbs_filename) {
+void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, string sbs_filename) {
   auto logger = logger::GetOrCreateLogger("wer");
   logger->set_level(spdlog::level::info);
 
@@ -550,15 +550,15 @@ void WriteSbs(wer_alignment &topAlignment, vector<shared_ptr<Stitching>> stitche
   std::set<std::string> op_set = {"<ins>", "<del>", "<sub>"};
 
   size_t offset = 2;  // line number in output file where first triple starts
-  for (auto p_stitch: stitches) {
-    string tk_classLabel = p_stitch->classLabel;
+  for (const auto &p_stitch: stitches) {
+    string tk_classLabel = p_stitch.classLabel;
     string tk_wer_tags = "";
-    auto wer_tags = p_stitch->nlpRow.wer_tags;
+    auto wer_tags = p_stitch.nlpRow.wer_tags;
     for (auto wer_tag: wer_tags) {
       tk_wer_tags = tk_wer_tags + wer_tag + "|";
     }
-    string ref_tk = p_stitch->reftk;
-    string hyp_tk = p_stitch->hyptk;
+    string ref_tk = p_stitch.reftk;
+    string hyp_tk = p_stitch.hyptk;
     string tag = "";
 
     if (ref_tk == NOOP) {
