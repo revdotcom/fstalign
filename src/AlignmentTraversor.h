@@ -18,15 +18,15 @@ struct triple {
 
 class AlignmentTraversor {
  public:
-  AlignmentTraversor(spWERA topLevel);
-  bool NextTriple(triple *triple);
+  AlignmentTraversor(wer_alignment &topLevel);
+  bool NextTriple(triple &triple);
   void Restart();
 
  private:
-  spWERA root;
+  wer_alignment &root;
   int currentPosInRoot = -1;
   int currentPosInSubclass;
-  spWERA currentSubclass;
+  wer_alignment *currentSubclass;
 };
 
 #endif  // __ATRAVERSOR_H__

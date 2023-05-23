@@ -12,30 +12,29 @@ using namespace fst;
 
 PathHeap::PathHeap() {
   // creating the set
-  heap = new set<shared_ptr<ShortlistEntry>, shortlistComparatorSharedPtr>();
 }
 
 void PathHeap::insert(shared_ptr<ShortlistEntry> entry) {
   // just add it to the set, leaving to the comparator to do its job
-  heap->insert(entry);
+  heap.insert(entry);
 }
 
 shared_ptr<ShortlistEntry> PathHeap::removeFirst() {
   // we want to take the 1st element and remove it
-  auto logbookIter = heap->begin();
+  auto logbookIter = heap.begin();
   auto currentState_ptr = *logbookIter;
-  heap->erase(logbookIter);
+  heap.erase(logbookIter);
   return currentState_ptr;
 }
 
-int PathHeap::size() { return heap->size(); }
+int PathHeap::size() { return heap.size(); }
 
 shared_ptr<ShortlistEntry> PathHeap::GetBestWerCandidate() {
-  set<shared_ptr<ShortlistEntry>, shortlistComparatorSharedPtr>::iterator iter = heap->begin();
+  set<shared_ptr<ShortlistEntry>, shortlistComparatorSharedPtr>::iterator iter = heap.begin();
 
   shared_ptr<ShortlistEntry> best = nullptr;
   float bestWer = std::numeric_limits<float>::quiet_NaN();
-  while (iter != heap->end()) {
+  while (iter != heap.end()) {
     auto entry = *iter;
     float local_wer = (float)entry->numErrors / (float)entry->numWords;
 
@@ -57,9 +56,9 @@ shared_ptr<ShortlistEntry> PathHeap::GetBestWerCandidate() {
 }
 
 int PathHeap::prune(int targetSz) {
-  set<shared_ptr<ShortlistEntry>, shortlistComparatorSharedPtr>::iterator iter = heap->begin();
+  set<shared_ptr<ShortlistEntry>, shortlistComparatorSharedPtr>::iterator iter = heap.begin();
   float wer0, wer_last;
-  int sz = heap->size();
+  int sz = heap.size();
   for (int i = 0; i < targetSz && i < sz; i++) {
     float local_wer = (float)(*iter)->numErrors / ((float)(*iter)->numWords);
     if (i == 0) {
@@ -77,7 +76,7 @@ int PathHeap::prune(int targetSz) {
   // logger->set_level(spdlog::level::debug);
   logger->debug("==== pruning starting =====");
   logger->debug("pruning to {} items -> top wer was {} and last wer was {}.  We have {} items in the heap.", targetSz,
-                wer0, wer_last, heap->size());
+                wer0, wer_last, heap.size());
 
   /* TODO:  make sure we don't prune paths that have the same length/error-count
 as the last one kept at 'targetSz'
@@ -85,7 +84,7 @@ as the last one kept at 'targetSz'
 
   int numErrorsWithoutInsertions = (*last_wer_index)->numErrors - (*last_wer_index)->numInsert;
   int pruned = 0;
-  while (iter != heap->end()) {
+  while (iter != heap.end()) {
     auto p = *iter;
     float local_wer = (float)(*iter)->numErrors / ((float)(*iter)->numWords);
     logger->debug(
@@ -104,13 +103,13 @@ bool  pruneMe = (*last_wer_index)->numErrors + 20 < (*iter)->numErrors; --> seem
     bool pruneMe = (*last_wer_index)->numErrors + 20 < (*iter)->numErrors;
     logger->debug("{} + 20 < {} = {}", numErrorsWithoutInsertions, localCoreErr, pruneMe);
     if (pruneMe) {
-      heap->erase(iter++);
+      heap.erase(iter++);
       pruned++;
     } else {
       iter++;
     }
   }
-  logger->debug("after pruning we have {} items in the heap", heap->size());
+  logger->debug("after pruning we have {} items in the heap", heap.size());
   logger->debug("-----");
 
   return pruned;

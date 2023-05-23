@@ -22,10 +22,10 @@ typedef struct MyArc* MyArcPtr;
 typedef shared_ptr<ShortlistEntry> spSLE;
 
 struct MyArc {
-  int ilabel;
-  int olabel;
-  float weight;
-  int nextstate;
+  int ilabel = 0;
+  int olabel = 0;
+  float weight = 0.0;
+  int nextstate = 0;
 };
 
 struct ShortlistEntry {
@@ -36,7 +36,7 @@ struct ShortlistEntry {
   int numInsert = 0;
   double costToGoThere = 0;
   float costSoFar = 0;
-  shared_ptr<MyArc> local_arc;
+  MyArc local_arc;
   shared_ptr<ShortlistEntry> linkToHere = nullptr;
 };
 
@@ -70,6 +70,6 @@ class PathHeap {
   bool pruningIncludeInsInThreshold = true;
 
  private:
-  set<std::shared_ptr<ShortlistEntry>, shortlistComparatorSharedPtr>* heap;
+  set<std::shared_ptr<ShortlistEntry>, shortlistComparatorSharedPtr> heap;
 };
 #endif  // __PATH_HEAP_H__

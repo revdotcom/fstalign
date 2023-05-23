@@ -148,145 +148,12 @@ int main(int argc, char **argv) {
                 FSTALIGNER_VERSION_PATCH);
 
   auto subcommand = app.get_subcommands()[0];
-  auto command = subcommand->get_name();
-
-  Json::Value obj;
-  if (!json_norm_filename.empty()) {
-    console->info("reading json norm info from {}", json_norm_filename);
-    ifstream ifs(json_norm_filename);
-
-    Json::CharReaderBuilder builder;
-    builder["collectComments"] = false;
-
-    JSONCPP_STRING errs;
-    Json::parseFromStream(builder, ifs, &obj, &errs);
-
-    console->info("The json we just read [{}] has {} elements from its root", json_norm_filename, obj.size());
-  } else {
-    stringstream ss;
-    ss << "{}";
-
-    Json::CharReaderBuilder builder;
-    JSONCPP_STRING errs;
-    Json::parseFromStream(builder, ss, &obj, &errs);
-  }
-
-  Json::Value wer_sidecar_obj;
-  if (!wer_sidecar_filename.empty()) {
-    console->info("reading wer sidecar info from {}", wer_sidecar_filename);
-    ifstream ifs(wer_sidecar_filename);
-
-    Json::CharReaderBuilder builder;
-    builder["collectComments"] = false;
-
-    JSONCPP_STRING errs;
-    Json::parseFromStream(builder, ifs, &wer_sidecar_obj, &errs);
-
-    console->info("The json we just read [{}] has {} elements from its root", wer_sidecar_filename, wer_sidecar_obj.size());
-  } else {
-    stringstream ss;
-    ss << "{}";
-
-    Json::CharReaderBuilder builder;
-    JSONCPP_STRING errs;
-    Json::parseFromStream(builder, ss, &wer_sidecar_obj, &errs);
-  }
-
-  Json::Value hyp_json_obj;
-  if (!hyp_json_norm_filename.empty()) {
-    console->info("reading hypothesis json norm info from {}", hyp_json_norm_filename);
-    ifstream ifs(hyp_json_norm_filename);
-
-    Json::CharReaderBuilder builder;
-    builder["collectComments"] = false;
-
-    JSONCPP_STRING errs;
-    Json::parseFromStream(builder, ifs, &hyp_json_obj, &errs);
-
-    console->info("The json we just read [{}] has {} elements from its root", json_norm_filename, hyp_json_obj.size());
-  } else {
-    stringstream ss;
-    ss << "{}";
-
-    Json::CharReaderBuilder builder;
-    JSONCPP_STRING errs;
-    Json::parseFromStream(builder, ss, &hyp_json_obj, &errs);
-  }
+  auto command = subcommand->get_name(); 
+ 
 
   // loading "reference" inputs
-  FstLoader *hyp;
-  FstLoader *ref;
-  if (EndsWithCaseInsensitive(ref_filename, string(".nlp"))) {
-    NlpReader nlpReader = NlpReader();
-    console->info("reading reference nlp from {}", ref_filename);
-    auto vec = nlpReader.read_from_disk(ref_filename);
-    NlpFstLoader *nlpFst = new NlpFstLoader(vec, obj, wer_sidecar_obj, true, use_punctuation);
-    ref = nlpFst;
-  } else if (EndsWithCaseInsensitive(ref_filename, string(".ctm"))) {
-    console->info("reading reference ctm from {}", ref_filename);
-    CtmReader ctmReader = CtmReader();
-    auto vect = ctmReader.read_from_disk(ref_filename);
-    CtmFstLoader *ctmFst = new CtmFstLoader(vect);
-    ref = ctmFst;
-  } else if (EndsWithCaseInsensitive(ref_filename, string(".fst"))) {
-    if (symbols_filename.empty()) {
-      console->error("a symbols file must be specified if reading an FST.");
-    }
-    console->info("reading reference fst from {}", ref_filename);
-    FstFileLoader *archive_fst = new FstFileLoader(ref_filename);
-    ref = archive_fst;
-  } else {
-    console->info("reading reference plain text from {}", ref_filename);
-    auto *oneBestFst = new OneBestFstLoader();
-    oneBestFst->LoadTextFile(ref_filename);
-    ref = oneBestFst;
-  }
-
-  // loading "hypothesis" inputs
-  if (EndsWithCaseInsensitive(hyp_filename, string(".nlp"))) {
-    console->info("reading hypothesis nlp from {}", hyp_filename);
-    // Make empty json for wer sidecar
-    Json::Value hyp_empty_json;
-    stringstream ss;
-    ss << "{}";
-
-    Json::CharReaderBuilder builder;
-    JSONCPP_STRING errs;
-    Json::parseFromStream(builder, ss, &hyp_empty_json, &errs);
-    NlpReader nlpReader = NlpReader();
-    auto vec = nlpReader.read_from_disk(hyp_filename);
-    // for now, nlp files passed as hypothesis won't have their labels handled as such
-    // this also mean that json normalization will be ignored
-    NlpFstLoader *nlpFst = new NlpFstLoader(vec, hyp_json_obj, hyp_empty_json, false, use_punctuation);
-    hyp = nlpFst;
-  } else if (EndsWithCaseInsensitive(hyp_filename, string(".ctm"))) {
-    console->info("reading hypothesis ctm from {}", hyp_filename);
-    CtmReader ctmReader = CtmReader();
-    auto vect = ctmReader.read_from_disk(hyp_filename);
-    CtmFstLoader *ctmFst = new CtmFstLoader(vect);
-    hyp = ctmFst;
-  } else if (EndsWithCaseInsensitive(hyp_filename, string(".fst"))) {
-    if (symbols_filename.empty()) {
-      console->error("a symbols file must be specified if reading an FST.");
-    }
-    console->info("reading hypothesis fst from {}", hyp_filename);
-    FstFileLoader *archive_fst = new FstFileLoader(hyp_filename);
-    hyp = archive_fst;
-  } else {
-    console->info("reading hypothesis plain text from {}", hyp_filename);
-    auto *hypOneBest = new OneBestFstLoader();
-    hypOneBest->LoadTextFile(hyp_filename);
-    hyp = hypOneBest;
-  }
-
-  SynonymOptions syn_opts;
-  syn_opts.disable_cutoffs = disable_cutoffs;
-  syn_opts.disable_hyphen_ignore = disable_hyphen_ignore;
-
-  SynonymEngine *engine = new SynonymEngine(syn_opts);
-  if (synonyms_filename.size() > 0) {
-    engine->LoadFile(synonyms_filename);
-  }
+  std::unique_ptr<FstLoader> hyp = FstLoader::MakeHypothesisLoader(hyp_filename, hyp_json_norm_filename, use_punctuation, !symbols_filename.empty());
+  std::unique_ptr<FstLoader> ref = FstLoader::MakeReferenceLoader(ref_filename, wer_sidecar_filename, json_norm_filename, use_punctuation, !symbols_filename.empty()); 
 
   AlignerOptions alignerOptions;
   alignerOptions.speaker_switch_context_size = speaker_switch_context_size;
@@ -298,8 +165,18 @@ int main(int argc, char **argv) {
   alignerOptions.symbols_filename = symbols_filename;
   alignerOptions.composition_approach = composition_approach;
 
+
+  SynonymOptions syn_opts;
+  syn_opts.disable_cutoffs = disable_cutoffs;
+  syn_opts.disable_hyphen_ignore = disable_hyphen_ignore;
+
+  SynonymEngine engine(syn_opts);
+  if (synonyms_filename.size() > 0) {
+    engine.LoadFile(synonyms_filename);
+  }
+
   if (command == "wer") {
-    HandleWer(ref, hyp, engine, output_sbs, output_nlp, alignerOptions);
+    HandleWer(*ref, *hyp, engine, output_sbs, output_nlp, alignerOptions);
   } else if (command == "align") {
     if (output_nlp.empty()) {
       console->error("the output nlp file must be specified");
@@ -311,10 +188,10 @@ int main(int argc, char **argv) {
     // TODO: We should instrument FstLoader base class
     // to have nlp rows and ctm rows and have a getCtmRows/getNlpRows
     // empty methods that throw exceptions if not implemented.
-    NlpFstLoader *nlpRef = dynamic_cast<NlpFstLoader *>(ref);
-    CtmFstLoader *ctmHyp = dynamic_cast<CtmFstLoader *>(hyp);
+    NlpFstLoader *nlpRef = dynamic_cast<NlpFstLoader *>(ref.get());
+    CtmFstLoader *ctmHyp = dynamic_cast<CtmFstLoader *>(hyp.get());
 
-    HandleAlign(nlpRef, ctmHyp, engine, output_nlp_file, alignerOptions);
+    HandleAlign(*nlpRef, *ctmHyp, engine, output_nlp_file, alignerOptions);
 
     output_nlp_file.flush();
     output_nlp_file.close();
@@ -335,3 +212,137 @@ int main(int argc, char **argv) {
 
   console->info("done");
 }
+
+std::unique_ptr<FstLoader> FstLoader::MakeReferenceLoader(const std::string& ref_filename,
+                                                          const std::string& wer_sidecar_filename,
+                                                          const std::string& json_norm_filename,
+                                                          bool use_punctuation,
+                                                          bool symbols_file_included) {
+  auto console = logger::GetLogger("console");
+  Json::Value obj;
+  if (!json_norm_filename.empty()) {
+    console->info("reading json norm info from {}", json_norm_filename);
+    ifstream ifs(json_norm_filename);
+
+    Json::CharReaderBuilder builder;
+    builder["collectComments"] = false;
+
+    JSONCPP_STRING errs;
+    Json::parseFromStream(builder, ifs, &obj, &errs);
+
+    console->info("The json we just read [{}] has {} elements from its root", json_norm_filename, obj.size());
+  } else {
+    stringstream ss;
+    ss << "{}";
+
+    Json::CharReaderBuilder builder;
+    JSONCPP_STRING errs;
+    Json::parseFromStream(builder, ss, &obj, &errs);
+  }
+  Json::Value wer_sidecar_obj;
+  if (!wer_sidecar_filename.empty()) {
+    console->info("reading wer sidecar info from {}", wer_sidecar_filename);
+    ifstream ifs(wer_sidecar_filename);
+
+    Json::CharReaderBuilder builder;
+    builder["collectComments"] = false;
+
+    JSONCPP_STRING errs;
+    Json::parseFromStream(builder, ifs, &wer_sidecar_obj, &errs);
+
+    console->info("The json we just read [{}] has {} elements from its root", wer_sidecar_filename, wer_sidecar_obj.size());
+  } else {
+    stringstream ss;
+    ss << "{}";
+
+    Json::CharReaderBuilder builder;
+    JSONCPP_STRING errs;
+    Json::parseFromStream(builder, ss, &wer_sidecar_obj, &errs);
+  }
+  if (EndsWithCaseInsensitive(ref_filename, string(".nlp"))) {
+    NlpReader nlpReader = NlpReader();
+    console->info("reading reference nlp from {}", ref_filename);
+    auto vec = nlpReader.read_from_disk(ref_filename);
+    return std::make_unique<NlpFstLoader>(vec, obj, wer_sidecar_obj, true, use_punctuation);
+  } else if (EndsWithCaseInsensitive(ref_filename, string(".ctm"))) {
+    console->info("reading reference ctm from {}", ref_filename);
+    CtmReader ctmReader = CtmReader();
+    auto vect = ctmReader.read_from_disk(ref_filename);
+    return std::make_unique<CtmFstLoader>(vect);
+  } else if (EndsWithCaseInsensitive(ref_filename, string(".fst"))) {
+    if (!symbols_file_included) {
+      console->error("a symbols file must be specified if reading an FST.");
+    }
+    console->info("reading reference fst from {}", ref_filename);
+    return std::make_unique<FstFileLoader>(ref_filename);
+  } else {
+    console->info("reading reference plain text from {}", ref_filename);
+    auto oneBestFst = std::make_unique<OneBestFstLoader>();
+    oneBestFst->LoadTextFile(ref_filename);
+    return oneBestFst;
+  }
+}
+
+std::unique_ptr<FstLoader> FstLoader::MakeHypothesisLoader(const std::string& hyp_filename,
+                                                           const std::string& hyp_json_norm_filename,
+                                                           bool use_punctuation,
+                                                           bool symbols_file_included) {
+  auto console = logger::GetLogger("console");
+
+
+
+  Json::Value hyp_json_obj;
+  if (!hyp_json_norm_filename.empty()) {
+    console->info("reading hypothesis json norm info from {}", hyp_json_norm_filename);
+    ifstream ifs(hyp_json_norm_filename);
+
+    Json::CharReaderBuilder builder;
+    builder["collectComments"] = false;
+
+    JSONCPP_STRING errs;
+    Json::parseFromStream(builder, ifs, &hyp_json_obj, &errs);
+
+    console->info("The json we just read [{}] has {} elements from its root", hyp_json_norm_filename, hyp_json_obj.size());
+  } else {
+    stringstream ss;
+    ss << "{}";
+
+    Json::CharReaderBuilder builder;
+    JSONCPP_STRING errs;
+    Json::parseFromStream(builder, ss, &hyp_json_obj, &errs);
+  }
+
+  // loading "hypothesis" inputymb
+  if (EndsWithCaseInsensitive(hyp_filename, string(".nlp"))) {
+    console->info("reading hypothesis nlp from {}", hyp_filename);
+    // Make empty json for wer sidecar
+    Json::Value hyp_empty_json;
+    stringstream ss;
+    ss << "{}";
+
+    Json::CharReaderBuilder builder;
+    JSONCPP_STRING errs;
+    Json::parseFromStream(builder, ss, &hyp_empty_json, &errs);
+    NlpReader nlpReader = NlpReader();
+    auto vec = nlpReader.read_from_disk(hyp_filename);
+    // for now, nlp files passed as hypothesis won't have their labels handled as such
+    // this also mean that json normalization will be ignored
+    return std::make_unique<NlpFstLoader>(vec, hyp_json_obj, hyp_empty_json, false, use_punctuation);
+  } else if (EndsWithCaseInsensitive(hyp_filename, string(".ctm"))) {
+    console->info("reading hypothesis ctm from {}", hyp_filename);
+    CtmReader ctmReader = CtmReader();
+    auto vect = ctmReader.read_from_disk(hyp_filename);
+    return std::make_unique<CtmFstLoader>(vect);
+  } else if (EndsWithCaseInsensitive(hyp_filename, string(".fst"))) {
+    if (!symbols_file_included) {
+      console->error("a symbols file must be specified if reading an FST.");
+    }
+    console->info("reading hypothesis fst from {}", hyp_filename);
+    return std::make_unique<FstFileLoader>(hyp_filename);
+  } else {
+    console->info("reading hypothesis plain text from {}", hyp_filename);
+    auto hypOneBest = std::make_unique<OneBestFstLoader>();
+    hypOneBest->LoadTextFile(hyp_filename);
+    return hypOneBest;
+  }
+} 

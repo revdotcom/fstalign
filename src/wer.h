@@ -32,21 +32,21 @@ struct WerResult {
   }
 };
 
-vector<int> GetSpeakerSwitchIndices(vector<shared_ptr<Stitching>> stitches);
+vector<int> GetSpeakerSwitchIndices(const vector<Stitching>& stitches);
 
 // These methods record different WER analyses to JSON
 void RecordWerResult(Json::Value &json, WerResult wr);
-void RecordWer(spWERA topAlignment);
-void RecordSpeakerWer(vector<shared_ptr<Stitching>> stitches);
-void RecordSpeakerSwitchWer(vector<shared_ptr<Stitching>> stitches, int speaker_switch_context_size);
-void RecordSentenceWer(vector<shared_ptr<Stitching>> stitches);
-void RecordTagWer(vector<shared_ptr<Stitching>> stitches);
-void RecordCaseWer(vector<shared_ptr<Stitching>> aligned_stitches);
+void RecordWer(wer_alignment& topAlignment);
+void RecordSpeakerWer(const vector<Stitching>& stitches);
+void RecordSpeakerSwitchWer(const vector<Stitching>& stitches, int speaker_switch_context_size);
+void RecordSentenceWer(const vector<Stitching>& stitches);
+void RecordTagWer(const vector<Stitching>& stitches);
+void RecordCaseWer(const vector<Stitching>& aligned_stitches);
 
 // Adds PR metrics to topAlignment
-void CalculatePrecisionRecall(spWERA &topAlignment, int threshold);
+void CalculatePrecisionRecall(wer_alignment &topAlignment, int threshold);
 
 typedef vector<pair<size_t, string>> ErrorGroups;
 
 void AddErrorGroup(ErrorGroups &groups, size_t &line, string &ref, string &hyp);
-void WriteSbs(spWERA topAlignment, vector<shared_ptr<Stitching>> stitches, string sbs_filename);
+void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, string sbs_filename);

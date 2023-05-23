@@ -26,7 +26,7 @@
 class StandardCompositionFst : public IComposition {
  protected:
   // Lazily composed fst, created during initialization
-  fst::StdComposeFst *fstC_;
+  std::unique_ptr<fst::StdComposeFst> fstC_;
 
  public:
   StandardCompositionFst(const fst::StdFst &fstA, const fst::StdFst &fstB);

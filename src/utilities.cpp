@@ -133,7 +133,7 @@ bool isValidNgram(const string &token) {
   }
 }
 
-unordered_set<string> get_bigrams(const spWERA &topAlignment) {
+unordered_set<string> get_bigrams(wer_alignment &topAlignment) {
   string bigram_ref = "";
   string bigram_hyp = "";
   unordered_set<string> all_bigrams;
@@ -141,14 +141,14 @@ unordered_set<string> get_bigrams(const spWERA &topAlignment) {
 
   // Create a list of all tokens, flattening entity tokens
   vector<pair<string, string>> flattened_tokens;
-  for (auto &tokens : topAlignment->tokens) {
+  for (auto &tokens : topAlignment.tokens) {
     // handle entity labels
     if (isEntityLabel(tokens.first)) {
       auto class_label = tokens.first;
 
-      for (auto &label_alignment : topAlignment->label_alignments) {
-        if (label_alignment->classLabel == class_label) {
-          for (auto &labelTokens : label_alignment->tokens) {
+      for (auto &label_alignment : topAlignment.label_alignments) {
+        if (label_alignment.classLabel == class_label) {
+          for (auto &labelTokens : label_alignment.tokens) {
             flattened_tokens.push_back(labelTokens);
           }
         }
@@ -164,7 +164,7 @@ unordered_set<string> get_bigrams(const spWERA &topAlignment) {
     // cout << it  - topAlignment->tokens.begin() << " : "<< bigram_ref << " (" << it->first << " " <<
     // std::next(it)->first <<" )" << endl;
     if (isValidNgram(bigram_ref)) {
-      topAlignment->ref_bigrams[bigram_ref] += 1;
+      topAlignment.ref_bigrams[bigram_ref] += 1;
       all_bigrams.insert(bigram_ref);
     }
     bi_words = {it->second, std::next(it)->second};
@@ -172,11 +172,11 @@ unordered_set<string> get_bigrams(const spWERA &topAlignment) {
     // cout << it  - topAlignment->tokens.begin() << " : "<< bigram_hyp << " (" << it->second << " " <<
     // std::next(it)->second <<" )" << endl;
     if (isValidNgram(bigram_hyp)) {
-      topAlignment->hyp_bigrams[bigram_hyp] += 1;
+      topAlignment.hyp_bigrams[bigram_hyp] += 1;
       all_bigrams.insert(bigram_hyp);
     }
 
-    topAlignment->bigram_tokens.push_back(std::make_pair(bigram_ref, bigram_hyp));
+    topAlignment.bigram_tokens.push_back(std::make_pair(bigram_ref, bigram_hyp));
   }
   return all_bigrams;
 }

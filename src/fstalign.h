@@ -50,9 +50,9 @@ struct AlignerOptions {
 // void HandleAlign(NlpFstLoader *refLoader, CtmFstLoader *hypLoader, SynonymEngine *engine, ofstream &output_nlp_file,
 //                  int numBests, string symbols_filename, string composition_approach);
 
-void HandleWer(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engine, string output_sbs, string output_nlp,
+void HandleWer(FstLoader &refLoader, FstLoader &hypLoader, SynonymEngine &engine, string output_sbs, string output_nlp,
                AlignerOptions alignerOptions);
-void HandleAlign(NlpFstLoader *refLoader, CtmFstLoader *hypLoader, SynonymEngine *engine, ofstream &output_nlp_file,
+void HandleAlign(NlpFstLoader &refLoader, CtmFstLoader &hypLoader, SynonymEngine &engine, ofstream &output_nlp_file,
                  AlignerOptions alignerOptions);
 
 #endif  // __FSTALIGN_H__

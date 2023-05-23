@@ -16,21 +16,23 @@ Walker.h
 class Walker {
  public:
   Walker();
-  ~Walker();
-  vector<shared_ptr<wer_alignment>> walkComposed(IComposition &fst, SymbolTable &symbol, FstAlignOption &options,
+  ~Walker() = default;
+  vector<wer_alignment> walkComposed(IComposition &fst, SymbolTable &symbol, FstAlignOption &options,
                                                  int numBests);
   int numberOfLoopsBeforePruning = 50;
   int pruningHeapSizeTarget = 20;
 
  private:
-  map<int, float> *logbook;
+  map<int, float> logbook;
+  PathHeap _heapA;
+  PathHeap _heapB;
   PathHeap *heapA;
   PathHeap *heapB;
   std::shared_ptr<spdlog::logger> logger;
 
   std::shared_ptr<ShortlistEntry> enqueueIfNeeded(std::shared_ptr<ShortlistEntry> currentStatePtr,
-                                                  shared_ptr<MyArc> arc_ptr, bool isAnchor);
-  shared_ptr<wer_alignment> GetDetailsFromTopCandidates(ShortlistEntry &currentState, SymbolTable &symbol,
+                                                  const MyArc& arc_ptr, bool isAnchor);
+  wer_alignment GetDetailsFromTopCandidates(ShortlistEntry &currentState, SymbolTable &symbol,
                                                         FstAlignOption &options);
 };
 
