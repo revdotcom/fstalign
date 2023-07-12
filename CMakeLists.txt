@@ -66,6 +66,7 @@ add_library(fstaligner-common
   src/SynonymEngine.cpp
   src/utilities.cpp
   src/Walker.cpp
+  src/Json.cpp
   third-party/inih/cpp/INIReader.cpp
 )
 
@@ -84,7 +85,7 @@ add_subdirectory(third-party/catch2)
 
 add_executable(fstalign src/main.cpp)
 
-include_directories(fstalign 
+include_directories(fstalign
   ${FSTALIGN_INCLUDES}
   ${OPENFST_INCLUDES}
   ${ICU_INCLUDE_DIRS}

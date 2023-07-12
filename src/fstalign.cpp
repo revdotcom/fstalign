@@ -44,7 +44,7 @@ using StdReverseOlabelCompare = ReverseOLabelCompare<StdArc>;
 
 bool sort_alignment(const wer_alignment& a, const wer_alignment &b) { return a.WER() < b.WER(); }
 
-wer_alignment Fstalign(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine &engine, AlignerOptions alignerOptions) {
+wer_alignment Fstalign(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine &engine, const AlignerOptions& alignerOptions) {
   //  int numBests, string symbols_filename, string composition_approach, bool levenstein_first_pass) {
   auto logger = logger::GetOrCreateLogger("fstalign");
   FstAlignOption options;
