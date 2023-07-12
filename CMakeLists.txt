@@ -66,7 +66,6 @@ add_library(fstaligner-common
   src/SynonymEngine.cpp
   src/utilities.cpp
   src/Walker.cpp
-  src/Json.cpp
   third-party/inih/cpp/INIReader.cpp
 )
 
