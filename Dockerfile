@@ -1,19 +1,14 @@
-# Using kaldi image for pre-built OpenFST, version is 1.6.7
-FROM kaldiasr/kaldi:2020-09 as kaldi-base
-
-FROM debian:9.8
+# Using kaldi image for pre-built OpenFST, version is 1.7.2
+FROM kaldiasr/kaldi:latest as kaldi-base
+FROM debian:11
 
 COPY --from=kaldi-base /opt/kaldi/tools/openfst /opt/openfst
 ENV OPENFST_ROOT /opt/openfst
 
 ARG JOBS=4
 
-#Update stretch repositories
-RUN sed -i s/deb.debian.org/archive.debian.org/g /etc/apt/sources.list
-RUN sed -i 's|security.debian.org|archive.debian.org/|g' /etc/apt/sources.list
-RUN sed -i '/stretch-updates/d' /etc/apt/sources.list
-
 RUN apt-get update && \
+    apt-get upgrade -y && \
     apt-get -y install \
     cmake \
     g++ \
