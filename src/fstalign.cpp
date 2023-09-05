@@ -555,7 +555,7 @@ void align_stitches_to_nlp(NlpFstLoader& refLoader, vector<Stitching> &stitches)
   }
 }
 
-void write_stitches_to_nlp(vector<Stitching>& stitches, ofstream &output_nlp_file, Json::Value norm_json) {
+void write_stitches_to_nlp(vector<Stitching>& stitches, ofstream &output_nlp_file, Json::Value norm_json, bool add_inserts = false) {
   auto logger = logger::GetOrCreateLogger("fstalign");
   logger->info("Writing nlp output");
   // write header; 'comment' is there to store information about how well the alignment went
@@ -565,7 +565,7 @@ void write_stitches_to_nlp(vector<Stitching>& stitches, ofstream &output_nlp_fil
                   << endl;
   for (auto &stitch : stitches) {
     // if the comment starts with 'ins'
-    if (stitch.comment.find("ins") == 0) {
+    if (stitch.comment.find("ins") == 0 && !add_inserts) {
       // there's no nlp row info for such case, let's skip over it
       if (stitch.confidence >= 1) {
         logger->warn("an insertion with high confidence was found for {}@{}", stitch.hyptk, stitch.start_ts);
@@ -596,6 +596,9 @@ void write_stitches_to_nlp(vector<Stitching>& stitches, ofstream &output_nlp_fil
       }
 
       ref_tk = original_nlp_token;
+    } else if (stitch.comment.find("ins") == 0) {
+      logger->info("an insertion was found for {} {}", stitch.hyptk, stitch.comment);
+      ref_tk = stitch.hyptk;
     }
 
     if (ref_tk == NOOP) {
@@ -627,8 +630,8 @@ void write_stitches_to_nlp(vector<Stitching>& stitches, ofstream &output_nlp_fil
   }
 }
 
-void HandleWer(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine &engine, string output_sbs, string output_nlp,
-               AlignerOptions alignerOptions) {
+void HandleWer(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine &engine, const string& output_sbs, const string& output_nlp,
+               AlignerOptions alignerOptions, bool add_inserts_nlp) {
   //  int speaker_switch_context_size, int numBests, int pr_threshold, string symbols_filename,
   //  string composition_approach, bool record_case_stats) {
   auto logger = logger::GetOrCreateLogger("fstalign");
@@ -687,7 +690,7 @@ void HandleWer(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine &engine
 
     if (!output_nlp.empty()) {
       ofstream nlp_ostream(output_nlp);
-      write_stitches_to_nlp(stitches, nlp_ostream, nlp_ref_loader->mJsonNorm);
+      write_stitches_to_nlp(stitches, nlp_ostream, nlp_ref_loader->mJsonNorm, add_inserts_nlp); 
     }
   }
 
