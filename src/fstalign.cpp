@@ -597,8 +597,9 @@ void write_stitches_to_nlp(vector<Stitching>& stitches, ofstream &output_nlp_fil
 
       ref_tk = original_nlp_token;
     } else if (stitch.comment.find("ins") == 0) {
-      logger->info("an insertion was found for {} {}", stitch.hyptk, stitch.comment);
-      ref_tk = stitch.hyptk;
+      logger->debug("an insertion was found for {} {}", stitch.hyptk, stitch.comment);
+      ref_tk = "";
+      stitch.comment = "ins(" + stitch.hyptk + ")";
     }
 
     if (ref_tk == NOOP) {
@@ -690,7 +691,7 @@ void HandleWer(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine &engine
 
     if (!output_nlp.empty()) {
       ofstream nlp_ostream(output_nlp);
-      write_stitches_to_nlp(stitches, nlp_ostream, nlp_ref_loader->mJsonNorm, add_inserts_nlp); 
+      write_stitches_to_nlp(stitches, nlp_ostream, nlp_ref_loader->mJsonNorm, add_inserts_nlp);
     }
   }
 
