@@ -34,6 +34,7 @@ int main(int argc, char **argv) {
   bool record_case_stats = false;
   bool use_punctuation = false;
   bool disable_approximate_alignment = false;
+  bool add_inserts_nlp = false;
 
   bool disable_cutoffs = false;
   bool disable_hyphen_ignore = false;
@@ -122,6 +123,7 @@ int main(int argc, char **argv) {
                     "Record precision/recall for how well the hypothesis"
                     "casing matches the reference.");
   get_wer->add_flag("--use-punctuation", use_punctuation, "Treat punctuation from nlp rows as separate tokens");
+  get_wer->add_flag("--add-inserts-nlp", add_inserts_nlp, "Add inserts to NLP output");
 
   // CLI11_PARSE(app, argc, argv);
   try {
@@ -148,12 +150,12 @@ int main(int argc, char **argv) {
                 FSTALIGNER_VERSION_PATCH);
 
   auto subcommand = app.get_subcommands()[0];
-  auto command = subcommand->get_name(); 
- 
+  auto command = subcommand->get_name();
+
 
   // loading "reference" inputs
   std::unique_ptr<FstLoader> hyp = FstLoader::MakeHypothesisLoader(hyp_filename, hyp_json_norm_filename, use_punctuation, !symbols_filename.empty());
-  std::unique_ptr<FstLoader> ref = FstLoader::MakeReferenceLoader(ref_filename, wer_sidecar_filename, json_norm_filename, use_punctuation, !symbols_filename.empty()); 
+  std::unique_ptr<FstLoader> ref = FstLoader::MakeReferenceLoader(ref_filename, wer_sidecar_filename, json_norm_filename, use_punctuation, !symbols_filename.empty());
 
   AlignerOptions alignerOptions;
   alignerOptions.speaker_switch_context_size = speaker_switch_context_size;
@@ -176,7 +178,7 @@ int main(int argc, char **argv) {
   }
 
   if (command == "wer") {
-    HandleWer(*ref, *hyp, engine, output_sbs, output_nlp, alignerOptions);
+    HandleWer(*ref, *hyp, engine, output_sbs, output_nlp, alignerOptions, add_inserts_nlp);
   } else if (command == "align") {
     if (output_nlp.empty()) {
       console->error("the output nlp file must be specified");
@@ -345,4 +347,4 @@ std::unique_ptr<FstLoader> FstLoader::MakeHypothesisLoader(const std::string& hy
     hypOneBest->LoadTextFile(hyp_filename);
     return hypOneBest;
   }
-} 
+}
