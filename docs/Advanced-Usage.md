@@ -12,6 +12,23 @@ Much of the advanced features for fstalign come from providing [NLP file inputs]
 
 - Speaker-switch WER: similarly, fstalign will report the error rate of words around a speaker switch
   - The window size for the context of a speaker switch can be adjusted with the `--speaker-switch-context <int>` flag. By default this is set to 5.
+ 
+## Table of Contents
+* [Inputs](#inputs)
+  * [CTM](#ctm)
+  * [NLP](#nlp)
+  * [FST](#fst)
+  * [Synonyms](#synonyms)
+  * [Normalizations](#normalizations)
+  * [WER Sidecar](#wer-sidecar)
+* [Text Transforms](#text-transforms)
+  * [use-punctuation](#use-punctuation)
+  * [use-case](#use-case)
+* [Outputs](#outputs)
+  * [Text Log](#text-log)
+  * [Side-by-side](#sbs)
+  * [JSON Log](#json-log)
+  * [Aligned NLP](#nlp-1)
 
 ## Inputs
 ### CTM
@@ -82,6 +99,40 @@ CLI flag: `--wer-sidecar`
 
 Only usable for NLP format reference files. This passes a [WER sidecar](https://github.com/revdotcom/fstalign/blob/develop/docs//NLP-Format.md#wer-tag-sidecar) file to
 add extra information to some outputs. Optional.
+
+## Text Transforms
+In this section, we outline transforms that can be applied to input files. These will modify the handling of the files by `fstalign`.
+### `use-punctuation`
+Adding the `--use-punctuation` flag will treat punctuation from NLP files as individual tokens for `fstalign`. All other file formats that desire this format are expected to handle punctuation on their own and separating them into their own tokens.
+
+The following files are equivalent with this flag set:
+
+**example.nlp**
+```
+token|speaker|ts|endTs|punctuation|case|tags|wer_tags
+Good|0||||UC|[]|[]
+morning|0|||.|LC|['5:TIME']|['5']
+Welcome|0|||!|LC|[]|[]
+```
+
+**example.txt**
+```
+good morning . welcome !
+```
+
+_Note that WER when this flag is set, measures errors in the words output by the ASR as well as punctuation._
+
+### `use-case`
+Adding the `--use-case` flag will take a word's letter case into consideration. In other words, the same word with different letters capitalized will now be considered a different word. For example consider the following:
+
+**Ref:** `Hi this is an example`
+
+**Hyp:** `hi THIS iS An ExAmPlE`
+
+Without this flag, `fstalign` considers these two strings to be equivalent and result in 0 errors. With `--use-case` set, none of these words would be equivalent because they have different letter cases.
+
+_Note that WER when this flag is set, measures errors in the words output by the ASR, taking into account letter casing._
+
 
 ## Outputs
 
