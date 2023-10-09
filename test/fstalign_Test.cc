@@ -679,7 +679,7 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-adapted-composition()") {
     REQUIRE_THAT(result, Contains("WER: INS:0 DEL:3 SUB:3"));
   }
 
-  SECTION("wer with case and punctuation(nlp output)") {
+  SECTION("NLP Hypothesis: wer with case and punctuation(nlp output)") {
     const auto result =
         exec(command("wer", approach, "short_punc.ref.nlp", "short_punc.hyp.nlp", sbs_output, nlp_output, TEST_SYNONYMS)+" --use-punctuation --use-case");
     const auto testFile = std::string{TEST_DATA} + "short.aligned.punc_case.nlp";
@@ -687,6 +687,31 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-adapted-composition()") {
     REQUIRE(compareFiles(nlp_output.c_str(), testFile.c_str()));
     REQUIRE_THAT(result, Contains("WER: 13/42 = 0.3095"));
     REQUIRE_THAT(result, Contains("WER: INS:2 DEL:7 SUB:4"));
+  }
+
+  SECTION("CTM Hypothesis: wer with case and punctuation(nlp output)") {
+    const auto result =
+        exec(command("wer", approach, "align_1.ref.nlp", "align_1.hyp.punc_case.ctm", sbs_output, nlp_output, TEST_SYNONYMS)+" --use-punctuation --use-case");
+    const auto testFile = std::string{TEST_DATA} + "align_1.aligned.punc_case.nlp";
+
+    REQUIRE(compareFiles(nlp_output.c_str(), testFile.c_str()));
+    REQUIRE_THAT(result, Contains("WER: 6/14 = 0.4286"));
+    REQUIRE_THAT(result, Contains("WER: INS:1 DEL:2 SUB:3"));
+  }
+
+  SECTION("TXT Hypothesis: wer with case and punctuation(nlp output)") {
+    const auto result =
+        exec(command("wer", approach, "twenty.ref.testing.nlp", "twenty.hyp.punc_case.txt", sbs_output, nlp_output, TEST_SYNONYMS,
+                                      "twenty.ref.testing.norm.json")+" --use-punctuation --use-case");
+    const auto testFile = std::string{TEST_DATA} + "twenty.aligned.punc_case.nlp";
+
+    REQUIRE(compareFiles(nlp_output.c_str(), testFile.c_str()));
+    REQUIRE_THAT(result, Contains("WER: 6/7 = 0.8571"));
+    REQUIRE_THAT(result, Contains("WER: INS:2 DEL:0 SUB:4"));
+    REQUIRE_THAT(result, Contains("Wer Entity ID 1 WER: 1/1 = 1.0000"));
+    REQUIRE_THAT(result, Contains("Wer Entity ID 0 WER: 1/1 = 1.0000"));
+    REQUIRE_THAT(result, Contains("Wer Entity ID 2 WER: 1/1 = 1.0000"));
+    REQUIRE_THAT(result, Contains("Wer Entity ID 3 WER: 2/3 = 0.6667"));
   }
 
   // alignment tests

@@ -1,0 +1,8 @@
+token|speaker|ts|endTs|punctuation|prepunctuation|case|tags|wer_tags|oldTs|oldEndTs|ali_comment|confidence
+20|2|0.0000|0.0000|||CA|['1:CARDINAL']|['1']|84.6600|85.0600|sub(in)|
+in|2|0.0000|0.0000|||LC|[]|[]|89.1600|89.2800|sub(Twenty)|
+2020|2|0.0000|0.0000|||CA|['0:YEAR']|['0', '2']|89.7400|89.9900|sub(tHiRtY)|
+is|2|0.0000|0.0000|||LC|[]|[]|89.1600|89.2800||
+one|2|0.0000|0.0000|||CA|['3:CARDINAL']|['3']|89.7400|89.9900|,push_last|
+twenty|2|0.0000|0.0000|||LC|['3:CARDINAL']|['3']|89.7400|89.9900|sub(two),push_last|
+three|2|0.0000|0.0000|||LC|['3:CARDINAL']|['3']|89.7400|89.9900|,push_last|
