@@ -56,6 +56,8 @@ class NlpFstLoader : public FstLoader {
   Json::Value mJsonNorm;
   Json::Value mWerSidecar;
   virtual const std::string &getToken(int index) const { return mToken.at(index); }
+ private:
+  bool mUsePunctuation, mUseCase;
 };
 
 #endif /* NLP_H_ */

@@ -19,11 +19,14 @@ NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value norma
     Json::Value wer_sidecar)
     : NlpFstLoader(records, normalization, wer_sidecar, true) {}
 
-NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value normalization, 
+NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value normalization,
     Json::Value wer_sidecar, bool processLabels, bool use_punctuation, bool use_case)
     : FstLoader() {
   mJsonNorm = normalization;
   mWerSidecar = wer_sidecar;
+  mUsePunctuation = use_punctuation;
+  mUseCase = use_case;
+
   std::string last_label;
   bool firstTk = true;
 
@@ -81,8 +84,10 @@ NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value norma
         mJsonNorm[curr_label_id]["candidates"][last_idx]["verbalization"].append(curr_tk);
       }
     } else {
-      std::string lower_cased = UnicodeLowercase(curr_tk);
-      mToken.push_back(lower_cased);
+      if (!mUseCase) {
+          curr_tk = UnicodeLowercase(curr_tk);
+      }
+      mToken.push_back(curr_tk);
       mSpeakers.push_back(speaker);
       if (use_punctuation && punctuation != "") {
         mToken.push_back(punctuation);
@@ -118,8 +123,10 @@ void NlpFstLoader::addToSymbolTable(fst::SymbolTable &symbol) const {
           auto candidate = candidates[i]["verbalization"];
           for (auto tk_itr : candidate) {
             std::string token = tk_itr.asString();
-            std::string lower_cased = UnicodeLowercase(token);
-            AddSymbolIfNeeded(symbol, lower_cased);
+            if (!mUseCase) {
+              token = UnicodeLowercase(token);
+            }
+            AddSymbolIfNeeded(symbol, token);
           }
         }
       }
@@ -250,11 +257,13 @@ so we add 2 states
         auto candidate = candidates[i]["verbalization"];
         for (auto tk_itr : candidate) {
           std::string ltoken = std::string(tk_itr.asString());
-          std::string lower_cased = UnicodeLowercase(ltoken);
+          if (!mUseCase) {
+            ltoken = UnicodeLowercase(ltoken);
+          }
           transducer.AddState();
           nextState++;
 
-          int token_sym = symbol.Find(lower_cased);
+          int token_sym = symbol.Find(ltoken);
           if (token_sym == -1) {
             token_sym = symbol.Find(options.symUnk);
           }
