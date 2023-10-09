@@ -24,7 +24,6 @@ NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value norma
     : FstLoader() {
   mJsonNorm = normalization;
   mWerSidecar = wer_sidecar;
-  mUsePunctuation = use_punctuation;
   mUseCase = use_case;
 
   std::string last_label;
