@@ -12,7 +12,9 @@
 #include "utilities.h"
 
 // empty constructor
-OneBestFstLoader::OneBestFstLoader() : FstLoader() {}
+OneBestFstLoader::OneBestFstLoader(bool use_case) : FstLoader() {
+  mUseCase = use_case;
+}
 
 void OneBestFstLoader::BuildFromString(const std::string content) {
   std::istringstream mystream(content);
@@ -33,7 +35,10 @@ void OneBestFstLoader::LoadTextFile(const std::string filename) {
 
 void OneBestFstLoader::addToSymbolTable(fst::SymbolTable &symbol) const {
   for (TokenType::const_iterator i = mToken.begin(); i != mToken.end(); ++i) {
-    std::string token = UnicodeLowercase(*i);
+    std::string token = *i;
+    if (!mUseCase) {
+      token = UnicodeLowercase(token);
+    }
     // fst::kNoSymbol
     if (symbol.Find(token) == -1) {
       symbol.AddSymbol(token);
@@ -57,7 +62,10 @@ fst::StdVectorFst OneBestFstLoader::convertToFst(const fst::SymbolTable &symbol,
   int map_sz = map.size();
   int wc = 0;
   for (TokenType::const_iterator i = mToken.begin(); i != mToken.end(); ++i) {
-    std::string token = UnicodeLowercase(*i);
+    std::string token = *i;
+    if (!mUseCase) {
+      token = UnicodeLowercase(token);
+    }
     transducer.AddState();
 
     int tk_idx = symbol.Find(token);
@@ -92,7 +100,10 @@ std::vector<int> OneBestFstLoader::convertToIntVector(fst::SymbolTable &symbol) 
 
   FstAlignOption options;
   for (TokenType::const_iterator i = mToken.begin(); i != mToken.end(); ++i) {
-    std::string token = UnicodeLowercase(*i);
+    std::string token = *i;
+    if (!mUseCase) {
+      token = UnicodeLowercase(token);
+    }
     int token_sym = symbol.Find(token);
     if (token_sym == -1) {
       token_sym = symbol.Find(options.symUnk);

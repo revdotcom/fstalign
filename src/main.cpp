@@ -273,7 +273,7 @@ std::unique_ptr<FstLoader> FstLoader::MakeReferenceLoader(const std::string& ref
     console->info("reading reference ctm from {}", ref_filename);
     CtmReader ctmReader = CtmReader();
     auto vect = ctmReader.read_from_disk(ref_filename);
-    return std::make_unique<CtmFstLoader>(vect);
+    return std::make_unique<CtmFstLoader>(vect, use_case);
   } else if (EndsWithCaseInsensitive(ref_filename, string(".fst"))) {
     if (!symbols_file_included) {
       console->error("a symbols file must be specified if reading an FST.");
@@ -282,7 +282,7 @@ std::unique_ptr<FstLoader> FstLoader::MakeReferenceLoader(const std::string& ref
     return std::make_unique<FstFileLoader>(ref_filename);
   } else {
     console->info("reading reference plain text from {}", ref_filename);
-    auto oneBestFst = std::make_unique<OneBestFstLoader>();
+    auto oneBestFst = std::make_unique<OneBestFstLoader>(use_case);
     oneBestFst->LoadTextFile(ref_filename);
     return oneBestFst;
   }
@@ -338,7 +338,7 @@ std::unique_ptr<FstLoader> FstLoader::MakeHypothesisLoader(const std::string& hy
     console->info("reading hypothesis ctm from {}", hyp_filename);
     CtmReader ctmReader = CtmReader();
     auto vect = ctmReader.read_from_disk(hyp_filename);
-    return std::make_unique<CtmFstLoader>(vect);
+    return std::make_unique<CtmFstLoader>(vect, use_case);
   } else if (EndsWithCaseInsensitive(hyp_filename, string(".fst"))) {
     if (!symbols_file_included) {
       console->error("a symbols file must be specified if reading an FST.");
@@ -347,7 +347,7 @@ std::unique_ptr<FstLoader> FstLoader::MakeHypothesisLoader(const std::string& hy
     return std::make_unique<FstFileLoader>(hyp_filename);
   } else {
     console->info("reading hypothesis plain text from {}", hyp_filename);
-    auto hypOneBest = std::make_unique<OneBestFstLoader>();
+    auto hypOneBest = std::make_unique<OneBestFstLoader>(use_case);
     hypOneBest->LoadTextFile(hyp_filename);
     return hypOneBest;
   }

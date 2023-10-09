@@ -11,7 +11,7 @@
 
 class OneBestFstLoader : public FstLoader {
  public:
-  OneBestFstLoader();
+  OneBestFstLoader(bool use_case = false);
   virtual ~OneBestFstLoader();
   void LoadTextFile(const std::string filename);
   void BuildFromString(const std::string content);
@@ -21,6 +21,8 @@ class OneBestFstLoader : public FstLoader {
   virtual const std::string &getToken(int index) const { return mToken.at(index); }
   virtual std::vector<int> convertToIntVector(fst::SymbolTable &symbol) const;
   int TokensSize() { return mToken.size(); }
+ private:
+  bool mUseCase;
 };
 
 #endif /* ONEBESTFSTLOADER_H_ */
