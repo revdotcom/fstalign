@@ -51,7 +51,7 @@ struct AlignerOptions {
 //                  int numBests, string symbols_filename, string composition_approach);
 
 void HandleWer(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine &engine, const string& output_sbs, const string& output_nlp,
-               AlignerOptions alignerOptions, bool add_inserts_nlp = false);
+               AlignerOptions alignerOptions, bool add_inserts_nlp = false, bool use_case = false);
 void HandleAlign(NlpFstLoader &refLoader, CtmFstLoader &hypLoader, SynonymEngine &engine, ofstream &output_nlp_file,
                  AlignerOptions alignerOptions);
 

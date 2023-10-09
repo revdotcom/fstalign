@@ -218,7 +218,8 @@ wer_alignment Fstalign(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine
 
 vector<Stitching> make_stitches(wer_alignment &alignment, vector<RawCtmRecord> hyp_ctm_rows = {},
                                             vector<RawNlpRecord> hyp_nlp_rows = {},
-                                            vector<string> one_best_tokens = {}) {
+                                            vector<string> one_best_tokens = {},
+                                            bool use_case = false) {
   auto logger = logger::GetOrCreateLogger("fstalign");
 
   // Go through top alignment and create stitches
@@ -287,7 +288,11 @@ vector<Stitching> make_stitches(wer_alignment &alignment, vector<RawCtmRecord> h
 
       part.hyp_orig = ctmPart.word;
       // sanity check
-      std::string ctmCopy = UnicodeLowercase(ctmPart.word);
+      std::string ctmCopy = std::string(ctmPart.word);
+      if (!use_case) {
+        ctmCopy = UnicodeLowercase(ctmPart.word);
+      }
+
       if (hyp_tk != ctmCopy) {
         logger->warn(
             "hum, looks like the ctm and the alignment got out of sync? [{}] vs "
@@ -326,7 +331,10 @@ vector<Stitching> make_stitches(wer_alignment &alignment, vector<RawCtmRecord> h
       part.hyp_orig = token;
 
       // sanity check
-      std::string token_copy = UnicodeLowercase(token);
+      std::string token_copy = std::string(token);
+      if (!use_case) {
+        token_copy = UnicodeLowercase(token);
+      }
       if (hyp_tk != token_copy) {
         logger->warn(
             "hum, looks like the text and the alignment got out of sync? [{}] vs "
@@ -633,7 +641,7 @@ void write_stitches_to_nlp(vector<Stitching>& stitches, ofstream &output_nlp_fil
 }
 
 void HandleWer(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine &engine, const string& output_sbs, const string& output_nlp,
-               AlignerOptions alignerOptions, bool add_inserts_nlp) {
+               AlignerOptions alignerOptions, bool add_inserts_nlp, bool use_case) {
   //  int speaker_switch_context_size, int numBests, int pr_threshold, string symbols_filename,
   //  string composition_approach, bool record_case_stats) {
   auto logger = logger::GetOrCreateLogger("fstalign");
@@ -648,9 +656,9 @@ void HandleWer(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine &engine
   NlpFstLoader *nlp_hyp_loader = dynamic_cast<NlpFstLoader *>(&hypLoader);
   OneBestFstLoader *best_loader = dynamic_cast<OneBestFstLoader *>(&hypLoader);
   if (ctm_hyp_loader) {
-    stitches = make_stitches(topAlignment, ctm_hyp_loader->mCtmRows, {});
+    stitches = make_stitches(topAlignment, ctm_hyp_loader->mCtmRows, {}, {}, use_case);
   } else if (nlp_hyp_loader) {
-    stitches = make_stitches(topAlignment, {}, nlp_hyp_loader->mNlpRows);
+    stitches = make_stitches(topAlignment, {}, nlp_hyp_loader->mNlpRows, {}, use_case);
   } else if (best_loader) {
     vector<string> tokens;
     tokens.reserve(best_loader->TokensSize());
@@ -658,9 +666,9 @@ void HandleWer(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine &engine
       string token = best_loader->getToken(i);
       tokens.push_back(token);
     }
-    stitches = make_stitches(topAlignment, {}, {}, tokens);
+    stitches = make_stitches(topAlignment, {}, {}, tokens, use_case);
   } else {
-    stitches = make_stitches(topAlignment);
+    stitches = make_stitches(topAlignment, {}, {}, {}, use_case);
   }
 
   NlpFstLoader *nlp_ref_loader = dynamic_cast<NlpFstLoader *>(&refLoader);
