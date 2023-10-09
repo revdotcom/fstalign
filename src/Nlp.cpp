@@ -20,7 +20,7 @@ NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value norma
     : NlpFstLoader(records, normalization, wer_sidecar, true) {}
 
 NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value normalization, 
-    Json::Value wer_sidecar, bool processLabels, bool use_punctuation)
+    Json::Value wer_sidecar, bool processLabels, bool use_punctuation, bool use_case)
     : FstLoader() {
   mJsonNorm = normalization;
   mWerSidecar = wer_sidecar;
