@@ -9,10 +9,7 @@
   * [Dependencies](#Dependencies)
   * [Build](#Build)
   * [Docker](#Docker)
-- [Quickstart](#Quickstart)
-  * [WER Subcommand](#WER-Subcommand)
-  * [Align Subcommand](#Align-Subcommand)
-- [Advanced Usage](#Advanced-Usage)
+- [Documentation](#Documentation)
 
 ## Overview
 `fstalign` is a tool for creating alignment between two sequences of tokens (here out referred to as “reference” and “hypothesis”). It has two key functions: computing word error rate (WER) and aligning [NLP-formatted](https://github.com/revdotcom/fstalign/blob/develop/docs/NLP-Format.md) references with CTM hypotheses.
