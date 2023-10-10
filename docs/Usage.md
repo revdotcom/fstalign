@@ -1,19 +1,9 @@
-## Advanced Usage
-Much of the advanced features for fstalign come from providing [NLP file inputs](#NLP) to the references. Some of these features include:
-- Entity category WER and normalization: based on labels in the NLP file, entities are grouped into classes in the WER output
-  - For example: if the NLP has `2020|0||||CA|['0:YEAR']|` you will see
-```s
-[+++] [22:36:50] [approach1] class YEAR         WER: 0/8 = 0.0000
-```
-
-  - Another useful feature here is normalization, which allows tokens with entity labels to have multiple normalizations accepted as correct by fstalign. This functionality is enabled when the tool is invoked with `--ref-json <path_to_norm_sidecar>` (passed in addition to the `--ref`). This enables something like `2020` to be treated equivalent to `twenty twenty`. More details on the specification for this file are specified in the [Inputs](#Inputs) section below. Note that only reference-side normalization is currently supported.
-
-- Speaker-wise WER: since the NLP file contains a speaker column, fstalign logs and output will provide a breakdown of WER by speaker ID if non-null
-
-- Speaker-switch WER: similarly, fstalign will report the error rate of words around a speaker switch
-  - The window size for the context of a speaker switch can be adjusted with the `--speaker-switch-context <int>` flag. By default this is set to 5.
- 
+# Documentation
 ## Table of Contents
+* [Quickstart](#quickstart)
+* [Subcommands](#subcommands)
+  * [`wer`](#wer)
+  * [`align`](#align)
 * [Inputs](#inputs)
   * [CTM](#ctm)
   * [NLP](#nlp)
@@ -29,6 +19,60 @@ Much of the advanced features for fstalign come from providing [NLP file inputs]
   * [Side-by-side](#sbs)
   * [JSON Log](#json-log)
   * [Aligned NLP](#nlp-1)
+* [Advanced Usage](#advanced-usage)
+
+In this document, we outline the functions of `fstalign` and the features that make this tool unique. Please feel free to start an issue if any of this documentation is lacking / needs further clarification.
+
+## Quickstart
+```
+Rev FST Align
+Usage: ./fstalign [OPTIONS] [SUBCOMMAND]
+
+Options:
+  -h,--help                   Print this help message and exit
+  --help-all                  Expand all help
+  --version                   Show fstalign version.
+
+Subcommands:
+  wer                         Get the WER between a reference and an hypothesis.
+  align                       Produce an alignment between an NLP file and a CTM-like input.
+```
+## Subcommands
+### `wer`
+
+The wer subcommand is the most frequent usage of this tool. Required are two arguments traditional to WER calculation: a reference (`--ref <file_path>`) and a hypothesis (`--hyp <file_path>`) transcript. Currently the tool is configured to simply look at the file extension to determine the file format of the input transcripts and parse accordingly.
+
+| File Extension | Reference Support | Hypothesis Supprt |
+| ----------- | ----------- | ----------- |
+| `.ctm`      | :white_check_mark: | :white_check_mark: |
+| `.nlp`      | :white_check_mark: | :white_check_mark: |
+| `.fst`      | :white_check_mark: | :white_check_mark: |
+| All other file extensions, assumed to be plain text | :white_check_mark: | :white_check_mark: |
+
+Basic Example:
+```
+ref.txt
+this is the best sentence
+
+hyp.txt
+this is a test sentence
+
+./bin/fstalign wer --ref ref.txt --hyp hyp.txt
+```
+
+When run, fstalign will dump a log to STDOUT with summary WER information at the bottom. For the above example:
+```
+[+++] [20:37:10] [fstalign] done walking the graph
+[+++] [20:37:10] [wer] best WER: 2/5 = 0.4000 (Total words in reference: 5)
+[+++] [20:37:10] [wer] best WER: INS:0 DEL:0 SUB:2
+[+++] [20:37:10] [wer] best WER: Precision:0.600000 Recall:0.600000
+```
+
+Note that in addition to general WER, the insertion/deletion/substitution breakdown is also printed. fstalign also has other useful outputs, including a JSON log for downstream machine parsing, and a side-by-side view of the alignment and errors generated. For more details, see the [Outputs](https://github.com/revdotcom/fstalign/blob/develop/docs/Advanced-Usage.md#outputs) section in the [Advanced Usage](https://github.com/revdotcom/fstalign/blob/develop/docs/Advanced-Usage.md) doc.
+
+### `align`
+Usage of the `align` subcommand is almost identical to the `wer` subcommand. The exception is that `align` can only be run if the provided reference is a NLP and the provided hypothesis is a CTM. This is because the core function of the subcommand is to align an NLP without timestamps to a CTM that has timestamps, producing an output of tokens from the reference with timings from the hypothesis.
+
 
 ## Inputs
 ### CTM
@@ -221,3 +265,18 @@ The “bigrams” and “unigrams” fields are only populated with unigrams and
 CLI flag: `--output-nlp`
 
 Writes out the reference [NLP](https://github.com/revdotcom/fstalign/blob/develop/docs/NLP-Format.md), but with timings provided by a hypothesis CTM. Mostly relevant for the `align` subcommand.
+
+## Advanced Usage
+Much of the advanced features for fstalign come from providing [NLP file inputs](#NLP) to the references. Some of these features include:
+- Entity category WER and normalization: based on labels in the NLP file, entities are grouped into classes in the WER output
+  - For example: if the NLP has `2020|0||||CA|['0:YEAR']|` you will see
+```s
+[+++] [22:36:50] [approach1] class YEAR         WER: 0/8 = 0.0000
+```
+
+  - Another useful feature here is normalization, which allows tokens with entity labels to have multiple normalizations accepted as correct by fstalign. This functionality is enabled when the tool is invoked with `--ref-json <path_to_norm_sidecar>` (passed in addition to the `--ref`). This enables something like `2020` to be treated equivalent to `twenty twenty`. More details on the specification for this file are specified in the [Inputs](#Inputs) section below. Note that only reference-side normalization is currently supported.
+
+- Speaker-wise WER: since the NLP file contains a speaker column, fstalign logs and output will provide a breakdown of WER by speaker ID if non-null
+
+- Speaker-switch WER: similarly, fstalign will report the error rate of words around a speaker switch
+  - The window size for the context of a speaker switch can be adjusted with the `--speaker-switch-context <int>` flag. By default this is set to 5.
