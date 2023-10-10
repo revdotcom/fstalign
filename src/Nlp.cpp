@@ -38,6 +38,7 @@ NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value norma
     auto curr_label_id = row.best_label_id;
     auto punctuation = row.punctuation;
     auto curr_row_tags = row.wer_tags;
+
     // Update wer tags in records to real string labels
     vector<string> real_wer_tags;
     for (auto &tag: curr_row_tags) {
@@ -88,16 +89,15 @@ NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value norma
       }
       mToken.push_back(curr_tk);
       mSpeakers.push_back(speaker);
-      if (use_punctuation && punctuation != "") {
-        mToken.push_back(punctuation);
-        mSpeakers.push_back(speaker);
-        RawNlpRecord nlp_row = row;
-        nlp_row.token = nlp_row.punctuation;
-        nlp_row.punctuation = "";
-        mNlpRows.push_back(nlp_row);
-      }
     }
-
+    if (use_punctuation && punctuation != "") {
+      mToken.push_back(punctuation);
+      mSpeakers.push_back(speaker);
+      RawNlpRecord punc_row = row;
+      punc_row.token = punc_row.punctuation;
+      punc_row.punctuation = "";
+      mNlpRows.push_back(punc_row);
+    }
     firstTk = false;
     last_label = curr_label;
   }
