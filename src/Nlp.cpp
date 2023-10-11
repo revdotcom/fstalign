@@ -93,6 +93,7 @@ NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value norma
       mSpeakers.push_back(speaker);
       RawNlpRecord punc_row;
       punc_row.token = punc_row.punctuation;
+      punc_row.speakerId = speaker;
       punc_row.punctuation = "";
       mNlpRows.push_back(punc_row);
     }

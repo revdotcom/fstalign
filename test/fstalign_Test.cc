@@ -695,8 +695,8 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-adapted-composition()") {
     const auto testFile = std::string{TEST_DATA} + "align_1.aligned.punc_case.nlp";
 
     REQUIRE(compareFiles(nlp_output.c_str(), testFile.c_str()));
-    REQUIRE_THAT(result, Contains("WER: 6/14 = 0.4286"));
-    REQUIRE_THAT(result, Contains("WER: INS:1 DEL:2 SUB:3"));
+    REQUIRE_THAT(result, Contains("WER: 7/15 = 0.4667"));
+    REQUIRE_THAT(result, Contains("WER: INS:0 DEL:2 SUB:5"));
   }
 
   SECTION("TXT Hypothesis: wer with case and punctuation(nlp output)") {
