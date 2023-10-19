@@ -27,13 +27,15 @@ struct RawCtmRecord {
 
 class CtmFstLoader : public FstLoader {
  public:
-  CtmFstLoader(std::vector<RawCtmRecord> &records);
+  CtmFstLoader(std::vector<RawCtmRecord> &records, bool use_case = false);
   ~CtmFstLoader();
   vector<RawCtmRecord> mCtmRows;
   virtual void addToSymbolTable(fst::SymbolTable &symbol) const;
   virtual fst::StdVectorFst convertToFst(const fst::SymbolTable &symbol, std::vector<int> map) const;
   virtual std::vector<int> convertToIntVector(fst::SymbolTable &symbol) const;
   virtual const std::string &getToken(int index) const { return mToken.at(index); }
+ private:
+  bool mUseCase;
 };
 
 class CtmReader {

@@ -33,6 +33,7 @@ int main(int argc, char **argv) {
   int levenstein_maximum_error_streak = 100;
   bool record_case_stats = false;
   bool use_punctuation = false;
+  bool use_case = false;
   bool disable_approximate_alignment = false;
   bool add_inserts_nlp = false;
 
@@ -123,6 +124,7 @@ int main(int argc, char **argv) {
                     "Record precision/recall for how well the hypothesis"
                     "casing matches the reference.");
   get_wer->add_flag("--use-punctuation", use_punctuation, "Treat punctuation from nlp rows as separate tokens");
+  get_wer->add_flag("--use-case", use_case, "Keeps token casing and considers tokens with different case as different tokens");
   get_wer->add_flag("--add-inserts-nlp", add_inserts_nlp, "Add inserts to NLP output");
 
   // CLI11_PARSE(app, argc, argv);
@@ -154,8 +156,8 @@ int main(int argc, char **argv) {
 
 
   // loading "reference" inputs
-  std::unique_ptr<FstLoader> hyp = FstLoader::MakeHypothesisLoader(hyp_filename, hyp_json_norm_filename, use_punctuation, !symbols_filename.empty());
-  std::unique_ptr<FstLoader> ref = FstLoader::MakeReferenceLoader(ref_filename, wer_sidecar_filename, json_norm_filename, use_punctuation, !symbols_filename.empty());
+  std::unique_ptr<FstLoader> hyp = FstLoader::MakeHypothesisLoader(hyp_filename, hyp_json_norm_filename, use_punctuation, use_case, !symbols_filename.empty());
+  std::unique_ptr<FstLoader> ref = FstLoader::MakeReferenceLoader(ref_filename, wer_sidecar_filename, json_norm_filename, use_punctuation, use_case, !symbols_filename.empty());
 
   AlignerOptions alignerOptions;
   alignerOptions.speaker_switch_context_size = speaker_switch_context_size;
@@ -178,7 +180,7 @@ int main(int argc, char **argv) {
   }
 
   if (command == "wer") {
-    HandleWer(*ref, *hyp, engine, output_sbs, output_nlp, alignerOptions, add_inserts_nlp);
+    HandleWer(*ref, *hyp, engine, output_sbs, output_nlp, alignerOptions, add_inserts_nlp, use_case);
   } else if (command == "align") {
     if (output_nlp.empty()) {
       console->error("the output nlp file must be specified");
@@ -219,6 +221,7 @@ std::unique_ptr<FstLoader> FstLoader::MakeReferenceLoader(const std::string& ref
                                                           const std::string& wer_sidecar_filename,
                                                           const std::string& json_norm_filename,
                                                           bool use_punctuation,
+                                                          bool use_case,
                                                           bool symbols_file_included) {
   auto console = logger::GetLogger("console");
   Json::Value obj;
@@ -265,12 +268,12 @@ std::unique_ptr<FstLoader> FstLoader::MakeReferenceLoader(const std::string& ref
     NlpReader nlpReader = NlpReader();
     console->info("reading reference nlp from {}", ref_filename);
     auto vec = nlpReader.read_from_disk(ref_filename);
-    return std::make_unique<NlpFstLoader>(vec, obj, wer_sidecar_obj, true, use_punctuation);
+    return std::make_unique<NlpFstLoader>(vec, obj, wer_sidecar_obj, true, use_punctuation, use_case);
   } else if (EndsWithCaseInsensitive(ref_filename, string(".ctm"))) {
     console->info("reading reference ctm from {}", ref_filename);
     CtmReader ctmReader = CtmReader();
     auto vect = ctmReader.read_from_disk(ref_filename);
-    return std::make_unique<CtmFstLoader>(vect);
+    return std::make_unique<CtmFstLoader>(vect, use_case);
   } else if (EndsWithCaseInsensitive(ref_filename, string(".fst"))) {
     if (!symbols_file_included) {
       console->error("a symbols file must be specified if reading an FST.");
@@ -279,7 +282,7 @@ std::unique_ptr<FstLoader> FstLoader::MakeReferenceLoader(const std::string& ref
     return std::make_unique<FstFileLoader>(ref_filename);
   } else {
     console->info("reading reference plain text from {}", ref_filename);
-    auto oneBestFst = std::make_unique<OneBestFstLoader>();
+    auto oneBestFst = std::make_unique<OneBestFstLoader>(use_case);
     oneBestFst->LoadTextFile(ref_filename);
     return oneBestFst;
   }
@@ -288,6 +291,7 @@ std::unique_ptr<FstLoader> FstLoader::MakeReferenceLoader(const std::string& ref
 std::unique_ptr<FstLoader> FstLoader::MakeHypothesisLoader(const std::string& hyp_filename,
                                                            const std::string& hyp_json_norm_filename,
                                                            bool use_punctuation,
+                                                           bool use_case,
                                                            bool symbols_file_included) {
   auto console = logger::GetLogger("console");
 
@@ -329,12 +333,12 @@ std::unique_ptr<FstLoader> FstLoader::MakeHypothesisLoader(const std::string& hy
     auto vec = nlpReader.read_from_disk(hyp_filename);
     // for now, nlp files passed as hypothesis won't have their labels handled as such
     // this also mean that json normalization will be ignored
-    return std::make_unique<NlpFstLoader>(vec, hyp_json_obj, hyp_empty_json, false, use_punctuation);
+    return std::make_unique<NlpFstLoader>(vec, hyp_json_obj, hyp_empty_json, false, use_punctuation, use_case);
   } else if (EndsWithCaseInsensitive(hyp_filename, string(".ctm"))) {
     console->info("reading hypothesis ctm from {}", hyp_filename);
     CtmReader ctmReader = CtmReader();
     auto vect = ctmReader.read_from_disk(hyp_filename);
-    return std::make_unique<CtmFstLoader>(vect);
+    return std::make_unique<CtmFstLoader>(vect, use_case);
   } else if (EndsWithCaseInsensitive(hyp_filename, string(".fst"))) {
     if (!symbols_file_included) {
       console->error("a symbols file must be specified if reading an FST.");
@@ -343,7 +347,7 @@ std::unique_ptr<FstLoader> FstLoader::MakeHypothesisLoader(const std::string& hy
     return std::make_unique<FstFileLoader>(hyp_filename);
   } else {
     console->info("reading hypothesis plain text from {}", hyp_filename);
-    auto hypOneBest = std::make_unique<OneBestFstLoader>();
+    auto hypOneBest = std::make_unique<OneBestFstLoader>(use_case);
     hypOneBest->LoadTextFile(hyp_filename);
     return hypOneBest;
   }

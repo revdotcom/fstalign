@@ -28,11 +28,13 @@ class FstLoader {
                                                         const std::string& wer_sidecar_filename,
                                                         const std::string& json_norm_filename,
                                                         bool use_punctuation,
+                                                        bool use_case,
                                                         bool symbols_file_included);
 
   static std::unique_ptr<FstLoader> MakeHypothesisLoader(const std::string& hyp_filename,
                                                          const std::string& hyp_json_norm_filename,
                                                          bool use_punctuation,
+                                                         bool use_case,
                                                          bool symbols_file_included);
 
 
