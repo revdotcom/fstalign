@@ -594,15 +594,6 @@ void write_stitches_to_nlp(vector<Stitching>& stitches, ofstream &output_nlp_fil
         logger->warn("an unnormalized token was found: {}", ref_tk);
       }
     } else if (IsNoisecodeToken(original_nlp_token)) {
-      // if we have a noisecode  <.*> in the nlp token, we inject it here
-      if (stitch.comment.length() == 0) {
-        if (ref_tk == DEL || ref_tk == "") {
-          stitch.comment = "sub(<eps>)";
-        } else {
-          stitch.comment = "sub(" + ref_tk + ")";
-        }
-      }
-
       ref_tk = original_nlp_token;
     } else if (stitch.comment.find("ins") == 0) {
       assert(add_inserts);
