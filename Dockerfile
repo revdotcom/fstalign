@@ -37,3 +37,5 @@ COPY tools /fstalign/tools
 ENV PATH \
     /fstalign/bin/:\
     $PATH
+
+ENTRYPOINT ["fstalign"]
