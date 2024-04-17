@@ -30,7 +30,6 @@ NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value norma
 
   // fuse multiple rows that have the same id/label into one entry only
   for (auto &row : records) {
-    mNlpRows.push_back(row);
     auto curr_tk = row.token;
     auto curr_label = row.best_label;
     auto curr_label_id = row.best_label_id;
@@ -48,6 +47,7 @@ NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value norma
     }
     row.wer_tags = real_wer_tags;
     std::string speaker = row.speakerId;
+    mNlpRows.push_back(row);
 
     if (processLabels && curr_label != "") {
       if (firstTk || curr_label != last_label) {
