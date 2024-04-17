@@ -1,0 +1,125 @@
+           ref_token	hyp_token           	IsErr	Class	Wer_Tag_Entities
+         <crosstalk>	<crosstalk>         			
+                yeah	yeah                			
+                   ,	<del>               	ERR		
+                yeah	<del>               	ERR		
+                   ,	<del>               	ERR		
+               right	right               			
+                   .	<del>               	ERR		
+                yeah	<del>               	ERR		
+                   ,	<del>               	ERR		
+                 all	<del>               	ERR		
+               right	<del>               	ERR		
+                   ,	i'll                	ERR		
+            probably	do                  	ERR		
+                just	just                			
+                that	that                			
+                   .	<del>               	ERR		
+                 are	are                 			
+               there	there               			
+                 any	any                 			
+             visuals	visuals             			
+                that	that                			
+                come	come                			
+                  to	to                  			
+                mind	mind                			
+                  or	or                  			
+                yeah	yeah                			
+                   ,	<del>               	ERR		
+                sure	sure                			
+                   .	<del>               	ERR		
+                when	when                			
+                   i	i                   			
+                hear	hear                			
+              foobar	foobar              			###1_PROPER_NOUN###|###2_SPACY>ORG###|
+                   ,	<del>               	ERR		
+                   i	i                   			
+               think	think               			
+               about	about               			
+                just	just                			
+                that	that                			
+                   :	<del>               	ERR		
+                 foo	foobar              	ERR		
+                   a	a                   			
+------------------------------------------------------------
+                Line	Group               
+                   4	, yeah , <-> ***
+                   8	. yeah , all right , probably <-> i'll do
+                  17	. <-> ***
+                  28	, <-> ***
+                  30	. <-> ***
+                  35	, <-> ***
+                  41	: foo <-> foobar
+------------------------------------------------------------
+             Unigram	Prec.     	Recall    
+                   ,	0/0 (0.0 %)	0/6 (0.0 %)
+                   .	0/0 (0.0 %)	0/3 (0.0 %)
+                   :	0/0 (0.0 %)	0/1 (0.0 %)
+                 all	0/0 (0.0 %)	0/1 (0.0 %)
+                  do	0/1 (0.0 %)	0/0 (0.0 %)
+                 foo	0/0 (0.0 %)	0/1 (0.0 %)
+                i'll	0/1 (0.0 %)	0/0 (0.0 %)
+            probably	0/0 (0.0 %)	0/1 (0.0 %)
+              foobar	1/2 (50.0 %)	1/1 (100.0 %)
+               right	1/1 (100.0 %)	1/2 (50.0 %)
+                yeah	2/2 (100.0 %)	2/4 (50.0 %)
+         <crosstalk>	1/1 (100.0 %)	1/1 (100.0 %)
+                   a	1/1 (100.0 %)	1/1 (100.0 %)
+               about	1/1 (100.0 %)	1/1 (100.0 %)
+                 any	1/1 (100.0 %)	1/1 (100.0 %)
+                 are	1/1 (100.0 %)	1/1 (100.0 %)
+                come	1/1 (100.0 %)	1/1 (100.0 %)
+                hear	1/1 (100.0 %)	1/1 (100.0 %)
+                   i	2/2 (100.0 %)	2/2 (100.0 %)
+                just	2/2 (100.0 %)	2/2 (100.0 %)
+                mind	1/1 (100.0 %)	1/1 (100.0 %)
+                  or	1/1 (100.0 %)	1/1 (100.0 %)
+                sure	1/1 (100.0 %)	1/1 (100.0 %)
+                that	3/3 (100.0 %)	3/3 (100.0 %)
+               there	1/1 (100.0 %)	1/1 (100.0 %)
+               think	1/1 (100.0 %)	1/1 (100.0 %)
+                  to	1/1 (100.0 %)	1/1 (100.0 %)
+             visuals	1/1 (100.0 %)	1/1 (100.0 %)
+                when	1/1 (100.0 %)	1/1 (100.0 %)
+------------------------------------------------------------
+              Bigram	Precision           	Recall              
+               , all	0/0 (0.0 %)	0/1 (0.0 %)
+                 , i	0/0 (0.0 %)	0/1 (0.0 %)
+          , probably	0/0 (0.0 %)	0/1 (0.0 %)
+             , right	0/0 (0.0 %)	0/1 (0.0 %)
+              , sure	0/0 (0.0 %)	0/1 (0.0 %)
+              , yeah	0/0 (0.0 %)	0/1 (0.0 %)
+               . are	0/0 (0.0 %)	0/1 (0.0 %)
+              . when	0/0 (0.0 %)	0/1 (0.0 %)
+              . yeah	0/0 (0.0 %)	0/1 (0.0 %)
+               : foo	0/0 (0.0 %)	0/1 (0.0 %)
+           all right	0/0 (0.0 %)	0/1 (0.0 %)
+             do just	0/1 (0.0 %)	0/0 (0.0 %)
+               foo a	0/0 (0.0 %)	0/1 (0.0 %)
+            foobar ,	0/0 (0.0 %)	0/1 (0.0 %)
+            foobar a	0/1 (0.0 %)	0/0 (0.0 %)
+             i'll do	0/1 (0.0 %)	0/0 (0.0 %)
+       probably just	0/0 (0.0 %)	0/1 (0.0 %)
+             right ,	0/0 (0.0 %)	0/1 (0.0 %)
+             right .	0/0 (0.0 %)	0/1 (0.0 %)
+              sure .	0/0 (0.0 %)	0/1 (0.0 %)
+              that .	0/0 (0.0 %)	0/1 (0.0 %)
+              that :	0/0 (0.0 %)	0/1 (0.0 %)
+              yeah ,	0/0 (0.0 %)	0/4 (0.0 %)
+    <crosstalk> yeah	1/1 (100.0 %)	1/1 (100.0 %)
+          about just	1/1 (100.0 %)	1/1 (100.0 %)
+         any visuals	1/1 (100.0 %)	1/1 (100.0 %)
+           are there	1/1 (100.0 %)	1/1 (100.0 %)
+             come to	1/1 (100.0 %)	1/1 (100.0 %)
+         hear foobar	1/1 (100.0 %)	1/1 (100.0 %)
+              i hear	1/1 (100.0 %)	1/1 (100.0 %)
+             i think	1/1 (100.0 %)	1/1 (100.0 %)
+           just that	2/2 (100.0 %)	2/2 (100.0 %)
+             mind or	1/1 (100.0 %)	1/1 (100.0 %)
+             or yeah	1/1 (100.0 %)	1/1 (100.0 %)
+           that come	1/1 (100.0 %)	1/1 (100.0 %)
+           there any	1/1 (100.0 %)	1/1 (100.0 %)
+         think about	1/1 (100.0 %)	1/1 (100.0 %)
+             to mind	1/1 (100.0 %)	1/1 (100.0 %)
+        visuals that	1/1 (100.0 %)	1/1 (100.0 %)
+              when i	1/1 (100.0 %)	1/1 (100.0 %)

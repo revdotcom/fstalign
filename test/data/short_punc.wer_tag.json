@@ -1,0 +1,8 @@
+{
+    "1": {
+        "entity_type": "PROPER_NOUN"
+    },
+    "2": {
+        "entity_type": "SPACY>ORG"
+    }
+}
