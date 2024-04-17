@@ -16,6 +16,11 @@
 using namespace std;
 using namespace fst;
 
+struct WerTagEntry {
+  string tag_id;
+  string entity_type;
+};
+
 struct RawNlpRecord {
   string token;
   string speakerId;
@@ -27,7 +32,7 @@ struct RawNlpRecord {
   string labels;
   string best_label;
   string best_label_id;
-  vector<string> wer_tags;
+  vector<WerTagEntry> wer_tags;
   string confidence;
 };
 
@@ -37,7 +42,7 @@ class NlpReader {
   virtual ~NlpReader();
   vector<RawNlpRecord> read_from_disk(const std::string &filename);
   string GetBestLabel(std::string &labels);
-  vector<string> GetWerTags(std::string &wer_tags_str);
+  vector<WerTagEntry> GetWerTags(std::string &wer_tags_str);
   string GetLabelId(std::string &label);
 };
 

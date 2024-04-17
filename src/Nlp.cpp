@@ -28,6 +28,7 @@ NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value norma
   std::string last_label;
   bool firstTk = true;
 
+  auto logger = logger::GetOrCreateLogger("NlpFstLoader");
   // fuse multiple rows that have the same id/label into one entry only
   for (auto &row : records) {
     auto curr_tk = row.token;
@@ -37,15 +38,13 @@ NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value norma
     auto curr_row_tags = row.wer_tags;
 
     // Update wer tags in records to real string labels
-    vector<string> real_wer_tags;
     for (auto &tag : curr_row_tags) {
-      auto real_tag = tag;
       if (mWerSidecar != Json::nullValue) {
-        real_tag = "###" + real_tag + "_" + mWerSidecar[real_tag]["entity_type"].asString() + "###";
+        tag.entity_type = mWerSidecar[tag.tag_id]["entity_type"].asString();
+        logger->info(tag.entity_type);
       }
-      real_wer_tags.push_back(real_tag);
     }
-    row.wer_tags = real_wer_tags;
+    row.wer_tags = curr_row_tags;
     std::string speaker = row.speakerId;
     mNlpRows.push_back(row);
 
@@ -411,8 +410,8 @@ std::string NlpReader::GetBestLabel(std::string &labels) {
   return labels;
 }
 
-std::vector<std::string> NlpReader::GetWerTags(std::string &wer_tags_str) {
-  std::vector<std::string> wer_tags;
+std::vector<WerTagEntry> NlpReader::GetWerTags(std::string &wer_tags_str) {
+  std::vector<WerTagEntry> wer_tags;
   if (wer_tags_str == "[]") {
     return wer_tags;
   }
@@ -420,8 +419,9 @@ std::vector<std::string> NlpReader::GetWerTags(std::string &wer_tags_str) {
   int current_pos = 2;
   auto pos = wer_tags_str.find("'", current_pos);
   while (pos != -1) {
-    std::string wer_tag = wer_tags_str.substr(current_pos, pos - current_pos);
-    wer_tags.push_back(wer_tag);
+    WerTagEntry entry;
+    entry.tag_id = wer_tags_str.substr(current_pos, pos - current_pos);
+    wer_tags.push_back(entry);
     current_pos = wer_tags_str.find("'", pos + 1) + 1;
     if (current_pos == 0) {
       break;

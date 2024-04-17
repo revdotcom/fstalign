@@ -350,19 +350,16 @@ void RecordTagWer(const vector<Stitching>& stitches) {
   for (const auto &stitch : stitches) {
     if (!stitch.nlpRow.wer_tags.empty()) {
       for (auto wer_tag : stitch.nlpRow.wer_tags) {
-        int tag_start = wer_tag.find_first_not_of('#');
-        int tag_end = wer_tag.find('_');
-        string wer_tag_id = wer_tag.substr(tag_start, tag_end - tag_start);
-        wer_results.insert(std::pair<std::string, WerResult>(wer_tag_id, {0, 0, 0, 0, 0}));
+        wer_results.insert(std::pair<std::string, WerResult>(wer_tag.tag_id, {0, 0, 0, 0, 0}));
         // Check with rfind since other comments can be there
         bool del = stitch.comment.rfind("del", 0) == 0;
         bool ins = stitch.comment.rfind("ins", 0) == 0;
         bool sub = stitch.comment.rfind("sub", 0) == 0;
-        wer_results[wer_tag_id].insertions += ins;
-        wer_results[wer_tag_id].deletions += del;
-        wer_results[wer_tag_id].substitutions += sub;
+        wer_results[wer_tag.tag_id].insertions += ins;
+        wer_results[wer_tag.tag_id].deletions += del;
+        wer_results[wer_tag.tag_id].substitutions += sub;
         if (!ins) {
-          wer_results[wer_tag_id].numWordsInReference += 1;
+          wer_results[wer_tag.tag_id].numWordsInReference += 1;
         }
       }
     }
@@ -555,7 +552,7 @@ void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, st
     string tk_wer_tags = "";
     auto wer_tags = p_stitch.nlpRow.wer_tags;
     for (auto wer_tag: wer_tags) {
-      tk_wer_tags = tk_wer_tags + wer_tag + "|";
+      tk_wer_tags = tk_wer_tags + "###" + wer_tag.tag_id + "_" + wer_tag.entity_type + "###|";
     }
     string ref_tk = p_stitch.reftk;
     string hyp_tk = p_stitch.hyptk;

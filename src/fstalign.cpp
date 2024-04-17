@@ -619,7 +619,7 @@ void write_stitches_to_nlp(vector<Stitching>& stitches, ofstream &output_nlp_fil
                     << "[";
     /* for (auto wer_tag : nlpRow.wer_tags) { */
     for (auto it = stitch.nlpRow.wer_tags.begin(); it != stitch.nlpRow.wer_tags.end(); ++it) {
-      output_nlp_file << "'" << *it << "'";
+      output_nlp_file << "'" << it->tag_id << "'";
       if (std::next(it) != stitch.nlpRow.wer_tags.end()) {
         output_nlp_file << ", ";
       }
