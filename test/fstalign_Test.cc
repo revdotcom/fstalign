@@ -681,7 +681,7 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-adapted-composition()") {
 
   SECTION("NLP Hypothesis: wer with case and punctuation(nlp output)") {
     const auto result =
-        exec(command("wer", approach, "short_punc.ref.nlp", "short_punc.hyp.nlp", sbs_output, nlp_output, TEST_SYNONYMS)+" --use-punctuation --use-case");
+        exec(command("wer", approach, "short_punc.ref.nlp", "short_punc.hyp.nlp", sbs_output, nlp_output, TEST_SYNONYMS)+" --use-punctuation --use-case --wer-sidecar short_punc.wer_tag.json");
     const auto testFile = std::string{TEST_DATA} + "short.aligned.punc_case.nlp";
 
     REQUIRE(compareFiles(nlp_output.c_str(), testFile.c_str()));
