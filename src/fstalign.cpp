@@ -695,6 +695,7 @@ void HandleWer(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine &engine
     }
   }
 
+  JsonLogUnigramBigramStats(topAlignment);
   if (!output_sbs.empty()) {
     logger->info("output_sbs = {}", output_sbs);
     WriteSbs(topAlignment, stitches, output_sbs);

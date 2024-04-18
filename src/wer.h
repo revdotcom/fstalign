@@ -50,3 +50,4 @@ typedef vector<pair<size_t, string>> ErrorGroups;
 
 void AddErrorGroup(ErrorGroups &groups, size_t &line, string &ref, string &hyp);
 void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, string sbs_filename);
+void JsonLogUnigramBigramStats(wer_alignment &topAlignment);

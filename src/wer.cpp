@@ -603,6 +603,10 @@ void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, st
     myfile << fmt::format("{0:>20}\t{1}", group.first, group.second) << endl;
   }
 
+  myfile.close();
+}
+
+void JsonLogUnigramBigramStats(wer_alignment &topAlignment) {
   for (const auto &a : topAlignment.unigram_stats) {
     string word = a.first;
     gram_error_counter u = a.second;
@@ -626,6 +630,4 @@ void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, st
     jsonLogger::JsonLogger::getLogger().root["wer"]["bigrams"][word]["precision"] = u.precision;
     jsonLogger::JsonLogger::getLogger().root["wer"]["bigrams"][word]["recall"] = u.recall;
   }
-
-  myfile.close();
 }
