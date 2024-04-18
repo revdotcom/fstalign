@@ -614,18 +614,6 @@ void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, st
     jsonLogger::JsonLogger::getLogger().root["wer"]["unigrams"][word]["precision"] = u.precision;
     jsonLogger::JsonLogger::getLogger().root["wer"]["unigrams"][word]["recall"] = u.recall;
   }
-  // output error unigrams
-  myfile << string(60, '-') << endl << fmt::format("{0:>20}\t{1:10}\t{2:10}", "Unigram", "Prec.", "Recall") << endl;
-  for (const auto &a : topAlignment.unigram_stats) {
-    string word = a.first;
-    gram_error_counter u = a.second;
-    myfile << fmt::format("{0:>20}\t{1}/{2} ({3:.1f} %)\t{4}/{5} ({6:.1f} %)", word, u.correct,
-                          (u.correct + u.ins + u.subst_fp), (float)u.precision, u.correct, (u.correct + u.del + u.subst_fn),
-                          (float)u.recall)
-           << endl;
-  }
-
-  myfile << string(60, '-') << endl << fmt::format("{0:>20}\t{1:20}\t{2:20}", "Bigram", "Precision", "Recall") << endl;
 
   for (const auto &a : topAlignment.bigrams_stats) {
     string word = a.first;
@@ -637,14 +625,6 @@ void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, st
     jsonLogger::JsonLogger::getLogger().root["wer"]["bigrams"][word]["substitutions_fn"] = u.subst_fn;
     jsonLogger::JsonLogger::getLogger().root["wer"]["bigrams"][word]["precision"] = u.precision;
     jsonLogger::JsonLogger::getLogger().root["wer"]["bigrams"][word]["recall"] = u.recall;
-  }
-  for (const auto &a : topAlignment.bigrams_stats) {
-    string word = a.first;
-    gram_error_counter u = a.second;
-    myfile << fmt::format("{0:>20}\t{1}/{2} ({3:.1f} %)\t{4}/{5} ({6:.1f} %)", word, u.correct,
-                          (u.correct + u.ins + u.subst_fp), (float)u.precision, u.correct, (u.correct + u.del + u.subst_fn),
-                          (float)u.recall)
-           << endl;
   }
 
   myfile.close();
