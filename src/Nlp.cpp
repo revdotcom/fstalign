@@ -28,7 +28,6 @@ NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value norma
   std::string last_label;
   bool firstTk = true;
 
-  auto logger = logger::GetOrCreateLogger("NlpFstLoader");
   // fuse multiple rows that have the same id/label into one entry only
   for (auto &row : records) {
     auto curr_tk = row.token;
@@ -41,7 +40,6 @@ NlpFstLoader::NlpFstLoader(std::vector<RawNlpRecord> &records, Json::Value norma
     for (auto &tag : curr_row_tags) {
       if (mWerSidecar != Json::nullValue) {
         tag.entity_type = mWerSidecar[tag.tag_id]["entity_type"].asString();
-        logger->info(tag.entity_type);
       }
     }
     row.wer_tags = curr_row_tags;
