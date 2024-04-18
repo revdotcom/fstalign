@@ -350,19 +350,16 @@ void RecordTagWer(const vector<Stitching>& stitches) {
   for (const auto &stitch : stitches) {
     if (!stitch.nlpRow.wer_tags.empty()) {
       for (auto wer_tag : stitch.nlpRow.wer_tags) {
-        int tag_start = wer_tag.find_first_not_of('#');
-        int tag_end = wer_tag.find('_');
-        string wer_tag_id = wer_tag.substr(tag_start, tag_end - tag_start);
-        wer_results.insert(std::pair<std::string, WerResult>(wer_tag_id, {0, 0, 0, 0, 0}));
+        wer_results.insert(std::pair<std::string, WerResult>(wer_tag.tag_id, {0, 0, 0, 0, 0}));
         // Check with rfind since other comments can be there
         bool del = stitch.comment.rfind("del", 0) == 0;
         bool ins = stitch.comment.rfind("ins", 0) == 0;
         bool sub = stitch.comment.rfind("sub", 0) == 0;
-        wer_results[wer_tag_id].insertions += ins;
-        wer_results[wer_tag_id].deletions += del;
-        wer_results[wer_tag_id].substitutions += sub;
+        wer_results[wer_tag.tag_id].insertions += ins;
+        wer_results[wer_tag.tag_id].deletions += del;
+        wer_results[wer_tag.tag_id].substitutions += sub;
         if (!ins) {
-          wer_results[wer_tag_id].numWordsInReference += 1;
+          wer_results[wer_tag.tag_id].numWordsInReference += 1;
         }
       }
     }
@@ -555,7 +552,7 @@ void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, st
     string tk_wer_tags = "";
     auto wer_tags = p_stitch.nlpRow.wer_tags;
     for (auto wer_tag: wer_tags) {
-      tk_wer_tags = tk_wer_tags + wer_tag + "|";
+      tk_wer_tags = tk_wer_tags + "###" + wer_tag.tag_id + "_" + wer_tag.entity_type + "###|";
     }
     string ref_tk = p_stitch.reftk;
     string hyp_tk = p_stitch.hyptk;
@@ -606,6 +603,10 @@ void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, st
     myfile << fmt::format("{0:>20}\t{1}", group.first, group.second) << endl;
   }
 
+  myfile.close();
+}
+
+void JsonLogUnigramBigramStats(wer_alignment &topAlignment) {
   for (const auto &a : topAlignment.unigram_stats) {
     string word = a.first;
     gram_error_counter u = a.second;
@@ -617,18 +618,6 @@ void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, st
     jsonLogger::JsonLogger::getLogger().root["wer"]["unigrams"][word]["precision"] = u.precision;
     jsonLogger::JsonLogger::getLogger().root["wer"]["unigrams"][word]["recall"] = u.recall;
   }
-  // output error unigrams
-  myfile << string(60, '-') << endl << fmt::format("{0:>20}\t{1:10}\t{2:10}", "Unigram", "Prec.", "Recall") << endl;
-  for (const auto &a : topAlignment.unigram_stats) {
-    string word = a.first;
-    gram_error_counter u = a.second;
-    myfile << fmt::format("{0:>20}\t{1}/{2} ({3:.1f} %)\t{4}/{5} ({6:.1f} %)", word, u.correct,
-                          (u.correct + u.ins + u.subst_fp), (float)u.precision, u.correct, (u.correct + u.del + u.subst_fn),
-                          (float)u.recall)
-           << endl;
-  }
-
-  myfile << string(60, '-') << endl << fmt::format("{0:>20}\t{1:20}\t{2:20}", "Bigram", "Precision", "Recall") << endl;
 
   for (const auto &a : topAlignment.bigrams_stats) {
     string word = a.first;
@@ -641,14 +630,4 @@ void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, st
     jsonLogger::JsonLogger::getLogger().root["wer"]["bigrams"][word]["precision"] = u.precision;
     jsonLogger::JsonLogger::getLogger().root["wer"]["bigrams"][word]["recall"] = u.recall;
   }
-  for (const auto &a : topAlignment.bigrams_stats) {
-    string word = a.first;
-    gram_error_counter u = a.second;
-    myfile << fmt::format("{0:>20}\t{1}/{2} ({3:.1f} %)\t{4}/{5} ({6:.1f} %)", word, u.correct,
-                          (u.correct + u.ins + u.subst_fp), (float)u.precision, u.correct, (u.correct + u.del + u.subst_fn),
-                          (float)u.recall)
-           << endl;
-  }
-
-  myfile.close();
 }

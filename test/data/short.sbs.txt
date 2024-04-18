@@ -1,0 +1,52 @@
+           ref_token	hyp_token           	IsErr	Class	Wer_Tag_Entities
+         <crosstalk>	<crosstalk>         			
+                Yeah	Yeah                			
+                   ,	,                   			
+                yeah	<del>               	ERR		
+                   ,	<del>               	ERR		
+               right	right               			
+                   .	<del>               	ERR		
+                Yeah	<del>               	ERR		
+                   ,	<del>               	ERR		
+                 all	<del>               	ERR		
+               right	<del>               	ERR		
+                   ,	I'll                	ERR		
+            probably	do                  	ERR		
+                just	just                			
+                that	that                			
+                   .	?                   	ERR		
+                 Are	Are                 			
+               there	there               			
+                 any	any                 			
+             visuals	visuals             			
+                that	that                			
+                come	come                			
+                  to	to                  			
+                mind	mind                			
+                  or	or                  		___100002_SYN_1-1___	
+               <ins>	?                   	ERR		
+                Yeah	Yeah                			
+                   ,	,                   			
+                sure	sure                			
+                   .	.                   			
+                When	When                			
+                   I	I                   			
+                hear	hear                			
+              Foobar	Foobar              			###1_PROPER_NOUN###|###2_SPACY>ORG###|
+                   ,	,                   			
+                   I	I                   			
+               think	think               			
+               about	about               			
+                just	just                			
+                that	that                			
+                   :	:                   			
+               <ins>	Foobar              	ERR		
+                 foo	,                   	ERR		
+                   a	a                   			
+------------------------------------------------------------
+                Line	Group               
+                   5	yeah , <-> ***
+                   8	. Yeah , all right , probably <-> I'll do
+                  17	. <-> ?
+                  27	*** <-> ?
+                  43	foo <-> Foobar ,

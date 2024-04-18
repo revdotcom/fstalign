@@ -680,11 +680,14 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-adapted-composition()") {
   }
 
   SECTION("NLP Hypothesis: wer with case and punctuation(nlp output)") {
+    const auto wer_sidecar_path = TEST_DATA + "short_punc.wer_tag.json";
     const auto result =
-        exec(command("wer", approach, "short_punc.ref.nlp", "short_punc.hyp.nlp", sbs_output, nlp_output, TEST_SYNONYMS)+" --use-punctuation --use-case");
+        exec(command("wer", approach, "short_punc.ref.nlp", "short_punc.hyp.nlp", sbs_output, nlp_output, TEST_SYNONYMS)+" --use-punctuation --use-case --wer-sidecar " + wer_sidecar_path);
     const auto testFile = std::string{TEST_DATA} + "short.aligned.punc_case.nlp";
+    const auto testSbsFile = std::string{TEST_DATA} + "short.sbs.txt";
 
     REQUIRE(compareFiles(nlp_output.c_str(), testFile.c_str()));
+    REQUIRE(compareFiles(sbs_output.c_str(), testSbsFile.c_str()));
     REQUIRE_THAT(result, Contains("WER: 13/42 = 0.3095"));
     REQUIRE_THAT(result, Contains("WER: INS:2 DEL:7 SUB:4"));
   }
