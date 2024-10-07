@@ -49,5 +49,5 @@ void CalculatePrecisionRecall(wer_alignment &topAlignment, int threshold);
 typedef vector<pair<size_t, string>> ErrorGroups;
 
 void AddErrorGroup(ErrorGroups &groups, size_t &line, string &ref, string &hyp);
-void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, string sbs_filename);
+void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, string sbs_filename, const vector<string> extra_nlp_columns);
 void JsonLogUnigramBigramStats(wer_alignment &topAlignment);

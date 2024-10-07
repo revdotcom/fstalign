@@ -526,7 +526,7 @@ void AddErrorGroup(ErrorGroups &groups, size_t &line, string &ref, string &hyp) 
   hyp = "";
 }
 
-void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, string sbs_filename) {
+void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, string sbs_filename, const vector<string> extra_nlp_columns) {
   auto logger = logger::GetOrCreateLogger("wer");
   logger->set_level(spdlog::level::info);
 
@@ -536,7 +536,11 @@ void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, st
   AlignmentTraversor visitor(topAlignment);
   string prev_tk_classLabel = "";
   logger->info("Side-by-Side alignment info going into {}", sbs_filename);
-  myfile << fmt::format("{0:>20}\t{1:20}\t{2}\t{3}\t{4}", "ref_token", "hyp_token", "IsErr", "Class", "Wer_Tag_Entities") << endl;
+  myfile << fmt::format("{0:>20}\t{1:20}\t{2}\t{3}\t{4}", "ref_token", "hyp_token", "IsErr", "Class", "Wer_Tag_Entities");
+  for (string col_name: extra_nlp_columns) {
+    myfile << fmt::format("\t{0}", col_name);
+  }
+  myfile << endl;
 
   // keep track of error groupings
   ErrorGroups groups_err;
@@ -545,6 +549,15 @@ void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, st
   string hyp_err = "";
 
   std::set<std::string> op_set = {"<ins>", "<del>", "<sub>"};
+  std::unordered_map<std::string, std::function<string(RawNlpRecord)>> nlp_name_to_val = {
+    {"speaker", [](RawNlpRecord row) {return row.speakerId;}},
+    {"punctuation", [](RawNlpRecord row) {return row.punctuation;}},
+    {"prepunctuation", [](RawNlpRecord row) {return row.prepunctuation;}},
+    {"ts", [](RawNlpRecord row) {return row.ts;}},
+    {"endTs", [](RawNlpRecord row) {return row.endTs;}},
+    {"case", [](RawNlpRecord row) {return row.casing;}},
+    {"confidence", [](RawNlpRecord row) {return row.confidence;}},
+  };
 
   size_t offset = 2;  // line number in output file where first triple starts
   for (const auto &p_stitch: stitches) {
@@ -587,7 +600,12 @@ void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, st
       eff_class = tk_classLabel;
     }
 
-    myfile << fmt::format("{0:>20}\t{1:20}\t{2}\t{3}\t{4}", ref_tk, hyp_tk, tag, eff_class, tk_wer_tags) << endl;
+    myfile << fmt::format("{0:>20}\t{1:20}\t{2}\t{3}\t{4}", ref_tk, hyp_tk, tag, eff_class, tk_wer_tags);
+
+    for (string col_name: extra_nlp_columns) {
+      myfile << fmt::format("\t{0}", nlp_name_to_val[col_name](p_stitch.nlpRow));
+    }
+    myfile << endl;
     offset++;
   }
 

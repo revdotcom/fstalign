@@ -698,7 +698,8 @@ void HandleWer(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine &engine
   JsonLogUnigramBigramStats(topAlignment);
   if (!output_sbs.empty()) {
     logger->info("output_sbs = {}", output_sbs);
-    WriteSbs(topAlignment, stitches, output_sbs);
+    std::vector<string> extra_nlp_columns = {"confidence"};
+    WriteSbs(topAlignment, stitches, output_sbs, extra_nlp_columns);
   }
 
   if (!output_nlp.empty() && !nlp_ref_loader) {
