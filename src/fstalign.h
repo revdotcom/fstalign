@@ -18,8 +18,8 @@ using namespace fst;
 // Represent information associated with a reference or hypothesis token
 struct Token {
   string token;
-  float start_ts=-1.0;
-  float end_ts=-1.0;
+  float start_ts=0.0;
+  float end_ts=0.0;
   float duration=0.0;
   float confidence=-1.0;
   string speaker;
