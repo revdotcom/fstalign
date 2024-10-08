@@ -262,8 +262,8 @@ void RecordCaseWer(const vector<Stitching> &aligned_stitches) {
   for (const auto &stitch : aligned_stitches) {
     const string &hyp = stitch.hyp_orig;
     const string &ref = stitch.nlpRow.token;
-    const string &reftk = stitch.reftk;
-    const string &hyptk = stitch.hyptk;
+    const string &reftk = stitch.reftk.token;
+    const string &hyptk = stitch.hyptk.token;
     const string &ref_casing = stitch.nlpRow.casing;
 
     if (hyptk == DEL || reftk == INS) {
@@ -526,7 +526,7 @@ void AddErrorGroup(ErrorGroups &groups, size_t &line, string &ref, string &hyp) 
   hyp = "";
 }
 
-void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, string sbs_filename, const vector<string> extra_nlp_columns) {
+void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, string sbs_filename, const vector<string> extra_ref_columns, const vector<string> extra_hyp_columns) {
   auto logger = logger::GetOrCreateLogger("wer");
   logger->set_level(spdlog::level::info);
 
@@ -537,8 +537,11 @@ void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, st
   string prev_tk_classLabel = "";
   logger->info("Side-by-Side alignment info going into {}", sbs_filename);
   myfile << fmt::format("{0:>20}\t{1:20}\t{2}\t{3}\t{4}", "ref_token", "hyp_token", "IsErr", "Class", "Wer_Tag_Entities");
-  for (string col_name: extra_nlp_columns) {
-    myfile << fmt::format("\t{0}", col_name);
+  for (string col_name: extra_ref_columns) {
+    myfile << fmt::format("\tref_{0}", col_name);
+  }
+  for (string col_name: extra_hyp_columns) {
+    myfile << fmt::format("\thyp_{0}", col_name);
   }
   myfile << endl;
 
@@ -549,15 +552,6 @@ void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, st
   string hyp_err = "";
 
   std::set<std::string> op_set = {"<ins>", "<del>", "<sub>"};
-  std::unordered_map<std::string, std::function<string(RawNlpRecord)>> nlp_name_to_val = {
-    {"speaker", [](RawNlpRecord row) {return row.speakerId;}},
-    {"punctuation", [](RawNlpRecord row) {return row.punctuation;}},
-    {"prepunctuation", [](RawNlpRecord row) {return row.prepunctuation;}},
-    {"ts", [](RawNlpRecord row) {return row.ts;}},
-    {"endTs", [](RawNlpRecord row) {return row.endTs;}},
-    {"case", [](RawNlpRecord row) {return row.casing;}},
-    {"confidence", [](RawNlpRecord row) {return row.confidence;}},
-  };
 
   size_t offset = 2;  // line number in output file where first triple starts
   for (const auto &p_stitch: stitches) {
@@ -567,8 +561,8 @@ void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, st
     for (auto wer_tag: wer_tags) {
       tk_wer_tags = tk_wer_tags + "###" + wer_tag.tag_id + "_" + wer_tag.entity_type + "###|";
     }
-    string ref_tk = p_stitch.reftk;
-    string hyp_tk = p_stitch.hyptk;
+    string ref_tk = p_stitch.reftk.token;
+    string hyp_tk = p_stitch.hyptk.token;
     string tag = "";
 
     if (ref_tk == NOOP) {
@@ -602,8 +596,11 @@ void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, st
 
     myfile << fmt::format("{0:>20}\t{1:20}\t{2}\t{3}\t{4}", ref_tk, hyp_tk, tag, eff_class, tk_wer_tags);
 
-    for (string col_name: extra_nlp_columns) {
-      myfile << fmt::format("\t{0}", nlp_name_to_val[col_name](p_stitch.nlpRow));
+    for (string col_name: extra_ref_columns) {
+      myfile << fmt::format("\t{0}", GetTokenPropertyAsString(p_stitch, true, col_name));
+    }
+    for (string col_name: extra_hyp_columns) {
+      myfile << fmt::format("\t{0}", GetTokenPropertyAsString(p_stitch, false, col_name));
     }
     myfile << endl;
     offset++;

@@ -15,15 +15,21 @@ fstalign.h
 using namespace std;
 using namespace fst;
 
+// Represent information associated with a reference or hypothesis token
+struct Token {
+  string token;
+  float start_ts=-1.0;
+  float end_ts=-1.0;
+  float duration=0.0;
+  float confidence=-1.0;
+  string speaker;
+};
+
 // Stitchings will be used to represent fstalign output, combining reference,
 // hypothesis, and error information into a record-like data structure.
 struct Stitching {
-  string reftk;
-  string hyptk;
-  float start_ts;
-  float end_ts;
-  float duration;
-  float confidence;
+  Token reftk;
+  Token hyptk;
   string classLabel;
   RawNlpRecord nlpRow;
   string hyp_orig;
@@ -54,5 +60,7 @@ void HandleWer(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine &engine
                AlignerOptions alignerOptions, bool add_inserts_nlp = false, bool use_case = false);
 void HandleAlign(NlpFstLoader &refLoader, CtmFstLoader &hypLoader, SynonymEngine &engine, ofstream &output_nlp_file,
                  AlignerOptions alignerOptions);
+
+string GetTokenPropertyAsString(Stitching stitch, bool refToken, string property);
 
 #endif  // __FSTALIGN_H__
