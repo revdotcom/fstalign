@@ -635,7 +635,7 @@ void write_stitches_to_nlp(vector<Stitching>& stitches, ofstream &output_nlp_fil
 }
 
 void HandleWer(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine &engine, const string& output_sbs, const string& output_nlp,
-               AlignerOptions alignerOptions, bool add_inserts_nlp, bool use_case) {
+               AlignerOptions alignerOptions, bool add_inserts_nlp, bool use_case, std::vector<string> ref_extra_columns, std::vector<string> hyp_extra_columns) {
   //  int speaker_switch_context_size, int numBests, int pr_threshold, string symbols_filename,
   //  string composition_approach, bool record_case_stats) {
   auto logger = logger::GetOrCreateLogger("fstalign");
@@ -701,8 +701,7 @@ void HandleWer(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine &engine
   JsonLogUnigramBigramStats(topAlignment);
   if (!output_sbs.empty()) {
     logger->info("output_sbs = {}", output_sbs);
-    std::vector<string> extra_hyp_columns = {"confidence"};
-    WriteSbs(topAlignment, stitches, output_sbs, std::vector<string>(),extra_hyp_columns);
+    WriteSbs(topAlignment, stitches, output_sbs, ref_extra_columns, hyp_extra_columns);
   }
 
   if (!output_nlp.empty() && !nlp_ref_loader) {

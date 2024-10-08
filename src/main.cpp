@@ -40,6 +40,9 @@ int main(int argc, char **argv) {
   bool disable_cutoffs = false;
   bool disable_hyphen_ignore = false;
 
+  std::vector<string> ref_extra_columns = std::vector<string>();
+  std::vector<string> hyp_extra_columns = std::vector<string>();
+
   CLI::App app("Rev FST Align");
   app.set_help_all_flag("--help-all", "Expand all help");
   app.add_flag("--version", version, "Show fstalign version.");
@@ -97,6 +100,10 @@ int main(int argc, char **argv) {
 
     c->add_option("--composition-approach", composition_approach,
                   "Desired composition logic. Choices are 'standard' or 'adapted'");
+    c->add_option("--ref-extra-cols", ref_extra_columns,
+                  "Extra columns from the reference to include in SBS output.");
+    c->add_option("--hyp-extra-cols", hyp_extra_columns,
+                  "Extra columns from the hypothesis to include in SBS output.");
   }
   get_wer->add_option("--wer-sidecar", wer_sidecar_filename,
                 "WER sidecar json file.");
@@ -180,7 +187,7 @@ int main(int argc, char **argv) {
   }
 
   if (command == "wer") {
-    HandleWer(*ref, *hyp, engine, output_sbs, output_nlp, alignerOptions, add_inserts_nlp, use_case);
+    HandleWer(*ref, *hyp, engine, output_sbs, output_nlp, alignerOptions, add_inserts_nlp, use_case, ref_extra_columns, hyp_extra_columns);
   } else if (command == "align") {
     if (output_nlp.empty()) {
       console->error("the output nlp file must be specified");

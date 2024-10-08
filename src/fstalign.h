@@ -48,16 +48,9 @@ struct AlignerOptions {
   int levenstein_maximum_error_streak = 100;
 };
 
-// original
-// void HandleWer(FstLoader *refLoader, FstLoader *hypLoader, SynonymEngine *engine, string output_sbs, string
-// output_nlp,
-//                int speaker_switch_context_size, int numBests, int pr_threshold, string symbols_filename,
-//                string composition_approach, bool record_case_stats);
-// void HandleAlign(NlpFstLoader *refLoader, CtmFstLoader *hypLoader, SynonymEngine *engine, ofstream &output_nlp_file,
-//                  int numBests, string symbols_filename, string composition_approach);
 
 void HandleWer(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine &engine, const string& output_sbs, const string& output_nlp,
-               AlignerOptions alignerOptions, bool add_inserts_nlp = false, bool use_case = false);
+               AlignerOptions alignerOptions, bool add_inserts_nlp, bool use_case, std::vector<string> ref_extra_columns, std::vector<string> hyp_extra_columns);
 void HandleAlign(NlpFstLoader &refLoader, CtmFstLoader &hypLoader, SynonymEngine &engine, ofstream &output_nlp_file,
                  AlignerOptions alignerOptions);
 
