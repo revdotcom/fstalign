@@ -311,21 +311,18 @@ vector<Stitching> make_stitches(wer_alignment &alignment, vector<RawCtmRecord> h
         part.hyptk.start_ts = ts;
         part.hyptk.end_ts = endTs;
         part.hyptk.duration = endTs - ts;
-        part.hyptk.confidence = stof(hypNlpPart.confidence);
       } else if (!hypNlpPart.ts.empty()) {
         float ts = stof(hypNlpPart.ts);
 
         part.hyptk.start_ts = ts;
         part.hyptk.end_ts = ts;
         part.hyptk.duration = 0.0;
-        part.hyptk.confidence = stof(hypNlpPart.confidence);
       } else if (!hypNlpPart.endTs.empty()) {
         float endTs = stof(hypNlpPart.endTs);
 
         part.hyptk.start_ts = endTs;
         part.hyptk.end_ts = endTs;
         part.hyptk.duration = 0.0;
-        part.hyptk.confidence = stof(hypNlpPart.confidence);
       }
     }
 
