@@ -324,6 +324,9 @@ vector<Stitching> make_stitches(wer_alignment &alignment, vector<RawCtmRecord> h
         part.hyptk.end_ts = endTs;
         part.hyptk.duration = 0.0;
       }
+      if (!hypNlpPart.confidence.empty()) {
+        part.hyptk.confidence = stof(hypNlpPart.confidence);
+      }
     }
 
     if (!one_best_tokens.empty()) {
