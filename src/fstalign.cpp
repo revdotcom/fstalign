@@ -242,15 +242,15 @@ vector<Stitching> make_stitches(wer_alignment &alignment, vector<RawCtmRecord> h
     stitches.emplace_back();
     Stitching &part = stitches.back();
     part.classLabel = tk_classLabel;
-    part.reftk = ref_tk;
-    part.hyptk = hyp_tk;
+    part.reftk = {ref_tk};
+    part.hyptk = {hyp_tk};
     bool del = false, ins = false, sub = false;
     if (ref_tk == INS) {
       part.comment = "ins";
     } else if (hyp_tk == DEL) {
       part.comment = "del";
     } else if (hyp_tk != ref_tk) {
-      part.comment = "sub(" + part.hyptk + ")";
+      part.comment = "sub(" + part.hyptk.token + ")";
     }
 
     // for classes, we will have only one token in the global vector
@@ -281,10 +281,10 @@ vector<Stitching> make_stitches(wer_alignment &alignment, vector<RawCtmRecord> h
 
     if (!hyp_ctm_rows.empty()) {
       auto ctmPart = hyp_ctm_rows[hypRowIndex];
-      part.start_ts = ctmPart.start_time_secs;
-      part.duration = ctmPart.duration_secs;
-      part.end_ts = ctmPart.start_time_secs + ctmPart.duration_secs;
-      part.confidence = ctmPart.confidence;
+      part.hyptk.start_ts = ctmPart.start_time_secs;
+      part.hyptk.duration = ctmPart.duration_secs;
+      part.hyptk.end_ts = ctmPart.start_time_secs + ctmPart.duration_secs;
+      part.hyptk.confidence = ctmPart.confidence;
 
       part.hyp_orig = ctmPart.word;
       // sanity check
@@ -308,21 +308,24 @@ vector<Stitching> make_stitches(wer_alignment &alignment, vector<RawCtmRecord> h
         float ts = stof(hypNlpPart.ts);
         float endTs = stof(hypNlpPart.endTs);
 
-        part.start_ts = ts;
-        part.end_ts = endTs;
-        part.duration = endTs - ts;
+        part.hyptk.start_ts = ts;
+        part.hyptk.end_ts = endTs;
+        part.hyptk.duration = endTs - ts;
       } else if (!hypNlpPart.ts.empty()) {
         float ts = stof(hypNlpPart.ts);
 
-        part.start_ts = ts;
-        part.end_ts = ts;
-        part.duration = 0.0;
+        part.hyptk.start_ts = ts;
+        part.hyptk.end_ts = ts;
+        part.hyptk.duration = 0.0;
       } else if (!hypNlpPart.endTs.empty()) {
         float endTs = stof(hypNlpPart.endTs);
 
-        part.start_ts = endTs;
-        part.end_ts = endTs;
-        part.duration = 0.0;
+        part.hyptk.start_ts = endTs;
+        part.hyptk.end_ts = endTs;
+        part.hyptk.duration = 0.0;
+      }
+      if (!hypNlpPart.confidence.empty()) {
+        part.hyptk.confidence = stof(hypNlpPart.confidence);
       }
     }
 
@@ -575,15 +578,15 @@ void write_stitches_to_nlp(vector<Stitching>& stitches, ofstream &output_nlp_fil
     // if the comment starts with 'ins'
     if (stitch.comment.find("ins") == 0 && !add_inserts) {
       // there's no nlp row info for such case, let's skip over it
-      if (stitch.confidence >= 1) {
-        logger->warn("an insertion with high confidence was found for {}@{}", stitch.hyptk, stitch.start_ts);
+      if (stitch.hyptk.confidence >= 1) {
+        logger->warn("an insertion with high confidence was found for {}@{}", stitch.hyptk.token, stitch.hyptk.start_ts);
       }
 
       continue;
     }
 
     string original_nlp_token = stitch.nlpRow.token;
-    string ref_tk = stitch.reftk;
+    string ref_tk = stitch.reftk.token;
 
     // trying to salvage some of the original punctuation in a relatively safe manner
     if (iequals(ref_tk, original_nlp_token)) {
@@ -597,9 +600,9 @@ void write_stitches_to_nlp(vector<Stitching>& stitches, ofstream &output_nlp_fil
       ref_tk = original_nlp_token;
     } else if (stitch.comment.find("ins") == 0) {
       assert(add_inserts);
-      logger->debug("an insertion was found for {} {}", stitch.hyptk, stitch.comment);
+      logger->debug("an insertion was found for {} {}", stitch.hyptk.token, stitch.comment);
       ref_tk = "";
-      stitch.comment = "ins(" + stitch.hyptk + ")";
+      stitch.comment = "ins(" + stitch.hyptk.token + ")";
     }
 
     if (ref_tk == NOOP) {
@@ -607,11 +610,11 @@ void write_stitches_to_nlp(vector<Stitching>& stitches, ofstream &output_nlp_fil
     }
 
     output_nlp_file << ref_tk << "|" << stitch.nlpRow.speakerId << "|";
-    if (stitch.hyptk == DEL) {
+    if (stitch.hyptk.token == DEL) {
       // we have no ts/endTs data to put...
       output_nlp_file << "||";
     } else {
-      output_nlp_file << fmt::format("{0:.4f}", stitch.start_ts) << "|" << fmt::format("{0:.4f}", stitch.end_ts)
+      output_nlp_file << fmt::format("{0:.4f}", stitch.hyptk.start_ts) << "|" << fmt::format("{0:.4f}", stitch.hyptk.end_ts)
                       << "|";
     }
 
@@ -632,7 +635,7 @@ void write_stitches_to_nlp(vector<Stitching>& stitches, ofstream &output_nlp_fil
 }
 
 void HandleWer(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine &engine, const string& output_sbs, const string& output_nlp,
-               AlignerOptions alignerOptions, bool add_inserts_nlp, bool use_case) {
+               AlignerOptions alignerOptions, bool add_inserts_nlp, bool use_case, std::vector<string> ref_extra_columns, std::vector<string> hyp_extra_columns) {
   //  int speaker_switch_context_size, int numBests, int pr_threshold, string symbols_filename,
   //  string composition_approach, bool record_case_stats) {
   auto logger = logger::GetOrCreateLogger("fstalign");
@@ -698,7 +701,7 @@ void HandleWer(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine &engine
   JsonLogUnigramBigramStats(topAlignment);
   if (!output_sbs.empty()) {
     logger->info("output_sbs = {}", output_sbs);
-    WriteSbs(topAlignment, stitches, output_sbs);
+    WriteSbs(topAlignment, stitches, output_sbs, ref_extra_columns, hyp_extra_columns);
   }
 
   if (!output_nlp.empty() && !nlp_ref_loader) {
@@ -719,4 +722,16 @@ void HandleAlign(NlpFstLoader& refLoader, CtmFstLoader& hypLoader, SynonymEngine
   auto stitches = make_stitches(topAlignment, hypLoader.mCtmRows);
   align_stitches_to_nlp(refLoader, stitches);
   write_stitches_to_nlp(stitches, output_nlp_file, refLoader.mJsonNorm);
+}
+
+string GetTokenPropertyAsString(Stitching stitch, bool refToken, string property) {
+  std::unordered_map<std::string, std::function<string(Token)>> col_name_to_val = {
+    {"speaker", [](Token tk) {return tk.speaker;}},
+    {"ts", [](Token tk) {return to_string(tk.start_ts);}},
+    {"endTs", [](Token tk) {return to_string(tk.end_ts);}},
+    {"confidence", [](Token tk) {return to_string(tk.confidence);}},
+  };
+  if (refToken) return col_name_to_val[property](stitch.reftk);
+  if (!refToken) return col_name_to_val[property](stitch.hyptk);
+  return "";
 }

@@ -262,8 +262,8 @@ void RecordCaseWer(const vector<Stitching> &aligned_stitches) {
   for (const auto &stitch : aligned_stitches) {
     const string &hyp = stitch.hyp_orig;
     const string &ref = stitch.nlpRow.token;
-    const string &reftk = stitch.reftk;
-    const string &hyptk = stitch.hyptk;
+    const string &reftk = stitch.reftk.token;
+    const string &hyptk = stitch.hyptk.token;
     const string &ref_casing = stitch.nlpRow.casing;
 
     if (hyptk == DEL || reftk == INS) {
@@ -526,7 +526,7 @@ void AddErrorGroup(ErrorGroups &groups, size_t &line, string &ref, string &hyp) 
   hyp = "";
 }
 
-void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, string sbs_filename) {
+void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, string sbs_filename, const vector<string> extra_ref_columns, const vector<string> extra_hyp_columns) {
   auto logger = logger::GetOrCreateLogger("wer");
   logger->set_level(spdlog::level::info);
 
@@ -536,7 +536,14 @@ void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, st
   AlignmentTraversor visitor(topAlignment);
   string prev_tk_classLabel = "";
   logger->info("Side-by-Side alignment info going into {}", sbs_filename);
-  myfile << fmt::format("{0:>20}\t{1:20}\t{2}\t{3}\t{4}", "ref_token", "hyp_token", "IsErr", "Class", "Wer_Tag_Entities") << endl;
+  myfile << fmt::format("{0:>20}\t{1:20}\t{2}\t{3}\t{4}", "ref_token", "hyp_token", "IsErr", "Class", "Wer_Tag_Entities");
+  for (string col_name: extra_ref_columns) {
+    myfile << fmt::format("\tref_{0}", col_name);
+  }
+  for (string col_name: extra_hyp_columns) {
+    myfile << fmt::format("\thyp_{0}", col_name);
+  }
+  myfile << endl;
 
   // keep track of error groupings
   ErrorGroups groups_err;
@@ -554,8 +561,8 @@ void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, st
     for (auto wer_tag: wer_tags) {
       tk_wer_tags = tk_wer_tags + "###" + wer_tag.tag_id + "_" + wer_tag.entity_type + "###|";
     }
-    string ref_tk = p_stitch.reftk;
-    string hyp_tk = p_stitch.hyptk;
+    string ref_tk = p_stitch.reftk.token;
+    string hyp_tk = p_stitch.hyptk.token;
     string tag = "";
 
     if (ref_tk == NOOP) {
@@ -587,7 +594,15 @@ void WriteSbs(wer_alignment &topAlignment, const vector<Stitching>& stitches, st
       eff_class = tk_classLabel;
     }
 
-    myfile << fmt::format("{0:>20}\t{1:20}\t{2}\t{3}\t{4}", ref_tk, hyp_tk, tag, eff_class, tk_wer_tags) << endl;
+    myfile << fmt::format("{0:>20}\t{1:20}\t{2}\t{3}\t{4}", ref_tk, hyp_tk, tag, eff_class, tk_wer_tags);
+
+    for (string col_name: extra_ref_columns) {
+      myfile << fmt::format("\t{0}", GetTokenPropertyAsString(p_stitch, true, col_name));
+    }
+    for (string col_name: extra_hyp_columns) {
+      myfile << fmt::format("\t{0}", GetTokenPropertyAsString(p_stitch, false, col_name));
+    }
+    myfile << endl;
     offset++;
   }
 
