@@ -1,5 +1,6 @@
 # Using kaldi image for pre-built OpenFST, version is 1.7.2
-FROM kaldiasr/kaldi:latest as kaldi-base
+FROM kaldiasr/kaldi:cpu-debian10-2024-07-29 as kaldi-base
+
 FROM debian:11
 
 COPY --from=kaldi-base /opt/kaldi/tools/openfst /opt/openfst
