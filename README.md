@@ -1,5 +1,3 @@
-<div align="left"><img src="docs/fstalign_logo.png" width="550"/></div>
-
 ![CI](https://github.com/revdotcom/fstalign/workflows/CI/badge.svg)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
