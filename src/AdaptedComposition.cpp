@@ -21,7 +21,7 @@ AdaptedCompositionFst::AdaptedCompositionFst(const fst::StdFst &fstA, const fst:
 #endif
 }
 
-AdaptedCompositionFst::AdaptedCompositionFst(const fst::StdFst &fstA, const fst::StdFst &fstB, SymbolTable &symbols)
+AdaptedCompositionFst::AdaptedCompositionFst(const fst::StdFst &fstA, const fst::StdFst &fstB, const SymbolTable &symbols)
     : fstA_{fstA}, fstB_{fstB} {
   logger_ = logger::GetOrCreateLogger("AdaptedCompositionFst");
   logger_->set_level(spdlog::level::info);
@@ -34,6 +34,31 @@ AdaptedCompositionFst::AdaptedCompositionFst(const fst::StdFst &fstA, const fst:
   sub_label_id_ = symbols.Find(options.symSub);
   del_label_id_ = symbols.Find(options.symDel);
   ins_label_id_ = symbols.Find(options.symIns);
+}
+
+AdaptedCompositionFst::AdaptedCompositionFst(const fst::StdFst &fstA, const fst::StdFst &fstB, const SymbolTable &symbols, const AlignerOptions& options)
+    : fstA_(fstA),                     // Reference to input FST A
+      fstB_(fstB),                     // Reference to input FST B
+      symbols_(&symbols),              // Pointer to symbol table
+      strict_punctuation_(options.strict_punctuation), // Store strict punctuation flag
+      punctuation_ids_(options.punctuation_ids)       // Store punctuation ID set
+      // Initialize other members if they exist (e.g., current_composed_next_state_id = 0;)
+{
+    logger_ = logger::GetOrCreateLogger("AdaptedCompositionFst"); // Use member logger_ if declared
+    logger_->set_level(spdlog::level::info);
+    #if TRACE
+      logger_->set_level(spdlog::level::trace);
+    #endif
+
+    // Initialize special symbol IDs (assuming these are member variables now)
+    FstAlignOption fst_options; // Contains special symbol names (symSub etc)
+    // Ensure sub_label_id_ etc are members if used elsewhere
+    sub_label_id_ = symbols_->Find(fst_options.symSub);
+    del_label_id_ = symbols_->Find(fst_options.symDel);
+    ins_label_id_ = symbols_->Find(fst_options.symIns);
+
+    // Initialize entity/synonym label vectors
+    SetSymbols(&symbols);
 }
 
 AdaptedCompositionFst::~AdaptedCompositionFst() {}
@@ -349,8 +374,22 @@ bool AdaptedCompositionFst::TryGetArcsAtState(StateId fromStateId, vector<fst::S
 #if TRACE
         logger_->trace("{}/{} >] adding sub/{}/{}", dbg_count, here_snap, arcA.ilabel, arcB.olabel);
 #endif
-        out_vector->push_back(StdArc(arcA.ilabel, arcB.olabel, substitution_cost, sub_state_ref_id));
-        arc_added++;
+        // --- Strict Punctuation Check --- 
+        bool skip_substitution = false;
+        if (strict_punctuation_) {
+            bool ilabel_is_punct = (punctuation_ids_.count(arcA.ilabel) > 0);
+            bool olabel_is_punct = (punctuation_ids_.count(arcB.olabel) > 0); // Check arcB.olabel for hyp side?
+             
+            if (ilabel_is_punct != olabel_is_punct) {
+                skip_substitution = true;
+            }
+        }
+        // --- End Strict Punctuation Check ---
+        
+        if (!skip_substitution) {
+          out_vector->push_back(StdArc(arcA.ilabel, arcB.olabel, substitution_cost, sub_state_ref_id));
+          arc_added++;
+        }
       }
     }
 
@@ -402,7 +441,7 @@ bool AdaptedCompositionFst::TryGetArcsAtState(StateId fromStateId, vector<fst::S
   return true;
 }
 
-void AdaptedCompositionFst::SetSymbols(fst::SymbolTable *symbols) {
+void AdaptedCompositionFst::SetSymbols(const fst::SymbolTable *symbols) {
   symbols_ = symbols;
   synonyms_label_ids.clear();
   synonyms_label_ids.resize(symbols->NumSymbols(), false);

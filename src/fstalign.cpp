@@ -176,6 +176,22 @@ wer_alignment Fstalign(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine
   engine.ApplyToFst(refFst, symbol);
   ArcSort(&refFst, StdILabelCompare());
 
+  // *** Precompute punctuation IDs ***
+  AlignerOptions alignerOptionsWithPunct = alignerOptions; // Copy base options
+  alignerOptionsWithPunct.punctuation_ids.insert(options.eps_idx); // Epsilon can align with anything
+  std::vector<std::string> punct_symbols = { ".", ",", "?", "!", "…", "...", ";", ":", "-" }; // Add more if needed
+  logger->info("Mapping punctuation symbols to IDs...");
+  for(const auto& punc : punct_symbols) {
+      int64_t id = symbol.Find(punc);
+      if (id != fst::kNoSymbol) {
+          alignerOptionsWithPunct.punctuation_ids.insert(id);
+          logger->debug("  Mapped '{}' -> ID {}", punc, id);
+      } else {
+          logger->debug("  Punctuation '{}' not found in symbol table.", punc);
+      }
+  }
+  // *********************************
+
   logger->info("printing ref fst");
   if (refFst.NumStates() > 100) {
     logger->info("fst is too large to be printed on the console");
@@ -194,17 +210,17 @@ wer_alignment Fstalign(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine
   Walker walker;
   walker.pruningHeapSizeTarget = alignerOptions.heapPruningTarget;
   walker.useRelativeBeamPruning = true;
-  walker.relativeBeamWidth = alignerOptions.relative_beam_width;
-  if (alignerOptions.composition_approach == "standard") {
-    StandardCompositionFst composed_fst(refFst, hypFst, symbol);
-    best_alignments = walker.walkComposed(composed_fst, symbol, options, alignerOptions.numBests);
-  } else if (alignerOptions.composition_approach == "adapted") {
+  walker.relativeBeamWidth = alignerOptionsWithPunct.relative_beam_width;
+  if (alignerOptionsWithPunct.composition_approach == "standard") {
+    StandardCompositionFst composed_fst(refFst, hypFst, symbol, alignerOptionsWithPunct);
+    best_alignments = walker.walkComposed(composed_fst, symbol, options, alignerOptionsWithPunct.numBests);
+  } else if (alignerOptionsWithPunct.composition_approach == "adapted") {
     RmEpsilon(&refFst, true);
     ReverseOLabelCompare<StdArc> comparer;
     ArcSort(&refFst, comparer);
-    AdaptedCompositionFst composed_fst(refFst, hypFst, symbol);
+    AdaptedCompositionFst composed_fst(refFst, hypFst, symbol, alignerOptionsWithPunct);
     // composed_fst.DebugComposedGraph();
-    best_alignments = walker.walkComposed(composed_fst, symbol, options, alignerOptions.numBests);
+    best_alignments = walker.walkComposed(composed_fst, symbol, options, alignerOptionsWithPunct.numBests);
   } else {
     throw std::runtime_error("invalid composition approach specified");
   }

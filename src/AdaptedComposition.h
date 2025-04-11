@@ -13,6 +13,7 @@ AdaptedComposition.h
 #include <utility>
 #include "IComposition.h"
 #include "utilities.h"
+#include "fstalign.h"
 
 using namespace std;
 
@@ -48,7 +49,7 @@ class AdaptedCompositionFst : public IComposition {
 
   StateId current_composed_next_state_id = 0;
 
-  fst::SymbolTable *symbols_;
+  const fst::SymbolTable *symbols_;
   std::vector<bool> synonyms_label_ids;
   std::vector<bool> entity_label_ids;
 
@@ -57,6 +58,9 @@ class AdaptedCompositionFst : public IComposition {
   // possible optimizations : limit to const FST or limit to StdVectorFst
   const fst::StdFst &fstA_;
   const fst::StdFst &fstB_;
+  // Add members to store options
+  bool strict_punctuation_ = false;
+  std::unordered_set<int> punctuation_ids_;
 
   StateId GetOrCreateComposedState(StateId a, StateId b);
   bool IsEntityLabel(int labelId);
@@ -65,7 +69,8 @@ class AdaptedCompositionFst : public IComposition {
 
  public:
   AdaptedCompositionFst(const fst::StdFst &fstA, const fst::StdFst &fstB);
-  AdaptedCompositionFst(const fst::StdFst &fstA, const fst::StdFst &fstB, SymbolTable &symbols);
+  AdaptedCompositionFst(const fst::StdFst &fstA, const fst::StdFst &fstB, const SymbolTable &symbols);
+  AdaptedCompositionFst(const fst::StdFst &fstA, const fst::StdFst &fstB, const SymbolTable &symbols, const AlignerOptions& options);
   ~AdaptedCompositionFst();
 
   StateId Start();
@@ -78,7 +83,7 @@ class AdaptedCompositionFst : public IComposition {
   // a is in the composed-graph referencial
   bool DoesComposedStateExist(StateId a);
 
-  void SetSymbols(fst::SymbolTable *symbols);
+  void SetSymbols(const fst::SymbolTable *symbols);
 
   void DebugComposedGraph();
 };

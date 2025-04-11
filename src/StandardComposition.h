@@ -16,6 +16,7 @@
 
 #include "IComposition.h"
 #include "utilities.h"
+#include "fstalign.h"
 
 /*
  * Calculates edit distance between two FSTs through two-step composition.
@@ -27,10 +28,15 @@ class StandardCompositionFst : public IComposition {
  protected:
   // Lazily composed fst, created during initialization
   std::unique_ptr<fst::StdComposeFst> fstC_;
+  // Add members to store options
+  bool strict_punctuation_ = false;
+  std::unordered_set<int> punctuation_ids_;
+  fst::SymbolTable symbols_; // Store symbols if needed for filtering
 
  public:
   StandardCompositionFst(const fst::StdFst &fstA, const fst::StdFst &fstB);
-  StandardCompositionFst(const fst::StdFst &fstA, const fst::StdFst &fstB, SymbolTable &symbols);
+  StandardCompositionFst(const fst::StdFst &fstA, const fst::StdFst &fstB, const SymbolTable &symbols);
+  StandardCompositionFst(const fst::StdFst &fstA, const fst::StdFst &fstB, const SymbolTable &symbols, const AlignerOptions& options);
   ~StandardCompositionFst();
 
   StateId Start();

@@ -41,6 +41,7 @@ int main(int argc, char **argv) {
   bool disable_hyphen_ignore = false;
 
   float relative_beam_width_cli = 20.0; // Default value for CLI parsing
+  bool strict_punctuation = false; // Default to less strict
 
   std::vector<string> ref_extra_columns = std::vector<string>();
   std::vector<string> hyp_extra_columns = std::vector<string>();
@@ -120,6 +121,8 @@ int main(int argc, char **argv) {
                             return std::string("Invalid floating point number: ") + e.what();
                         }
                     });
+    c->add_flag("--strict-punctuation", strict_punctuation,
+                "Prevent punctuation aligning with words (force ins/del/punct-punct subs)");
   }
   get_wer->add_option("--wer-sidecar", wer_sidecar_filename,
                 "WER sidecar json file.");
@@ -192,6 +195,7 @@ int main(int argc, char **argv) {
   alignerOptions.symbols_filename = symbols_filename;
   alignerOptions.composition_approach = composition_approach;
   alignerOptions.relative_beam_width = relative_beam_width_cli;
+  alignerOptions.strict_punctuation = strict_punctuation;
 
 
   SynonymOptions syn_opts;

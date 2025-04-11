@@ -47,6 +47,8 @@ struct AlignerOptions {
   bool levenstein_first_pass = false;
   int levenstein_maximum_error_streak = 100;
   float relative_beam_width = 20.0;
+  bool strict_punctuation = false;
+  std::unordered_set<int> punctuation_ids;
 };
 
 
