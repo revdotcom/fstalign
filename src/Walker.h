@@ -23,7 +23,7 @@ class Walker {
   int numberOfLoopsBeforePruning = 10;
   int pruningHeapSizeTarget = 100;
   bool useRelativeBeamPruning = true;
-  float relativeBeamWidth = 5.0;
+  float relativeBeamWidth = 20.0;
 
   // Logging configuration
   bool enableDetailedWalkerLogging = false;

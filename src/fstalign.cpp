@@ -193,6 +193,8 @@ wer_alignment Fstalign(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine
   vector<wer_alignment> best_alignments;
   Walker walker;
   walker.pruningHeapSizeTarget = alignerOptions.heapPruningTarget;
+  walker.useRelativeBeamPruning = true;
+  walker.relativeBeamWidth = alignerOptions.relative_beam_width;
   if (alignerOptions.composition_approach == "standard") {
     StandardCompositionFst composed_fst(refFst, hypFst, symbol);
     best_alignments = walker.walkComposed(composed_fst, symbol, options, alignerOptions.numBests);

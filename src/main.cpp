@@ -40,6 +40,8 @@ int main(int argc, char **argv) {
   bool disable_cutoffs = false;
   bool disable_hyphen_ignore = false;
 
+  float relative_beam_width_cli = 20.0; // Default value for CLI parsing
+
   std::vector<string> ref_extra_columns = std::vector<string>();
   std::vector<string> hyp_extra_columns = std::vector<string>();
 
@@ -104,6 +106,20 @@ int main(int argc, char **argv) {
                   "Extra columns from the reference to include in SBS output.");
     c->add_option("--hyp-extra-cols", hyp_extra_columns,
                   "Extra columns from the hypothesis to include in SBS output.");
+    c->add_option("--relative-beam-width", relative_beam_width_cli,
+                  "Relative beam width for pruning (cost > best_cost + width). Default: 20.0")
+                    ->check([](const std::string &str) {
+                        try {
+                            float val = std::stof(str);
+                            if (val > 0.0f) {
+                                return std::string(); // Success
+                            } else {
+                                return std::string("Value must be positive.");
+                            }
+                        } catch (const std::exception& e) {
+                            return std::string("Invalid floating point number: ") + e.what();
+                        }
+                    });
   }
   get_wer->add_option("--wer-sidecar", wer_sidecar_filename,
                 "WER sidecar json file.");
@@ -175,6 +191,7 @@ int main(int argc, char **argv) {
   alignerOptions.record_case_stats = record_case_stats;
   alignerOptions.symbols_filename = symbols_filename;
   alignerOptions.composition_approach = composition_approach;
+  alignerOptions.relative_beam_width = relative_beam_width_cli;
 
 
   SynonymOptions syn_opts;

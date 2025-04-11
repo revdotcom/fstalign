@@ -46,6 +46,7 @@ struct AlignerOptions {
   bool record_case_stats;
   bool levenstein_first_pass = false;
   int levenstein_maximum_error_streak = 100;
+  float relative_beam_width = 20.0;
 };
 
 
