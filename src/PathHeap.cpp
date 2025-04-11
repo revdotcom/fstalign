@@ -114,3 +114,48 @@ bool  pruneMe = (*last_wer_index)->numErrors + 20 < (*iter)->numErrors; --> seem
 
   return pruned;
 }
+
+int PathHeap::prune_relative(float beam_width) {
+    if (heap.empty()) {
+        return 0;
+    }
+
+    auto logger = logger::GetOrCreateLogger("pathheap");
+    size_t initial_size = heap.size();
+
+    // Find the best costSoFar in the current heap
+    // Note: The heap is ordered by the complex shortlistComparatorSharedPtr,
+    //       so the first element isn't necessarily the one with the lowest costSoFar.
+    //       We need to iterate to find the minimum costSoFar.
+    float best_cost = std::numeric_limits<float>::max();
+    for (const auto& entry : heap) {
+        if (entry->costSoFar < best_cost) {
+            best_cost = entry->costSoFar;
+        }
+    }
+
+    float cost_threshold = best_cost + beam_width;
+
+    logger->debug("==== Relative pruning starting (Beam: {}) =====", beam_width);
+    logger->debug("Initial size: {}, Best cost: {:.4f}, Threshold: {:.4f}",
+                  initial_size, best_cost, cost_threshold);
+
+    int pruned_count = 0;
+    auto iter = heap.begin();
+    while (iter != heap.end()) {
+        // Check if the current entry's cost exceeds the threshold
+        if ((*iter)->costSoFar > cost_threshold) {
+            // Remove the element and advance the iterator
+            iter = heap.erase(iter);
+            pruned_count++;
+        } else {
+            // Otherwise, just advance the iterator
+            ++iter;
+        }
+    }
+
+    logger->debug("After relative pruning: {} items remain ({} pruned)", heap.size(), pruned_count);
+    logger->debug("-----\n");
+
+    return pruned_count;
+}

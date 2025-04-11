@@ -64,6 +64,7 @@ class PathHeap {
   void insert(std::shared_ptr<ShortlistEntry> entry);
   shared_ptr<ShortlistEntry> removeFirst();
   int prune(int targetSz);
+  int prune_relative(float beam_width);
   int size();
   std::shared_ptr<ShortlistEntry> GetBestWerCandidate();
   int pruningErrorOffset = 20;

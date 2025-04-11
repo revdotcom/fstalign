@@ -12,6 +12,7 @@ Walker.h
 #include "FstLoader.h"
 #include "IComposition.h"
 #include "PathHeap.h"
+#include <unordered_map>
 
 class Walker {
  public:
@@ -19,11 +20,16 @@ class Walker {
   ~Walker() = default;
   vector<wer_alignment> walkComposed(IComposition &fst, SymbolTable &symbol, FstAlignOption &options,
                                                  int numBests);
-  int numberOfLoopsBeforePruning = 50;
-  int pruningHeapSizeTarget = 20;
+  int numberOfLoopsBeforePruning = 10;
+  int pruningHeapSizeTarget = 100;
+  bool useRelativeBeamPruning = true;
+  float relativeBeamWidth = 5.0;
+
+  // Logging configuration
+  bool enableDetailedWalkerLogging = false;
 
  private:
-  map<int, float> logbook;
+  std::unordered_map<int, float> logbook;
   PathHeap _heapA;
   PathHeap _heapB;
   PathHeap *heapA;

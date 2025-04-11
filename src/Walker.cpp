@@ -7,9 +7,11 @@ Walker.cpp
 #include "Walker.h"
 
 #include "utilities.h"
+#include <chrono>
 
 using namespace std;
 using namespace fst;
+using namespace std::chrono;
 
 Walker::Walker() : heapA(&_heapA), heapB(&_heapB) {
   logger = logger::GetOrCreateLogger("walker");
@@ -45,23 +47,72 @@ vector<wer_alignment> Walker::walkComposed(IComposition &fst, SymbolTable &symbo
   int loopSinceLastPruning = 0;
   int loopCount = 0;
   int last1kStage = 0;
+
+  // Timing variables
+  microseconds time_removing_from_heap(0);
+  microseconds time_processing_arcs(0);
+  microseconds time_pruning(0);
+  auto loop_start_time = high_resolution_clock::now();
+
   while (heapA->size() > 0 && topEntries.size() < numBests) {
     loopCount++;
+
+    // --- Timing: Remove from Heap ---
+    auto remove_start = high_resolution_clock::now();
     auto currentState_ptr = heapA->removeFirst();
+    auto remove_end = high_resolution_clock::now();
+    time_removing_from_heap += duration_cast<microseconds>(remove_end - remove_start);
+    // --- End Timing ---
+
+    if (!currentState_ptr) { // Should not happen if heapA->size() > 0, but defensive check
+        logger->warn("Removed null pointer from heapA, heap size was {}", heapA->size());
+        continue;
+    }
     auto currentState = *currentState_ptr;
     int s = currentState.currentState;
     visited_states.insert(s);
 
+    // --- Log Status Periodically ---
+    // Check the flag FIRST
+    if (this->enableDetailedWalkerLogging) {
+        // Then check the loop count
+        if (loopCount % 10000 == 0) { // Log every 10000 loops
+            auto now = high_resolution_clock::now();
+            auto elapsed_ms = duration_cast<milliseconds>(now - loop_start_time).count();
+             logger->info(
+                 "[Loop {}k] HeapA: {}, HeapB: {}, Logbook: {}, Visited: {}, Current Words: {}, Elapsed: {}ms",
+                 loopCount / 1000, heapA->size(), heapB->size(), logbook.size(), visited_states.size(), currentState.numWords, elapsed_ms);
+             logger->info(
+                 "[Loop {}k Timings] Remove: {}us, Arcs: {}us, Pruning: {}us",
+                 loopCount / 1000, time_removing_from_heap.count(), time_processing_arcs.count(), time_pruning.count());
+             // Reset timers
+             time_removing_from_heap = microseconds(0);
+             time_processing_arcs = microseconds(0);
+             time_pruning = microseconds(0);
+             loop_start_time = now; // Reset start time for next interval
+        }
+    }
+    // --- End Log Status ---
+
     if (currentState.numWords / 1000 > last1kStage) {
-      logger->info("approx. {} words processed", currentState.numWords);
+      logger->info("approx. {} words processed (Loop {})", currentState.numWords, loopCount);
       last1kStage = currentState.numWords / 1000;
+       if (this->enableDetailedWalkerLogging) {
+         logger->info(
+               "[Words {}k Status] HeapA: {}, HeapB: {}, Logbook: {}, Visited: {}",
+               last1kStage, heapA->size(), heapB->size(), logbook.size(), visited_states.size());
+       }
     }
 
+    // --- Timing: Processing Arcs ---
+    auto arcs_proc_start = high_resolution_clock::now();
     int arcsLeaving = 0;
     vector<StdArc> arcs_leaving_state;
+    // TODO: Consider timing fst.TryGetArcsAtState separately if suspected bottleneck
     if (!fst.TryGetArcsAtState(s, &arcs_leaving_state)) {
-      logger->error("no arcs leaving state {}", s);
-      continue;
+      // This might indicate an issue with the composition FST itself, though less likely the cause of *progressive* slowdown
+      logger->warn("No arcs leaving state {} (final={})", s, fst.Final(s) != StdFst::Weight::Zero());
+      // Continue processing final state check even if no arcs leave
     }
 
     for (vector<StdArc>::iterator iter = arcs_leaving_state.begin(); iter != arcs_leaving_state.end(); ++iter) {
@@ -80,19 +131,30 @@ vector<wer_alignment> Walker::walkComposed(IComposition &fst, SymbolTable &symbo
       local_arc.nextstate = arc.nextstate;
       local_arc.weight = arc.weight.Value();
 
-      bool isAnchor = false;
-      auto pp = enqueueIfNeeded(currentState_ptr, local_arc, isAnchor);
+      bool isAnchor = false; // Assuming isAnchor logic is handled elsewhere or not critical for timing now
+      auto pp = enqueueIfNeeded(currentState_ptr, local_arc, isAnchor); // This includes logbook access
 
       if (pp != nullptr) {
+        // Consider timing heapB->insert separately if needed
         heapB->insert(pp);
       }
     }
+    auto arcs_proc_end = high_resolution_clock::now();
+    time_processing_arcs += duration_cast<microseconds>(arcs_proc_end - arcs_proc_start);
+    // --- End Timing ---
 
     bool isFinal = fst.Final(s) != StdFst::Weight::Zero() ? true : false;
     if (isFinal) {
-      double localWer = (double)currentState.numErrors / (double)currentState.numWords;
-      logger->info("we reached a {}node with a wer of {}", isFinal ? "final " : "non-final! ", localWer);
+      // Check if numWords is non-zero to avoid division by zero
+      if (currentState.numWords > 0) {
+            double localWer = (double)currentState.numErrors / (double)currentState.numWords;
+            logger->debug("Reached final node (State {}) with wer {} ({} err / {} words)", s, localWer, currentState.numErrors, currentState.numWords);
+      } else {
+            logger->debug("Reached final node (State {}) with 0 words", s);
+      }
       topEntries.push_back(currentState);
+      // Sort topEntries if we want to stop early once numBests good paths are found? (Currently waits until heapA is empty)
+      // std::sort(topEntries.begin(), topEntries.end(), [](const ShortlistEntry& a, const ShortlistEntry& b){ /* compare WER */ });
     }
 
     if (heapA->size() > 0) {
@@ -100,24 +162,49 @@ vector<wer_alignment> Walker::walkComposed(IComposition &fst, SymbolTable &symbo
       continue;
     }
 
+    // HeapA is empty, check heapB and potentially prune/swap
     if (heapB->size() > 0) {
-      if (loopSinceLastPruning >= numberOfLoopsBeforePruning) {
-        SLE a = heapB->GetBestWerCandidate().get();
-        heapB->prune(this->pruningHeapSizeTarget); 
-        SLE b = heapB->GetBestWerCandidate().get();
+        // --- Timing: Pruning ---
+        auto prune_start = high_resolution_clock::now();
+        bool did_prune = false;
+        if (loopSinceLastPruning >= numberOfLoopsBeforePruning) {
+            did_prune = true;
+            size_t size_before = heapB->size();
+            // Optional: Get best WER before pruning for logging comparison
+            // shared_ptr<ShortlistEntry> best_before_ptr = heapB->GetBestWerCandidate();
+            // SLE best_before = best_before_ptr ? best_before_ptr.get() : nullptr;
 
-        if (logger->should_log(spdlog::level::debug)) {
-          logger->debug(
-              "best wer before pruning = {} ({} errors, {} words, {} state "
-              "visited)",
-              (float)a->numErrors / (float)a->numWords, a->numErrors, a->numWords, visited_states.size());
-          logger->debug(
-              "best wer after pruning  = {} ({} errors, {} words, {} state "
-              "visited)",
-              (float)b->numErrors / (float)b->numWords, b->numErrors, b->numWords, visited_states.size());
+            // *** CHOOSE PRUNING STRATEGY ***
+            if (this->useRelativeBeamPruning) {
+                 heapB->prune_relative(this->relativeBeamWidth);
+            } else {
+                 heapB->prune(this->pruningHeapSizeTarget);
+            }
+            // *******************************
+
+            size_t size_after = heapB->size();
+            // Optional: Get best WER after pruning
+            // shared_ptr<ShortlistEntry> best_after_ptr = heapB->GetBestWerCandidate();
+            // SLE best_after = best_after_ptr ? best_after_ptr.get() : nullptr;
+
+            if (this->enableDetailedWalkerLogging && logger->should_log(spdlog::level::debug)) {
+                 // Updated log message to reflect which strategy was used
+                 logger->debug(
+                     "Pruning HeapB (Loop {}) using {}: Size {} -> {}, Target/Beam: {:.1f}. Visited states: {}",
+                     loopCount,
+                     (this->useRelativeBeamPruning ? "Relative Beam" : "Fixed Target"),
+                     size_before, size_after,
+                     (this->useRelativeBeamPruning ? this->relativeBeamWidth : (float)this->pruningHeapSizeTarget),
+                     visited_states.size());
+                 // Add logging for best WER before/after if needed
+            }
+            loopSinceLastPruning = 0;
         }
-        loopSinceLastPruning = 0;
-      }
+        auto prune_end = high_resolution_clock::now();
+        if (did_prune) {
+            time_pruning += duration_cast<microseconds>(prune_end - prune_start);
+        }
+        // --- End Timing ---
     }
     loopSinceLastPruning++;
 
@@ -125,18 +212,39 @@ vector<wer_alignment> Walker::walkComposed(IComposition &fst, SymbolTable &symbo
     auto heapTmp = heapA;
     heapA = heapB;
     heapB = heapTmp;
+    // heapB is now empty after the swap, ready for next round's insertions
   }
 
-  logger->info("we have {} candidates after {} loops", topEntries.size(), loopCount);
+  // Final log summary
+  logger->info("Search finished. Loops: {}, Candidates found: {}", loopCount, topEntries.size());
+  logger->info("Final Sizes - HeapA: {}, HeapB: {}, Logbook: {}, Visited: {}", heapA->size(), heapB->size(), logbook.size(), visited_states.size());
+
+  logger->info("Reconstructing {} best alignments...", std::min((int)topEntries.size(), numBests));
+  // Sort topEntries by WER before detailed reconstruction?
+  std::sort(topEntries.begin(), topEntries.end(), [](const ShortlistEntry& a, const ShortlistEntry& b) {
+      // Handle division by zero
+      double wer_a = (a.numWords == 0) ? std::numeric_limits<double>::max() : (double)a.numErrors / a.numWords;
+      double wer_b = (b.numWords == 0) ? std::numeric_limits<double>::max() : (double)b.numErrors / b.numWords;
+      // Could add secondary sort key like costSoFar if WERs are equal
+      return wer_a < wer_b;
+  });
+
   if (topEntries.size() > 0) {
-    int i = 0;
+    int count = 0;
     for (auto &top : topEntries) {
-      logger->info("getting details for candidate {}", i);
-      // auto top = topEntries[0];
+       if (count >= numBests) break; // Only reconstruct the requested number
+      logger->info("Getting details for candidate {}/{}: State {}, WER {:.4f} ({} err / {} words), Cost {}",
+            count + 1, std::min((int)topEntries.size(), numBests),
+            top.currentState,
+            (top.numWords == 0) ? std::numeric_limits<double>::infinity() : (double)top.numErrors / top.numWords,
+            top.numErrors, top.numWords, top.costSoFar);
+
       auto align = GetDetailsFromTopCandidates(top, symbol, options);
       topAlignments.push_back(align);
-      i++;
+      count++;
     }
+  } else {
+       logger->warn("No final states reached or no paths survived pruning.");
   }
 
   return topAlignments;
