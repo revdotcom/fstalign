@@ -192,6 +192,48 @@ wer_alignment Fstalign(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine
   }
   // *********************************
 
+  // *** Build Favorable Substitution Map (Conditional) ***
+  if (alignerOptionsWithPunct.use_favored_substitutions) {
+      int symbol_table_size = symbol.AvailableKey();
+      // Ensure size is somewhat reasonable before allocating large vector
+      if (symbol_table_size > 0 && symbol_table_size < 2000000) { // Example limit
+          alignerOptionsWithPunct.favorable_substitution_map.assign(symbol_table_size, -1);
+          logger->info("Processing symbol table for favorable substitutions (Size: {})...", symbol_table_size);
+
+          for (fst::SymbolTableIterator siter(symbol); !siter.Done(); siter.Next()) {
+              int64_t idA = siter.Value();
+              if (idA <= 0 || idA >= symbol_table_size) continue;
+
+              std::string symbolA = symbol.Find(idA);
+              if (symbolA.empty() || !std::isalpha(static_cast<unsigned char>(symbolA[0]))) continue;
+
+              std::string symbolB = symbolA;
+              // Flip case of the first letter
+              if (std::islower(static_cast<unsigned char>(symbolB[0]))) {
+                  symbolB[0] = std::toupper(static_cast<unsigned char>(symbolB[0]));
+              } else {
+                  symbolB[0] = std::tolower(static_cast<unsigned char>(symbolB[0]));
+              }
+
+              int64_t idB = symbol.Find(symbolB);
+              if (idB != fst::kNoSymbol && idB > 0 && idB < symbol_table_size) {
+                  // Only store if not already set or if pointing correctly (prevent loops if somehow A->B and B->C)
+                  if (alignerOptionsWithPunct.favorable_substitution_map[idA] == -1 &&
+                      alignerOptionsWithPunct.favorable_substitution_map[idB] == -1) {
+                      alignerOptionsWithPunct.favorable_substitution_map[idA] = idB;
+                      alignerOptionsWithPunct.favorable_substitution_map[idB] = idA;
+                      // logger->debug("  Favored sub: '{}' ({}) <-> '{}' ({})", symbolA, idA, symbolB, idB); // Too verbose?
+                  }
+              }
+          }
+          logger->info("Finished processing favorable substitutions.");
+      } else {
+           logger->warn("Symbol table size ({}) too large or invalid, skipping favorable substitutions.", symbol_table_size);
+           alignerOptionsWithPunct.use_favored_substitutions = false; // Disable feature if map fails
+      }
+  }
+  // ****************************************************
+
   logger->info("printing ref fst");
   if (refFst.NumStates() > 100) {
     logger->info("fst is too large to be printed on the console");

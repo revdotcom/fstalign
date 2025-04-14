@@ -41,7 +41,11 @@ AdaptedCompositionFst::AdaptedCompositionFst(const fst::StdFst &fstA, const fst:
       fstB_(fstB),                     // Reference to input FST B
       symbols_(&symbols),              // Pointer to symbol table
       strict_punctuation_(options.strict_punctuation), // Store strict punctuation flag
-      punctuation_ids_(options.punctuation_ids)       // Store punctuation ID set
+      punctuation_ids_(options.punctuation_ids),
+      // Favored substitutions
+      use_favored_substitutions_(options.use_favored_substitutions),
+      favored_substitution_cost_(options.favored_substitution_cost),
+      favorable_substitution_map_(options.favorable_substitution_map)
       // Initialize other members if they exist (e.g., current_composed_next_state_id = 0;)
 {
     logger_ = logger::GetOrCreateLogger("AdaptedCompositionFst"); // Use member logger_ if declared
@@ -387,7 +391,25 @@ bool AdaptedCompositionFst::TryGetArcsAtState(StateId fromStateId, vector<fst::S
         // --- End Strict Punctuation Check ---
         
         if (!skip_substitution) {
-          out_vector->push_back(StdArc(arcA.ilabel, arcB.olabel, substitution_cost, sub_state_ref_id));
+          // --- Favored Substitution Cost Check ---
+          float current_sub_cost = 1.0f; // Default substitution cost
+          if (use_favored_substitutions_) {
+              int labelA = arcA.ilabel;
+              int labelB = arcB.olabel;
+              // Check bounds and if labelA has a favored partner which is labelB
+              if (labelA >= 0 && labelA < favorable_substitution_map_.size() &&
+                  favorable_substitution_map_[labelA] == labelB)
+              {
+                  current_sub_cost = favored_substitution_cost_; // Use lower cost
+#if TRACE
+                   logger_->trace("Applying favored sub cost ({}) for {} ({}) <-> {} ({})",
+                                 current_sub_cost, symbols_->Find(labelA), labelA, symbols_->Find(labelB), labelB);
+#endif
+              }
+          }
+          // --- End Favored Substitution Cost Check ---
+
+          out_vector->push_back(StdArc(arcA.ilabel, arcB.olabel, current_sub_cost, sub_state_ref_id));
           arc_added++;
         }
       }

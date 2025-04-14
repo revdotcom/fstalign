@@ -42,6 +42,9 @@ int main(int argc, char **argv) {
 
   float relative_beam_width_cli = 20.0; // Default value for CLI parsing
   bool strict_punctuation = false; // Default to less strict
+  // Favored substitutions
+  bool use_favored_subs_cli = false;
+  float favored_sub_cost_cli = 0.1f;
 
   std::vector<string> ref_extra_columns = std::vector<string>();
   std::vector<string> hyp_extra_columns = std::vector<string>();
@@ -123,6 +126,23 @@ int main(int argc, char **argv) {
                     });
     c->add_flag("--strict-punctuation", strict_punctuation,
                 "Prevent punctuation aligning with words (force ins/del/punct-punct subs)");
+    // Favored substitutions
+    c->add_flag("--use-favored-subs", use_favored_subs_cli,
+                 "Use lower cost for substitutions like Well<->well (checks first letter case).");
+    c->add_option("--favored-sub-cost", favored_sub_cost_cli,
+                  "Cost for favored substitutions (e.g., case diff). Default: 0.1")
+                    ->check([](const std::string &str) {
+                          try {
+                              float val = std::stof(str);
+                              if (val >= 0.0f) {
+                                  return std::string(); // Success
+                              } else {
+                                  return std::string("Value must be non-negative.");
+                              }
+                          } catch (const std::exception& e) {
+                              return std::string("Invalid floating point number: ") + e.what();
+                          }
+                      });
   }
   get_wer->add_option("--wer-sidecar", wer_sidecar_filename,
                 "WER sidecar json file.");
@@ -196,6 +216,9 @@ int main(int argc, char **argv) {
   alignerOptions.composition_approach = composition_approach;
   alignerOptions.relative_beam_width = relative_beam_width_cli;
   alignerOptions.strict_punctuation = strict_punctuation;
+  // Favored substitutions
+  alignerOptions.use_favored_substitutions = use_favored_subs_cli;
+  alignerOptions.favored_substitution_cost = favored_sub_cost_cli;
 
 
   SynonymOptions syn_opts;

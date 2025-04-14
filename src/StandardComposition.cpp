@@ -29,7 +29,11 @@ StandardCompositionFst::StandardCompositionFst(const fst::StdFst &fstA, const fs
 StandardCompositionFst::StandardCompositionFst(const fst::StdFst &fstA, const fst::StdFst &fstB, const SymbolTable &symbols, const AlignerOptions& options)
   : strict_punctuation_(options.strict_punctuation),
     punctuation_ids_(options.punctuation_ids),
-    symbols_(symbols)
+    symbols_(symbols),
+    // Favored substitutions
+    use_favored_substitutions_(options.use_favored_substitutions),
+    favored_substitution_cost_(options.favored_substitution_cost),
+    favorable_substitution_map_(options.favorable_substitution_map)
 {
     auto logger_ = logger::GetOrCreateLogger("StandardCompositionFst");
     logger_->set_level(spdlog::level::info);

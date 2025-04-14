@@ -31,6 +31,10 @@ class StandardCompositionFst : public IComposition {
   // Add members to store options
   bool strict_punctuation_ = false;
   std::unordered_set<int> punctuation_ids_;
+  // Favored substitutions
+  bool use_favored_substitutions_ = false;
+  float favored_substitution_cost_ = 0.1f;
+  std::vector<int> favorable_substitution_map_;
   fst::SymbolTable symbols_; // Store symbols if needed for filtering
 
  public:
