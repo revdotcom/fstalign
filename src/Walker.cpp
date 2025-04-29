@@ -66,7 +66,7 @@ vector<wer_alignment> Walker::walkComposed(IComposition &fst, SymbolTable &symbo
 
     if (!currentState_ptr) { // Should not happen if heapA->size() > 0, but defensive check
         logger->warn("Removed null pointer from heapA, heap size was {}", heapA->size());
-        continue;
+        // continue;
     }
     auto currentState = *currentState_ptr;
     int s = currentState.currentState;
@@ -113,6 +113,7 @@ vector<wer_alignment> Walker::walkComposed(IComposition &fst, SymbolTable &symbo
       // This might indicate an issue with the composition FST itself, though less likely the cause of *progressive* slowdown
       logger->warn("No arcs leaving state {} (final={})", s, fst.Final(s) != StdFst::Weight::Zero());
       // Continue processing final state check even if no arcs leave
+      continue;
     }
 
     for (vector<StdArc>::iterator iter = arcs_leaving_state.begin(); iter != arcs_leaving_state.end(); ++iter) {

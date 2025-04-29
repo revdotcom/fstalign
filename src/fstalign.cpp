@@ -255,6 +255,8 @@ wer_alignment Fstalign(FstLoader& refLoader, FstLoader& hypLoader, SynonymEngine
   walker.relativeBeamWidth = alignerOptionsWithPunct.relative_beam_width;
   if (alignerOptionsWithPunct.composition_approach == "standard") {
     StandardCompositionFst composed_fst(refFst, hypFst, symbol, alignerOptionsWithPunct);
+    walker.useRelativeBeamPruning = false;
+    // composed_fst.DebugComposedGraph("composed-fst.fst");
     best_alignments = walker.walkComposed(composed_fst, symbol, options, alignerOptionsWithPunct.numBests);
   } else if (alignerOptionsWithPunct.composition_approach == "adapted") {
     RmEpsilon(&refFst, true);
