@@ -6,12 +6,12 @@
                    ,	<del>               	ERR		
                right	right               			
                    .	<del>               	ERR		
-                Yeah	<del>               	ERR		
+                Yeah	I'll                	ERR		
                    ,	<del>               	ERR		
-                 all	<del>               	ERR		
+                 all	do                  	ERR		
                right	<del>               	ERR		
-                   ,	I'll                	ERR		
-            probably	do                  	ERR		
+                   ,	<del>               	ERR		
+            probably	<del>               	ERR		
                 just	just                			
                 that	that                			
                    .	?                   	ERR		
@@ -40,8 +40,8 @@
                 just	just                			
                 that	that                			
                    :	:                   			
-               <ins>	Foobar              	ERR		
-                 foo	,                   	ERR		
+                 foo	Foobar              	ERR		
+               <ins>	,                   	ERR		
                    a	a                   			
 ------------------------------------------------------------
                 Line	Group               

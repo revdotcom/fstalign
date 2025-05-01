@@ -3,10 +3,10 @@ token|speaker|ts|endTs|punctuation|prepunctuation|case|tags|wer_tags|oldTs|oldEn
 Yeah|1|0.0000|0.0000|,||UC|[]|[]||||
 yeah|1|||,||LC|[]|[]|||del|
 right|1|0.0000|0.0000|.||LC|[]|[]||||
-Yeah|1|||,||UC|[]|[]|||del|
-all|1|||||LC|[]|[]|||del|
-right|1|0.0000|0.0000|,||LC|[]|[]|||sub(i'll)|
-probably|1|0.0000|0.0000|||LC|[]|[]|||sub(do)|
+Yeah|1|0.0000|0.0000|,||UC|[]|[]|||sub(i'll)|
+all|1|0.0000|0.0000|||LC|[]|[]|||sub(do)|
+right|1|||,||LC|[]|[]|||del|
+probably|1|||||LC|[]|[]|||del|
 just|1|0.0000|0.0000|||LC|[]|[]||||
 that|1|0.0000|0.0000|.||LC|[]|[]||||
 Are|3|0.0000|0.0000|||UC|[]|[]||||

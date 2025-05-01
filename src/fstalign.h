@@ -46,6 +46,13 @@ struct AlignerOptions {
   bool record_case_stats;
   bool levenstein_first_pass = false;
   int levenstein_maximum_error_streak = 100;
+  float relative_beam_width = 50.0;
+  bool strict_punctuation = true;
+  std::unordered_set<int> punctuation_ids;
+  // Favored substitutions
+  bool use_favored_substitutions = true;
+  float favored_substitution_cost = 0.1f;
+  std::vector<int> favorable_substitution_map; // Map ID -> favored partner ID (-1 if none)
 };
 
 

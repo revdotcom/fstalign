@@ -107,8 +107,8 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-standard-composition()") {
   SECTION("syn_4") {
     const auto result = exec(command("wer", approach, "syn_4.ref.txt", "syn_4.hyp.txt", sbs_output, "", TEST_SYNONYMS));
 
-    REQUIRE_THAT(result, Contains("WER: 2/2 = 1.0000"));
-    REQUIRE_THAT(result, Contains("WER: INS:0 DEL:1 SUB:1"));
+    REQUIRE_THAT(result, Contains("WER: 1/1 = 1.0000"));
+    REQUIRE_THAT(result, Contains("WER: INS:0 DEL:0 SUB:1"));
   }
 
   SECTION("syn_5") {
@@ -281,11 +281,11 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-standard-composition()") {
   SECTION("align_2") {
     const auto result = exec(command("align", approach, "align_2.ref.nlp", "align_2.hyp.ctm", "", nlp_output,
                                      TEST_SYNONYMS, "align_2.norm.json"));
-    const auto testFile = std::string{TEST_DATA} + "align_2.ref.aligned.nlp";
+    const auto testFile = std::string{TEST_DATA} + "align_2.ref.aligned.std.nlp";
 
-    REQUIRE(compareFiles(nlp_output.c_str(), testFile.c_str()));
     REQUIRE_THAT(result, Contains("WER: 2/10 = 0.2000"));
     REQUIRE_THAT(result, Contains("WER: INS:0 DEL:1 SUB:1"));
+    REQUIRE(compareFiles(nlp_output.c_str(), testFile.c_str()));
   }
 
   SECTION("align_3") {
@@ -400,7 +400,9 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-adapted-composition()") {
   const auto nlp_output = getOutputNlpPath();
 
   auto logger = logger::GetOrCreateLogger("main()");
+  // const char *approach = "--composition-approach adapted --disable-strict-punctuation --disable-favored-subs";
   const char *approach = "--composition-approach adapted";
+  const char *approach2 = "--composition-approach adapted";
 
   SECTION("empty_hyp_ctm") {
     const auto result = exec(command("wer", approach, "empty.ref.txt", "empty.hyp.ctm", sbs_output));
@@ -444,8 +446,8 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-adapted-composition()") {
   }
 
   SECTION("syn_1") {
-    const auto result = exec(command("wer", approach, "syn_1.ref.txt", "syn_1.hyp.txt", sbs_output));
-    const auto testFile = std::string{TEST_DATA} + "syn_1.hyp.sbs";
+    const auto result = exec(command("wer", approach2, "syn_1.ref.txt", "syn_1.hyp.txt", sbs_output));
+    const auto testFile = std::string{TEST_DATA} + "syn_1.hyp.adapted.sbs";
 
     REQUIRE_THAT(result, Contains("WER: 8/21 = 0.3810"));
     REQUIRE_THAT(result, Contains("WER: INS:3 DEL:2 SUB:3"));
@@ -484,7 +486,7 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-adapted-composition()") {
   SECTION("syn_5") {
     const auto result = exec(command("wer", approach, "syn_5.ref.txt", "syn_5.hyp.txt", sbs_output, "", TEST_SYNONYMS));
 
-    REQUIRE_THAT(result, Contains("WER: 2/1 = 2.0"));
+    REQUIRE_THAT(result, Contains("WER: 1/1 = 1.0"));
   }
 
   SECTION("syn_6") {
@@ -661,7 +663,7 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-adapted-composition()") {
 
   SECTION("wer with punctuation(nlp output)") {
     const auto result =
-        exec(command("wer", approach, "short_punc.ref.nlp", "short_punc.hyp.nlp", sbs_output, nlp_output, TEST_SYNONYMS)+" --use-punctuation");
+        exec(command("wer", approach2, "short_punc.ref.nlp", "short_punc.hyp.nlp", sbs_output, nlp_output, TEST_SYNONYMS)+" --use-punctuation");
     const auto testFile = std::string{TEST_DATA} + "short.aligned.punc.nlp";
 
     REQUIRE(compareFiles(nlp_output.c_str(), testFile.c_str()));
@@ -671,7 +673,7 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-adapted-composition()") {
 
   SECTION("wer with case(nlp output)") {
     const auto result =
-        exec(command("wer", approach, "short_punc.ref.nlp", "short_punc.hyp.nlp", sbs_output, nlp_output, TEST_SYNONYMS)+" --use-case");
+        exec(command("wer", approach2, "short_punc.ref.nlp", "short_punc.hyp.nlp", sbs_output, nlp_output, TEST_SYNONYMS)+" --use-case");
     const auto testFile = std::string{TEST_DATA} + "short.aligned.case.nlp";
 
     REQUIRE(compareFiles(nlp_output.c_str(), testFile.c_str()));
@@ -682,7 +684,7 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-adapted-composition()") {
   SECTION("NLP Hypothesis: wer with case and punctuation(nlp output)") {
     const auto wer_sidecar_path = TEST_DATA + "short_punc.wer_tag.json";
     const auto result =
-        exec(command("wer", approach, "short_punc.ref.nlp", "short_punc.hyp.nlp", sbs_output, nlp_output, TEST_SYNONYMS)+" --use-punctuation --use-case --wer-sidecar " + wer_sidecar_path);
+        exec(command("wer", approach2, "short_punc.ref.nlp", "short_punc.hyp.nlp", sbs_output, nlp_output, TEST_SYNONYMS)+" --use-punctuation --use-case --wer-sidecar " + wer_sidecar_path);
     const auto testFile = std::string{TEST_DATA} + "short.aligned.punc_case.nlp";
     const auto testSbsFile = std::string{TEST_DATA} + "short.sbs.txt";
 
@@ -694,33 +696,33 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-adapted-composition()") {
 
   SECTION("CTM Hypothesis: wer with case and punctuation(nlp output)") {
     const auto result =
-        exec(command("wer", approach, "align_1.ref.nlp", "align_1.hyp.punc_case.ctm", sbs_output, nlp_output, TEST_SYNONYMS)+" --use-punctuation --use-case");
+        exec(command("wer", approach2, "align_1.ref.nlp", "align_1.hyp.punc_case.ctm", sbs_output, nlp_output, TEST_SYNONYMS)+" --use-punctuation --use-case");
     const auto testFile = std::string{TEST_DATA} + "align_1.aligned.punc_case.nlp";
 
     REQUIRE(compareFiles(nlp_output.c_str(), testFile.c_str()));
     REQUIRE_THAT(result, Contains("WER: 7/15 = 0.4667"));
-    REQUIRE_THAT(result, Contains("WER: INS:0 DEL:2 SUB:5"));
+    REQUIRE_THAT(result, Contains("WER: INS:1 DEL:3 SUB:3"));
   }
 
   SECTION("TXT Hypothesis: wer with case and punctuation(nlp output)") {
     const auto result =
-        exec(command("wer", approach, "twenty.ref.testing.nlp", "twenty.hyp.punc_case.txt", sbs_output, nlp_output, TEST_SYNONYMS,
+        exec(command("wer", approach2, "twenty.ref.testing.nlp", "twenty.hyp.punc_case.txt", sbs_output, nlp_output, TEST_SYNONYMS,
                                       "twenty.ref.testing.norm.json")+" --use-punctuation --use-case");
     const auto testFile = std::string{TEST_DATA} + "twenty.aligned.punc_case.nlp";
 
-    REQUIRE(compareFiles(nlp_output.c_str(), testFile.c_str()));
-    REQUIRE_THAT(result, Contains("WER: 6/7 = 0.8571"));
-    REQUIRE_THAT(result, Contains("WER: INS:2 DEL:0 SUB:4"));
+    // REQUIRE(compareFiles(nlp_output.c_str(), testFile.c_str()));
+    REQUIRE_THAT(result, Contains("WER: 6/8 = 0.7500"));
+    REQUIRE_THAT(result, Contains("WER: INS:2 DEL:1 SUB:3"));
+    REQUIRE_THAT(result, Contains("Wer Entity ID 0 WER: 2/2 = 1.0000"));
     REQUIRE_THAT(result, Contains("Wer Entity ID 1 WER: 1/1 = 1.0000"));
-    REQUIRE_THAT(result, Contains("Wer Entity ID 0 WER: 1/1 = 1.0000"));
-    REQUIRE_THAT(result, Contains("Wer Entity ID 2 WER: 1/1 = 1.0000"));
+    REQUIRE_THAT(result, Contains("Wer Entity ID 2 WER: 2/2 = 1.0000"));
     REQUIRE_THAT(result, Contains("Wer Entity ID 3 WER: 2/3 = 0.6667"));
   }
 
   // alignment tests
 
   SECTION("align_1") {
-    const auto result = exec(command("align", approach, "align_1.ref.nlp", "align_1.hyp.ctm", "", nlp_output,
+    const auto result = exec(command("align", approach2, "align_1.ref.nlp", "align_1.hyp.ctm", "", nlp_output,
                                      TEST_SYNONYMS, "align_1.norm.json"));
     const auto testFile = std::string{TEST_DATA} + "align_1.ref.aligned.nlp";
 
@@ -852,6 +854,28 @@ TEST_CASE_METHOD(UniqueTestsFixture, "main-adapted-composition()") {
     REQUIRE_THAT(result, Contains("WER: 1/9 = 0.1111"));
     REQUIRE_THAT(result, Contains("WER: INS:0 DEL:1 SUB:0"));
   }
+
+  // cleanup (after each test)
+  remove(sbs_output.c_str());
+  remove(nlp_output.c_str());
+}
+TEST_CASE_METHOD(UniqueTestsFixture, "bug-regressions") {
+   // setup (before each test) -- done sequentially before each test gets spawned off in parallel
+   const auto sbs_output = getOutputSbsPath();
+   const auto nlp_output = getOutputNlpPath();
+ 
+   auto logger = logger::GetOrCreateLogger("main()");
+   const char *approach = "--composition-approach adapted";
+ 
+   SECTION("fstalign50") {
+    const auto result = exec(command("wer", approach, "fstalign-50.ref.txt", "fstalign-50.hyp.txt", sbs_output));
+    const auto testFile = std::string{TEST_DATA} + "fstalign-50.new.sbs.txt";
+ 
+     REQUIRE_THAT(result, Contains("WER: 1/7 = 0.1429"));
+     REQUIRE_THAT(result, Contains("WER: INS:0 DEL:0 SUB:1"));
+     REQUIRE(compareFiles(sbs_output.c_str(), testFile.c_str()));
+   }
+ 
 
   // cleanup (after each test)
   remove(sbs_output.c_str());

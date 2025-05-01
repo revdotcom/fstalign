@@ -45,6 +45,7 @@ std::string exec(const std::string &cmd) {
   while (!feof(pipe.get())) {
     if (fgets(buffer.data(), length, pipe.get()) != nullptr) result += buffer.data();
   }
+  result = result + "\nCommand:\n" + cmd + "\n";
 
   return result;
 }
@@ -88,7 +89,6 @@ std::string command(const char *subcommand, const char *approach, const char *re
   if (!extraFlags.empty()) {
     cmd += " " + extraFlags;
   }
-
   return cmd;
 }
 

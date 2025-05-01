@@ -16,6 +16,7 @@
 
 #include "IComposition.h"
 #include "utilities.h"
+#include "fstalign.h"
 
 /*
  * Calculates edit distance between two FSTs through two-step composition.
@@ -26,16 +27,24 @@
 class StandardCompositionFst : public IComposition {
  protected:
   // Lazily composed fst, created during initialization
-  std::unique_ptr<fst::StdComposeFst> fstC_;
+  std::unique_ptr<fst::Fst<fst::StdArc>> fstC_;
+  // Add members to store options
+  bool strict_punctuation_ = false;
+  std::unordered_set<int> punctuation_ids_;
+  // Favored substitutions
+  bool use_favored_substitutions_ = false;
+  float favored_substitution_cost_ = 0.1f;
+  std::vector<int> favorable_substitution_map_;
+  const fst::SymbolTable& symbols_; // Store symbols if needed for filtering
 
  public:
   StandardCompositionFst(const fst::StdFst &fstA, const fst::StdFst &fstB);
-  StandardCompositionFst(const fst::StdFst &fstA, const fst::StdFst &fstB, SymbolTable &symbols);
+  StandardCompositionFst(const fst::StdFst &fstA, const fst::StdFst &fstB, const SymbolTable &symbols);
+  StandardCompositionFst(const fst::StdFst &fstA, const fst::StdFst &fstB, const SymbolTable &symbols, const AlignerOptions& options);
   ~StandardCompositionFst();
 
   StateId Start();
   fst::Fst<fst::StdArc>::Weight Final(StateId stateId);
-  vector<fst::StdArc> GetArcsAtState(StateId fromStateId);
   virtual bool TryGetArcsAtState(StateId fromStateId, vector<fst::StdArc> *out_vector);
 
   /* useful for debugging *SMALL* graphs, performs full (non-lazy) composition */

@@ -40,6 +40,12 @@ int main(int argc, char **argv) {
   bool disable_cutoffs = false;
   bool disable_hyphen_ignore = false;
 
+  float relative_beam_width_cli = 50.0; // Default value for CLI parsing
+  bool disable_strict_punctuation = false; // Default to less strict
+  // Favored substitutions
+  bool disable_favored_subs = false;
+  float favored_sub_cost = 0.1f;
+
   std::vector<string> ref_extra_columns = std::vector<string>();
   std::vector<string> hyp_extra_columns = std::vector<string>();
 
@@ -104,6 +110,39 @@ int main(int argc, char **argv) {
                   "Extra columns from the reference to include in SBS output.");
     c->add_option("--hyp-extra-cols", hyp_extra_columns,
                   "Extra columns from the hypothesis to include in SBS output.");
+    c->add_option("--relative-beam-width", relative_beam_width_cli,
+                  "Relative beam width for pruning (cost > best_cost + width). Default: 50.0")
+                    ->check([](const std::string &str) {
+                        try {
+                            float val = std::stof(str);
+                            if (val > 0.0f) {
+                                return std::string(); // Success
+                            } else {
+                                return std::string("Value must be positive.");
+                            }
+                        } catch (const std::exception& e) {
+                            return std::string("Invalid floating point number: ") + e.what();
+                        }
+                    });
+    c->add_flag("--disable-strict-punctuation", disable_strict_punctuation,
+                "Disable strict punctuation alignment (which prevents punctuation aligning with words).");
+    // Favored substitutions
+    c->add_flag("--disable-favored-subs", disable_favored_subs,
+                 "Disable favored substitutions (which makes alignment favor substitutions between words which differ only by case).");
+    c->add_option("--favored-sub-cost", favored_sub_cost,
+                  "Cost for favored substitutions (e.g., case diff). Default: 0.1")
+                    ->check([](const std::string &str) {
+                          try {
+                              float val = std::stof(str);
+                              if (val >= 0.0f) {
+                                  return std::string(); // Success
+                              } else {
+                                  return std::string("Value must be non-negative.");
+                              }
+                          } catch (const std::exception& e) {
+                              return std::string("Invalid floating point number: ") + e.what();
+                          }
+                      });
   }
   get_wer->add_option("--wer-sidecar", wer_sidecar_filename,
                 "WER sidecar json file.");
@@ -175,6 +214,11 @@ int main(int argc, char **argv) {
   alignerOptions.record_case_stats = record_case_stats;
   alignerOptions.symbols_filename = symbols_filename;
   alignerOptions.composition_approach = composition_approach;
+  alignerOptions.relative_beam_width = relative_beam_width_cli;
+  alignerOptions.strict_punctuation = !disable_strict_punctuation;
+  // Favored substitutions
+  alignerOptions.use_favored_substitutions = !disable_favored_subs;
+  alignerOptions.favored_substitution_cost = favored_sub_cost;
 
 
   SynonymOptions syn_opts;

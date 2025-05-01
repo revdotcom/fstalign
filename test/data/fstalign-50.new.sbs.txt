@@ -1,0 +1,11 @@
+           ref_token	hyp_token           	IsErr	Class	Wer_Tag_Entities
+                  su	su                  			
+             capital	capital             			
+                  es	es                  			
+                  la	la                  			
+              ciudad	ciudad              			
+                  de	de                  			
+                palu	pau                 	ERR		
+------------------------------------------------------------
+                Line	Group               
+                   8	palu <-> pau
