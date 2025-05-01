@@ -3,7 +3,7 @@
 
 # fstalign
 - [Overview](#Overview)
-- [What's new in 2.0](#What's new in 2.0)
+- [What's new in 2.0](#What's-new-in-2.0)
 - [Installation](#Installation)
   * [Dependencies](#Dependencies)
   * [Build](#Build)
