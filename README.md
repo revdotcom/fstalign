@@ -17,12 +17,12 @@ Due to its use of OpenFST and lazy algorithms for text-based alignment, `fstalig
 
 ## What's new in 2.0
 
-Version 2.0 introduces two major changes : 
-1. A new method to traverse the composition graph, which dramatically improve the overall speed, especially when the sequences are long and lots of errors are found.
+Version 2.0 introduces two major changes: 
+1. A new method to traverse the composition graph, which dramatically improves the overall speed, especially when the sequences are long contain many errors.
 We have files that took 25 minutes to align before that can now take about 7 seconds. This is especially noticeable with the adapted composition (the default).
 1. Some smarts were introduced when --use-case and --use-punctuation are enabled.
-Now, by default, punctuation symbols can only be substituded by other punctuation symbols (or deleted/inserted).
-Also, words that differ only by the first letter case will be prefered for substitution.
+Now, by default, punctuation symbols can only be substituted by other punctuation symbols (or deleted/inserted).
+Also, words that differ only by the first letter case will be preffered for substitution.
 
 
 Here's an example of the 1.x behavior and the 2.0 version
@@ -60,9 +60,9 @@ Here's an example of the 1.x behavior and the 2.0 version
                  The	the                 	ERR		
              Podcast	Podcast             			###168_###|###326_###|
 ```
-The confusion between `:` and `of` is not allow anymore.
+The confusion between `:` and `of` is not longer allowed.
 
-Also, here's how favoring or not the substitution based on case-insensitive comparison, while still counting it as an error looks like:
+Also, here's how favoring or not the substitution based on case-insensitive comparison, while still counting it as an error, looks like:
 ```
 ==> v1.x sbs.txt <==
            ref_token	hyp_token           	IsErr	Class	Wer_Tag_Entities
