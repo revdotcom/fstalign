@@ -32,7 +32,7 @@ RUN --mount=type=cache,target=/root/.ccache,sharing=locked  \
     rm -rf openfst-${OPENFST_VERSION} openfst-${OPENFST_VERSION}.tar.gz
 
 # Stage 2: Build fstalign
-FROM debian:${DEBIAN_BASE}-slim
+FROM debian-base
 
 COPY --from=openfst-builder /opt/openfst /opt/openfst
 ENV OPENFST_ROOT /opt/openfst
