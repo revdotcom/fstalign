@@ -1,0 +1,28 @@
+diff --git a/third-party/catch2/include/internal/catch_fatal_condition.cpp b/third-party/catch2/include/internal/catch_fatal_condition.cpp
+index 24e16d3c..78ddc6e5 100644
+--- a/third-party/catch2/include/internal/catch_fatal_condition.cpp
++++ b/third-party/catch2/include/internal/catch_fatal_condition.cpp
+@@ -97,7 +97,8 @@ namespace Catch {
+     
+     // 32kb for the alternate stack seems to be sufficient. However, this value
+     // is experimentally determined, so that's not guaranteed.
+-    constexpr static std::size_t sigStackSize = 32768 >= MINSIGSTKSZ ? 32768 : MINSIGSTKSZ;
++    // Note: MINSIGSTKSZ is not constexpr in glibc 2.34+, so we use a fixed safe value
++    constexpr static std::size_t sigStackSize = 32768;
+ 
+     static SignalDefs signalDefs[] = {
+         { SIGINT,  "SIGINT - Terminal interrupt signal" },
+diff --git a/third-party/catch2/single_include/catch2/catch.hpp b/third-party/catch2/single_include/catch2/catch.hpp
+index b324e56a..6a104637 100644
+--- a/third-party/catch2/single_include/catch2/catch.hpp
++++ b/third-party/catch2/single_include/catch2/catch.hpp
+@@ -7969,7 +7969,8 @@ namespace Catch {
+ 
+     // 32kb for the alternate stack seems to be sufficient. However, this value
+     // is experimentally determined, so that's not guaranteed.
+-    constexpr static std::size_t sigStackSize = 32768 >= MINSIGSTKSZ ? 32768 : MINSIGSTKSZ;
++    // Note: MINSIGSTKSZ is not constexpr in glibc 2.34+, so we use a fixed safe value
++    constexpr static std::size_t sigStackSize = 32768;
+ 
+     static SignalDefs signalDefs[] = {
+         { SIGINT,  "SIGINT - Terminal interrupt signal" },
