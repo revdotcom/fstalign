@@ -1,19 +1,45 @@
-# Using kaldi image for pre-built OpenFST, version is 1.7.2
-FROM kaldiasr/kaldi:cpu-debian10-2024-07-29 as kaldi-base
+# Stage 1: Build OpenFST 1.7.2 from source
+FROM debian:bookworm as openfst-builder
 
-FROM debian:11
+ARG OPENFST_VERSION=1.7.2
+ARG JOBS=4
 
-COPY --from=kaldi-base /opt/kaldi/tools/openfst /opt/openfst
+# Install build dependencies for OpenFST
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends \
+    g++ \
+    make \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy and build OpenFST from local tarball
+WORKDIR /tmp
+COPY ext/openfst-${OPENFST_VERSION}.tar.gz /tmp/
+RUN tar -xzf openfst-${OPENFST_VERSION}.tar.gz && \
+    cd openfst-${OPENFST_VERSION} && \
+    ./configure --prefix=/opt/openfst --enable-shared --enable-static && \
+    make -j${JOBS} && \
+    make install && \
+    cd .. && \
+    rm -rf openfst-${OPENFST_VERSION} openfst-${OPENFST_VERSION}.tar.gz
+
+# Stage 2: Build fstalign
+FROM debian:bookworm
+
+COPY --from=openfst-builder /opt/openfst /opt/openfst
 ENV OPENFST_ROOT /opt/openfst
 
 ARG JOBS=4
 
+# Install runtime and build dependencies
 RUN apt-get update && \
     apt-get upgrade -y && \
-    apt-get -y install \
+    apt-get install -y --no-install-recommends \
     cmake \
     g++ \
-    libicu-dev
+    make \
+    libicu-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /fstalign
 COPY CMakeLists.txt /fstalign/CMakeLists.txt
