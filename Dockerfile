@@ -53,7 +53,7 @@ WORKDIR /fstalign
 RUN mkdir -p /fstalign/build && \
     cd /fstalign/build && \
     rm -rf * && \
-    cmake .. -DOPENFST_ROOT="${OPENFST_ROOT}" -DDYNAMIC_OPENFST=ON && \
+    cmake .. -DOPENFST_ROOT="${OPENFST_ROOT}" -DDYNAMIC_OPENFST=OFF && \
     make -j${JOBS} VERBOSE=1 && \
     mkdir -p /fstalign/bin && \
     cp /fstalign/build/fstalign /fstalign/bin && \
