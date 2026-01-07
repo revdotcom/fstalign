@@ -3,7 +3,8 @@
  *
  * Collection of functions specific to the WER subcommand.
  *
- * Quinn McNamara (quinn@rev.com)
+ * Jp Robichaud (jp@rev.com)
+ * Quinn McNamara ()
  * 2021
  */
 #include "fstalign.h"
