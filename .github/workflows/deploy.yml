@@ -27,12 +27,18 @@ jobs:
           if [[ $GITHUB_REF == refs/tags/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/}
           fi
-          TAGS="${DOCKER_IMAGE}:${VERSION}-${DEBIAN_BASE}"
-          if [ "${DEBIAN_BASE}" = "bullseye" ]; then
-            TAGS="${TAGS} ${DOCKER_IMAGE}:${VERSION} ${DOCKER_IMAGE}:latest"
-          fi
+          {
+            echo "${DOCKER_IMAGE}:${VERSION}-${DEBIAN_BASE}"
+            if [ "${DEBIAN_BASE}" = "bullseye" ]; then
+              echo "${DOCKER_IMAGE}:${VERSION}"
+              echo "${DOCKER_IMAGE}:latest"
+            fi
+          } > tags.txt
+          delimiter="$(openssl rand -hex 8)"
+          echo "tags<<${delimiter}" >> $GITHUB_OUTPUT
+          cat tags.txt >> $GITHUB_OUTPUT
+          echo "${delimiter}" >> $GITHUB_OUTPUT
           echo ::set-output name=version::${VERSION}
-          echo ::set-output name=tags::${TAGS}
           echo ::set-output name=created::$(date -u +'%Y-%m-%dT%H:%M:%SZ')
 
       -
