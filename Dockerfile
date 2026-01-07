@@ -1,5 +1,10 @@
+ARG DEBIAN_BASE=bullseye
+FROM debian:${DEBIAN_BASE}-slim AS debian-base
+RUN echo "APT::Get::Assume-Yes \"true\";\nAPT::Get::allow \"true\";" | tee -a  /etc/apt/apt.conf.d/90_no_prompt && \
+    echo "APT::Keep-Downloaded-Packages \"false\";" | tee -a  /etc/apt/apt.conf.d/91_no_cache && \
+    apt-get update
 # Stage 1: Build OpenFST 1.7.2 from source
-FROM debian:bookworm as openfst-builder
+FROM debian-base as openfst-builder
 
 ARG OPENFST_VERSION=1.7.2
 ARG JOBS=4
@@ -10,12 +15,15 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     g++ \
     make \
+    ccache \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy and build OpenFST from local tarball
 WORKDIR /tmp
 COPY ext/openfst-${OPENFST_VERSION}.tar.gz /tmp/
-RUN tar -xzf openfst-${OPENFST_VERSION}.tar.gz && \
+RUN --mount=type=cache,target=/root/.ccache,sharing=locked  \
+    PATH=/usr/lib/ccache:${PATH} \
+    tar -xzf openfst-${OPENFST_VERSION}.tar.gz && \
     cd openfst-${OPENFST_VERSION} && \
     ./configure --prefix=/opt/openfst --enable-shared --enable-static && \
     make -j${JOBS} && \
@@ -38,6 +46,7 @@ RUN apt-get update && \
     cmake \
     g++ \
     make \
+    ccache \
     libicu-dev \
     && rm -rf /var/lib/apt/lists/*
 
@@ -50,7 +59,9 @@ COPY sample_data /fstalign/sample_data
 
 WORKDIR /fstalign
 
-RUN mkdir -p /fstalign/build && \
+RUN --mount=type=cache,target=/root/.ccache,sharing=locked  \
+    PATH=/usr/lib/ccache:${PATH} \
+    mkdir -p /fstalign/build && \
     cd /fstalign/build && \
     rm -rf * && \
     cmake .. -DOPENFST_ROOT="${OPENFST_ROOT}" -DDYNAMIC_OPENFST=OFF && \
