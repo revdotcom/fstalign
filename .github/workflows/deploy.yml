@@ -6,6 +6,11 @@ jobs:
   push_to_registry:
     name: Push Docker image to GitHub Packages
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        debian_base: [bullseye, bookworm]
+    env:
+      DEBIAN_BASE: ${{ matrix.debian_base }}
     steps:
       - 
         name: Check out the repo
@@ -22,7 +27,10 @@ jobs:
           if [[ $GITHUB_REF == refs/tags/* ]]; then
             VERSION=${GITHUB_REF#refs/tags/}
           fi
-          TAGS="${DOCKER_IMAGE}:${VERSION}"
+          TAGS="${DOCKER_IMAGE}:${VERSION}-${DEBIAN_BASE}"
+          if [ "${DEBIAN_BASE}" = "bullseye" ]; then
+            TAGS="${TAGS} ${DOCKER_IMAGE}:${VERSION} ${DOCKER_IMAGE}:latest"
+          fi
           echo ::set-output name=version::${VERSION}
           echo ::set-output name=tags::${TAGS}
           echo ::set-output name=created::$(date -u +'%Y-%m-%dT%H:%M:%SZ')
@@ -45,6 +53,6 @@ jobs:
           context: .
           platforms: linux/amd64
           push: true
-          tags: |
-            revdotcom/fstalign:latest
-            ${{ steps.prep.outputs.tags }}
+          build-args: |
+            DEBIAN_BASE=${{ env.DEBIAN_BASE }}
+          tags: ${{ steps.prep.outputs.tags }}

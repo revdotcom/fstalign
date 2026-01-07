@@ -8,8 +8,12 @@ jobs:
   # First we build the docker container, then we run CI tests
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        debian_base: [bullseye, bookworm]
     env: 
       DOCKER_IMAGE: fstalign
+      DEBIAN_BASE: ${{ matrix.debian_base }}
 
     steps:
       - name: Checkout repository and submodules
@@ -18,7 +22,10 @@ jobs:
           submodules: recursive
 
       - name: Build the docker container
-        run: docker build . -f Dockerfile -t ${DOCKER_IMAGE}
+        run: |
+          docker build . -f Dockerfile \
+            --build-arg DEBIAN_BASE=${DEBIAN_BASE} \
+            -t ${DOCKER_IMAGE}:${DEBIAN_BASE}
 
       - name: Run CI tests
-        run: docker run --rm -t ${DOCKER_IMAGE} bash -c '(cd build && make test)'
+        run: docker run --rm -t ${DOCKER_IMAGE}:${DEBIAN_BASE} bash -c '(cd build && make test)'

@@ -1,19 +1,54 @@
-# Using kaldi image for pre-built OpenFST, version is 1.7.2
-FROM kaldiasr/kaldi:cpu-debian10-2024-07-29 as kaldi-base
+ARG DEBIAN_BASE=bullseye
+FROM debian:${DEBIAN_BASE}-slim AS debian-base
+RUN echo "APT::Get::Assume-Yes \"true\";\nAPT::Get::allow \"true\";" | tee -a  /etc/apt/apt.conf.d/90_no_prompt && \
+    echo "APT::Keep-Downloaded-Packages \"false\";" | tee -a  /etc/apt/apt.conf.d/91_no_cache && \
+    apt-get update
+# Stage 1: Build OpenFST 1.7.2 from source
+FROM debian-base as openfst-builder
 
-FROM debian:11
+ARG OPENFST_VERSION=1.7.2
+ARG JOBS=4
 
-COPY --from=kaldi-base /opt/kaldi/tools/openfst /opt/openfst
+# Install build dependencies for OpenFST
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends \
+    g++ \
+    make \
+    ccache \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy and build OpenFST from local tarball
+WORKDIR /tmp
+COPY ext/openfst-${OPENFST_VERSION}.tar.gz /tmp/
+RUN --mount=type=cache,target=/root/.ccache,sharing=locked  \
+    PATH=/usr/lib/ccache:${PATH} \
+    tar -xzf openfst-${OPENFST_VERSION}.tar.gz && \
+    cd openfst-${OPENFST_VERSION} && \
+    ./configure --prefix=/opt/openfst --enable-shared --enable-static && \
+    make -j${JOBS} && \
+    make install && \
+    cd .. && \
+    rm -rf openfst-${OPENFST_VERSION} openfst-${OPENFST_VERSION}.tar.gz
+
+# Stage 2: Build fstalign
+FROM debian-base
+
+COPY --from=openfst-builder /opt/openfst /opt/openfst
 ENV OPENFST_ROOT /opt/openfst
 
 ARG JOBS=4
 
+# Install runtime and build dependencies
 RUN apt-get update && \
     apt-get upgrade -y && \
-    apt-get -y install \
+    apt-get install -y --no-install-recommends \
     cmake \
     g++ \
-    libicu-dev
+    make \
+    ccache \
+    libicu-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /fstalign
 COPY CMakeLists.txt /fstalign/CMakeLists.txt
@@ -24,10 +59,12 @@ COPY sample_data /fstalign/sample_data
 
 WORKDIR /fstalign
 
-RUN mkdir -p /fstalign/build && \
+RUN --mount=type=cache,target=/root/.ccache,sharing=locked  \
+    PATH=/usr/lib/ccache:${PATH} \
+    mkdir -p /fstalign/build && \
     cd /fstalign/build && \
     rm -rf * && \
-    cmake .. -DOPENFST_ROOT="${OPENFST_ROOT}" -DDYNAMIC_OPENFST=ON && \
+    cmake .. -DOPENFST_ROOT="${OPENFST_ROOT}" -DDYNAMIC_OPENFST=OFF && \
     make -j${JOBS} VERBOSE=1 && \
     mkdir -p /fstalign/bin && \
     cp /fstalign/build/fstalign /fstalign/bin && \
