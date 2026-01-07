@@ -27,7 +27,7 @@ COPY src /fstalign/src
 COPY test /fstalign/test
 COPY third-party /fstalign/third-party
 COPY sample_data /fstalign/sample_data
-
+COPY catch2.patch /fstalign/
 WORKDIR /fstalign
 RUN git apply catch2.patch
 RUN --mount=type=cache,target=/root/.ccache,sharing=locked  \

@@ -3,7 +3,7 @@
  * 
  * FstLoader for loading a serialized FST from disk.
  * 
- * Quinn McNamara (quinn@rev.com)
+ * JP Robichaud (jp@rev.com)
  * 2020
  */
 
