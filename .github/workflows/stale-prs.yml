@@ -1,0 +1,50 @@
+# Warns then closes old PRs. For more information, see:
+# https://github.com/actions/stale
+#
+# Part of an org-wide rollout. Timing is staggered across repos
+# to avoid GitHub API rate limits (9:00-9:59 AM ET window).
+
+name: 'Stale PRs'
+on:
+  schedule:
+    # Runs at 9:58 AM Eastern, Monday-Friday (14:58 UTC)
+    - cron: '58 14 * * 1-5'
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v10
+        with:
+          # Only process PRs - disable issue handling entirely
+          days-before-issue-stale: -1
+          days-before-issue-close: -1
+
+          # PR stale/close timing
+          days-before-pr-stale: 30
+          days-before-pr-close: 7
+
+          # PR messages
+          stale-pr-message: >
+            This PR has been automatically marked as stale due to inactivity.
+            It will be closed in 7 days if there is no further activity.
+            To keep this PR open, add the `not-stale` label or leave a comment.
+          close-pr-message: >
+            This PR was automatically closed due to inactivity. If this was
+            closed in error, feel free to reopen it.
+
+          # Labels
+          stale-pr-label: 'stale'
+
+          # Process oldest PRs first
+          ascending: true
+
+          # Higher limit for initial rollout to clean up backlog
+          operations-per-run: 200
+
+          exempt-pr-labels: 'not-stale,do-not-delete,keep'

@@ -1,0 +1,30 @@
+# Marks stale, then deletes, stale branches. See:
+# https://github.com/marketplace/actions/remove-stale-branches
+#
+# Part of an org-wide rollout. Timing is staggered across repos
+# to avoid GitHub API rate limits (9:00-9:59 AM ET window).
+
+name: 'Stale Branches'
+on:
+  schedule:
+    # Runs at 9:58 AM Eastern, Monday-Friday (14:58 UTC)
+    - cron: '58 14 * * 1-5'
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  remove-stale-branches:
+    name: Stale Branches
+    runs-on: ubuntu-latest
+    steps:
+      - uses: fpicalausa/remove-stale-branches@v2.4.0
+        with:
+          days-before-branch-stale: 30
+          days-before-branch-delete: 7
+          # Only target conventional branch prefixes
+          restrict-branches-regex: '^(feature|fix|release)/'
+          ignore-branches-with-open-prs: true
+          operations-per-run: 100
