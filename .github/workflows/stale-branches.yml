@@ -24,7 +24,7 @@ jobs:
         with:
           days-before-branch-stale: 30
           days-before-branch-delete: 7
-          # Only target conventional branch prefixes
-          restrict-branches-regex: '^(feature|fix|release)/'
+          # Only target conventional branch prefixes (release/* excluded - protected by repo rules)
+          restrict-branches-regex: '^(feature|fix)/'
           ignore-branches-with-open-prs: true
           operations-per-run: 100
