@@ -142,6 +142,28 @@ Finally, tests can be run using:
 make test
 ```
 
+### Building on macOS with OpenFST 1.8.x
+
+Homebrew's bundled `openfst` formula (in `openfst.rb`) provides 1.7.9 and conflicts
+with `homebrew/core/openfst`. Build OpenFST 1.8.x from source instead:
+
+```bash
+curl -L -O https://www.openfst.org/twiki/pub/FST/FstDownload/openfst-1.8.4.tar.gz
+tar xzf openfst-1.8.4.tar.gz
+cd openfst-1.8.4
+./configure --prefix="$HOME/opt/openfst-1.8.4" --disable-dependency-tracking
+make -j$(sysctl -n hw.logicalcpu) install
+```
+
+Then build fstalign pointing at the new prefix:
+
+```bash
+mkdir build && cd build
+cmake .. -DOPENFST_ROOT="$HOME/opt/openfst-1.8.4" -DDYNAMIC_OPENFST=ON
+make -j$(sysctl -n hw.logicalcpu)
+make test
+```
+
 ### Docker
 
 The fstalign docker image is hosted on Docker Hub and can be easily pulled and run:

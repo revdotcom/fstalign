@@ -475,7 +475,7 @@ void AdaptedCompositionFst::SetSymbols(const fst::SymbolTable *symbols) {
   logger_->debug("{}:{} we created 2 vector<bool> of {} items", __FILE__, __LINE__, symbols->NumSymbols());
 
   for (SymbolTableIterator siter(*symbols); !siter.Done(); siter.Next()) {
-    int64 sid = siter.Value();
+    int64_t sid = siter.Value();
     auto sym_tk = symbols->Find(sid);
 
     if (isSynonymLabel(sym_tk)) {

@@ -11,7 +11,7 @@ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
 enable_testing()
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(DEFINED ENV{OPENFST_ROOT})
@@ -41,7 +41,7 @@ set(OPENFST_INCLUDES
 
 if(DYNAMIC_OPENFST)
   set(OPENFST_LIBRARIES
-    ${OPENFST_ROOT}/lib/libfst.so
+    ${OPENFST_ROOT}/lib/libfst${CMAKE_SHARED_LIBRARY_SUFFIX}
   )
 else()
   set(OPENFST_LIBRARIES
@@ -69,7 +69,7 @@ add_library(fstaligner-common
   third-party/inih/cpp/INIReader.cpp
 )
 
-list(APPEND CMAKE_PREFIX_PATH "/usr/local/opt/icu4c") # for Mac users
+list(APPEND CMAKE_PREFIX_PATH "/usr/local/opt/icu4c" "/opt/homebrew/opt/icu4c@78" "/opt/homebrew/opt/icu4c") # for Mac users
 find_package(ICU REQUIRED COMPONENTS uc)
 
 target_link_libraries(fstaligner-common
@@ -80,7 +80,15 @@ target_link_libraries(fstaligner-common
 )
 
 add_subdirectory(third-party/jsoncpp)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  target_compile_options(jsoncpp_lib_static PRIVATE -Wno-implicit-int-float-conversion)
+endif()
 add_subdirectory(third-party/catch2)
+
+if(DYNAMIC_OPENFST)
+  set(CMAKE_BUILD_RPATH "${OPENFST_ROOT}/lib")
+  set(CMAKE_INSTALL_RPATH "${OPENFST_ROOT}/lib")
+endif()
 
 add_executable(fstalign src/main.cpp)
 

@@ -35,7 +35,7 @@ class ReverseOLabelCompare {
     return std::forward_as_tuple(lhs.olabel, lhs.ilabel) > std::forward_as_tuple(rhs.olabel, rhs.ilabel);
   }
 
-  constexpr uint64 Properties(uint64 props) const {
+  constexpr uint64_t Properties(uint64_t props) const {
     return (props & kArcSortProperties) | kOLabelSorted | (props & kAcceptor ? kILabelSorted : 0);
   }
 };

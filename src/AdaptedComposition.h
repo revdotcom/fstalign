@@ -19,8 +19,8 @@ using namespace std;
 
 typedef fst::Fst<fst::StdArc>::StateId StateId;
 
-typedef pair<uint32, uint32> StatePair;
-struct key_hash : public std::unary_function<StatePair, std::size_t> {
+typedef pair<uint32_t, uint32_t> StatePair;
+struct key_hash {
   std::size_t operator()(const StatePair &k) const { return std::get<0>(k) ^ std::get<1>(k); }
 };
 
