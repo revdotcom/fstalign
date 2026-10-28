@@ -1,5 +1,22 @@
+# The image base, by codename (AI-611): bullseye or bookworm (as before), or trixie, noble or resolute, the bases
+# of Rev's speech images (speechrec whisperx, OT, diarization). fstalign links ICU dynamically and ICU's soname
+# changes with each distro, so a consumer takes the build of its own base. DEBIAN_BASE picks the OS image
+# (base-<codename>); the name is kept for the Ubuntu ones too, as in speechrec.
 ARG DEBIAN_BASE=bullseye
-FROM debian:${DEBIAN_BASE}-slim AS debian-base
+FROM debian:bullseye-slim AS base-bullseye
+FROM debian:bookworm-slim AS base-bookworm
+FROM debian:trixie-slim AS base-trixie
+FROM ubuntu:24.04 AS base-noble
+FROM ubuntu:26.04 AS base-resolute
+# Canonical's ubuntu:26.04 OCI image adds /usr/bin/pebble (the rocks service manager, Go, not dpkg-owned, so apt never
+# patches it); nothing here uses it and its Go stdlib carries Critical/High CVEs (speechrec AI-612).
+RUN rm -f /usr/bin/pebble && rm -rf /var/lib/pebble
+FROM base-${DEBIAN_BASE} AS debian-base
+ARG DEBIAN_BASE
+ENV DEBIAN_FRONTEND=noninteractive
+# The image must be the base it was asked for.
+RUN . /etc/os-release && [ "$VERSION_CODENAME" = "$DEBIAN_BASE" ] || \
+        { echo "ERROR: image base is '$VERSION_CODENAME', but DEBIAN_BASE=$DEBIAN_BASE" >&2; exit 1; }
 RUN echo "APT::Get::Assume-Yes \"true\";\nAPT::Get::allow \"true\";" | tee -a  /etc/apt/apt.conf.d/90_no_prompt && \
     echo "APT::Keep-Downloaded-Packages \"false\";" | tee -a  /etc/apt/apt.conf.d/91_no_cache && \
     apt-get update

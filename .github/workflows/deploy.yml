@@ -7,8 +7,10 @@ jobs:
     name: Push Docker image to GitHub Packages
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        debian_base: [bullseye, bookworm]
+        # AI-611: plus trixie, noble and resolute, the bases of Rev's speech images (Dockerfile).
+        debian_base: [bullseye, bookworm, trixie, noble, resolute]
     env:
       DEBIAN_BASE: ${{ matrix.debian_base }}
     steps:

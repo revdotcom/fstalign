@@ -9,8 +9,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        debian_base: [bullseye, bookworm]
+        # AI-611: plus trixie, noble and resolute, the bases of Rev's speech images (Dockerfile).
+        debian_base: [bullseye, bookworm, trixie, noble, resolute]
     env: 
       DOCKER_IMAGE: fstalign
       DEBIAN_BASE: ${{ matrix.debian_base }}
@@ -29,3 +31,8 @@ jobs:
 
       - name: Run CI tests
         run: docker run --rm -t ${DOCKER_IMAGE}:${DEBIAN_BASE} bash -c '(cd build && make test)'
+
+      # Consumers copy /fstalign/bin/fstalign into an image of the same base: its shared libraries (ICU) must
+      # all resolve there.
+      - name: Check the binary's libraries
+        run: docker run --rm ${DOCKER_IMAGE}:${DEBIAN_BASE} bash -c '. /etc/os-release && echo "$PRETTY_NAME" && ldd /fstalign/bin/fstalign && ! ldd /fstalign/bin/fstalign | grep -q "not found"'
