@@ -1,5 +1,21 @@
-ARG DEBIAN_BASE=bullseye
-FROM debian:${DEBIAN_BASE}-slim AS debian-base
+# The image base, by codename (AI-611): bookworm, trixie, noble or resolute, the bases of Rev's speech images
+# (speechrec whisperx, OT, diarization), resolute by default; bullseye is dropped. fstalign links ICU dynamically and ICU's soname
+# changes with each distro, so a consumer takes the build of its own base. DEBIAN_BASE picks the OS image
+# (base-<codename>); the name is kept for the Ubuntu ones too, as in speechrec.
+ARG DEBIAN_BASE=resolute
+FROM debian:bookworm-slim AS base-bookworm
+FROM debian:trixie-slim AS base-trixie
+FROM ubuntu:24.04 AS base-noble
+FROM ubuntu:26.04 AS base-resolute
+# Canonical's ubuntu:26.04 OCI image adds /usr/bin/pebble (the rocks service manager, Go, not dpkg-owned, so apt never
+# patches it); nothing here uses it and its Go stdlib carries Critical/High CVEs (speechrec AI-612).
+RUN rm -f /usr/bin/pebble && rm -rf /var/lib/pebble
+FROM base-${DEBIAN_BASE} AS debian-base
+ARG DEBIAN_BASE
+ENV DEBIAN_FRONTEND=noninteractive
+# The image must be the base it was asked for.
+RUN . /etc/os-release && [ "$VERSION_CODENAME" = "$DEBIAN_BASE" ] || \
+        { echo "ERROR: image base is '$VERSION_CODENAME', but DEBIAN_BASE=$DEBIAN_BASE" >&2; exit 1; }
 RUN echo "APT::Get::Assume-Yes \"true\";\nAPT::Get::allow \"true\";" | tee -a  /etc/apt/apt.conf.d/90_no_prompt && \
     echo "APT::Keep-Downloaded-Packages \"false\";" | tee -a  /etc/apt/apt.conf.d/91_no_cache && \
     apt-get update
@@ -25,6 +41,14 @@ RUN --mount=type=cache,target=/root/.ccache,sharing=locked  \
     PATH=/usr/lib/ccache:${PATH} \
     tar -xzf openfst-${OPENFST_VERSION}.tar.gz && \
     cd openfst-${OPENFST_VERSION} && \
+    # OpenFst 1.7.2 on newer compilers, as rev-kaldi's tools/Makefile patches it. GCC 14+ (trixie): a raw pointer
+    # can't be assigned to a unique_ptr. GCC 15+ (resolute) checks uninstantiated template bodies: VectorHashBiTable's
+    # copy constructor names a member that doesn't exist (later OpenFst releases use *table.selector_). Neither
+    # changes code that older compilers build.
+    sed -i 's/isymbols_ = \(impl\.isymbols_\)/isymbols_.reset(\1/' src/include/fst/fst.h && \
+    sed -i 's/osymbols_ = \(impl\.osymbols_\)/osymbols_.reset(\1/' src/include/fst/fst.h && \
+    sed -i '/[io]symbols_\.reset/s/: nullptr;/: nullptr);/' src/include/fst/fst.h && \
+    sed -i 's/selector_(new S(table\.s_))/selector_(new S(*table.selector_))/' src/include/fst/bi-table.h && \
     ./configure --prefix=/opt/openfst --enable-shared --enable-static && \
     make -j${JOBS} && \
     make install && \
@@ -58,6 +82,10 @@ COPY third-party /fstalign/third-party
 COPY sample_data /fstalign/sample_data
 
 WORKDIR /fstalign
+
+# CMake 4 (resolute) refuses the bundled jsoncpp's cmake_minimum_required below 3.5 unless this is set; CMake 3.x
+# ignores it. As rev-asr-core's ci/async-asr/Dockerfile and revcoder's static ffmpeg build.
+ENV CMAKE_POLICY_VERSION_MINIMUM=3.5
 
 RUN --mount=type=cache,target=/root/.ccache,sharing=locked  \
     PATH=/usr/lib/ccache:${PATH} \

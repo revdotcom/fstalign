@@ -41,7 +41,7 @@ struct ShortlistEntry {
 };
 
 struct shortlistComparatorSharedPtr {
-  bool operator()(const shared_ptr<ShortlistEntry>& a, const shared_ptr<ShortlistEntry>& b) {
+  bool operator()(const shared_ptr<ShortlistEntry>& a, const shared_ptr<ShortlistEntry>& b) const {
     if (a->numWords == b->numWords) {
       if (a->numErrors == b->numErrors) {
         if (a->costSoFar == b->costSoFar) {

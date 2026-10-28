@@ -11,7 +11,8 @@ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
 enable_testing()
 
-set(CMAKE_CXX_STANDARD 14)
+# C++17 (AI-611): ICU 76's headers (trixie, resolute) need it; every base's compiler supports it.
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(DEFINED ENV{OPENFST_ROOT})

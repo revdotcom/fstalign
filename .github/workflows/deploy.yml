@@ -7,8 +7,10 @@ jobs:
     name: Push Docker image to GitHub Packages
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        debian_base: [bullseye, bookworm]
+        # AI-611: the bases of Rev's speech images (Dockerfile); bullseye is dropped.
+        debian_base: [bookworm, trixie, noble, resolute]
     env:
       DEBIAN_BASE: ${{ matrix.debian_base }}
     steps:
@@ -29,7 +31,8 @@ jobs:
           fi
           {
             echo "${DOCKER_IMAGE}:${VERSION}-${DEBIAN_BASE}"
-            if [ "${DEBIAN_BASE}" = "bullseye" ]; then
+            # The untagged <version> and latest aliases name the default base (resolute since AI-611; bullseye before).
+            if [ "${DEBIAN_BASE}" = "resolute" ]; then
               echo "${DOCKER_IMAGE}:${VERSION}"
               echo "${DOCKER_IMAGE}:latest"
             fi
