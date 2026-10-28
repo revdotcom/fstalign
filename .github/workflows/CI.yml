@@ -11,8 +11,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # AI-611: plus trixie, noble and resolute, the bases of Rev's speech images (Dockerfile).
-        debian_base: [bullseye, bookworm, trixie, noble, resolute]
+        # AI-611: the bases of Rev's speech images (Dockerfile); bullseye is dropped.
+        debian_base: [bookworm, trixie, noble, resolute]
     env: 
       DOCKER_IMAGE: fstalign
       DEBIAN_BASE: ${{ matrix.debian_base }}

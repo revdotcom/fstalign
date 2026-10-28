@@ -1,9 +1,8 @@
-# The image base, by codename (AI-611): bullseye or bookworm (as before), or trixie, noble or resolute, the bases
-# of Rev's speech images (speechrec whisperx, OT, diarization). fstalign links ICU dynamically and ICU's soname
+# The image base, by codename (AI-611): bookworm, trixie, noble or resolute, the bases of Rev's speech images
+# (speechrec whisperx, OT, diarization); bullseye is dropped. fstalign links ICU dynamically and ICU's soname
 # changes with each distro, so a consumer takes the build of its own base. DEBIAN_BASE picks the OS image
 # (base-<codename>); the name is kept for the Ubuntu ones too, as in speechrec.
-ARG DEBIAN_BASE=bullseye
-FROM debian:bullseye-slim AS base-bullseye
+ARG DEBIAN_BASE=bookworm
 FROM debian:bookworm-slim AS base-bookworm
 FROM debian:trixie-slim AS base-trixie
 FROM ubuntu:24.04 AS base-noble
