@@ -83,13 +83,16 @@ COPY sample_data /fstalign/sample_data
 
 WORKDIR /fstalign
 
+# CMake 4 (resolute) refuses the bundled jsoncpp's cmake_minimum_required below 3.5 unless this is set; CMake 3.x
+# ignores it. As rev-asr-core's ci/async-asr/Dockerfile and revcoder's static ffmpeg build.
+ENV CMAKE_POLICY_VERSION_MINIMUM=3.5
+
 RUN --mount=type=cache,target=/root/.ccache,sharing=locked  \
     PATH=/usr/lib/ccache:${PATH} \
     mkdir -p /fstalign/build && \
     cd /fstalign/build && \
     rm -rf * && \
-    # CMake 4 (resolute) refuses the bundled jsoncpp's cmake_minimum_required below 3.5; older CMake ignores this.
-    cmake .. -DOPENFST_ROOT="${OPENFST_ROOT}" -DDYNAMIC_OPENFST=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5 && \
+    cmake .. -DOPENFST_ROOT="${OPENFST_ROOT}" -DDYNAMIC_OPENFST=OFF && \
     make -j${JOBS} VERBOSE=1 && \
     mkdir -p /fstalign/bin && \
     cp /fstalign/build/fstalign /fstalign/bin && \
