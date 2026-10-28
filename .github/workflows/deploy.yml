@@ -31,8 +31,8 @@ jobs:
           fi
           {
             echo "${DOCKER_IMAGE}:${VERSION}-${DEBIAN_BASE}"
-            # The untagged <version> and latest aliases name the default base (bookworm since AI-611; bullseye before).
-            if [ "${DEBIAN_BASE}" = "bookworm" ]; then
+            # The untagged <version> and latest aliases name the default base (resolute since AI-611; bullseye before).
+            if [ "${DEBIAN_BASE}" = "resolute" ]; then
               echo "${DOCKER_IMAGE}:${VERSION}"
               echo "${DOCKER_IMAGE}:latest"
             fi
