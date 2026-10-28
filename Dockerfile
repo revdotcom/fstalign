@@ -42,6 +42,14 @@ RUN --mount=type=cache,target=/root/.ccache,sharing=locked  \
     PATH=/usr/lib/ccache:${PATH} \
     tar -xzf openfst-${OPENFST_VERSION}.tar.gz && \
     cd openfst-${OPENFST_VERSION} && \
+    # OpenFst 1.7.2 on newer compilers, as rev-kaldi's tools/Makefile patches it. GCC 14+ (trixie): a raw pointer
+    # can't be assigned to a unique_ptr. GCC 15+ (resolute) checks uninstantiated template bodies: VectorHashBiTable's
+    # copy constructor names a member that doesn't exist (later OpenFst releases use *table.selector_). Neither
+    # changes code that older compilers build.
+    sed -i 's/isymbols_ = \(impl\.isymbols_\)/isymbols_.reset(\1/' src/include/fst/fst.h && \
+    sed -i 's/osymbols_ = \(impl\.osymbols_\)/osymbols_.reset(\1/' src/include/fst/fst.h && \
+    sed -i '/[io]symbols_\.reset/s/: nullptr;/: nullptr);/' src/include/fst/fst.h && \
+    sed -i 's/selector_(new S(table\.s_))/selector_(new S(*table.selector_))/' src/include/fst/bi-table.h && \
     ./configure --prefix=/opt/openfst --enable-shared --enable-static && \
     make -j${JOBS} && \
     make install && \
