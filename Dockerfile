@@ -88,7 +88,8 @@ RUN --mount=type=cache,target=/root/.ccache,sharing=locked  \
     mkdir -p /fstalign/build && \
     cd /fstalign/build && \
     rm -rf * && \
-    cmake .. -DOPENFST_ROOT="${OPENFST_ROOT}" -DDYNAMIC_OPENFST=OFF && \
+    # CMake 4 (resolute) refuses the bundled jsoncpp's cmake_minimum_required below 3.5; older CMake ignores this.
+    cmake .. -DOPENFST_ROOT="${OPENFST_ROOT}" -DDYNAMIC_OPENFST=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5 && \
     make -j${JOBS} VERBOSE=1 && \
     mkdir -p /fstalign/bin && \
     cp /fstalign/build/fstalign /fstalign/bin && \
