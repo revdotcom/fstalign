@@ -9,8 +9,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The bases of Rev's speech images (Dockerfile). Resolute is the base we are moving to, so the others
-        # are disabled to save CI time, not removed: add one back to the list to enable it again.
         # Disabled: bookworm, trixie, noble.
         debian_base: [resolute]
     env:
