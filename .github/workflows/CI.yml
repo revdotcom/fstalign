@@ -11,11 +11,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Disabled: bookworm, trixie, noble.
-        debian_base: [resolute]
+        base_os: [resolute, wolfi]
     env: 
       DOCKER_IMAGE: fstalign
-      DEBIAN_BASE: ${{ matrix.debian_base }}
+      BASE_OS: ${{ matrix.base_os }}
 
     steps:
       - name: Checkout repository and submodules
@@ -26,13 +25,13 @@ jobs:
       - name: Build the docker container
         run: |
           docker build . -f Dockerfile \
-            --build-arg DEBIAN_BASE=${DEBIAN_BASE} \
-            -t ${DOCKER_IMAGE}:${DEBIAN_BASE}
+            --build-arg BASE_OS=${BASE_OS} \
+            -t ${DOCKER_IMAGE}:${BASE_OS}
 
       - name: Run CI tests
-        run: docker run --rm -t ${DOCKER_IMAGE}:${DEBIAN_BASE} bash -c '(cd build && make test)'
+        run: docker run --rm -t ${DOCKER_IMAGE}:${BASE_OS} bash -c '(cd build && make test)'
 
       # Consumers copy /fstalign/bin/fstalign into an image of the same base: its shared libraries (ICU) must
       # all resolve there.
       - name: Check the binary's libraries
-        run: docker run --rm ${DOCKER_IMAGE}:${DEBIAN_BASE} bash -c '. /etc/os-release && echo "$PRETTY_NAME" && ldd /fstalign/bin/fstalign && ! ldd /fstalign/bin/fstalign | grep -q "not found"'
+        run: docker run --rm ${DOCKER_IMAGE}:${BASE_OS} bash -c '. /etc/os-release && echo "$PRETTY_NAME" && ldd /fstalign/bin/fstalign && ! ldd /fstalign/bin/fstalign | grep -q "not found"'

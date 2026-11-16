@@ -9,10 +9,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Disabled: bookworm, trixie, noble.
-        debian_base: [resolute]
+        base_os: [resolute, wolfi]
     env:
-      DEBIAN_BASE: ${{ matrix.debian_base }}
+      BASE_OS: ${{ matrix.base_os }}
     steps:
       - 
         name: Check out the repo
@@ -30,9 +29,9 @@ jobs:
             VERSION=${GITHUB_REF#refs/tags/}
           fi
           {
-            echo "${DOCKER_IMAGE}:${VERSION}-${DEBIAN_BASE}"
-            # The untagged <version> and latest aliases name the default base (resolute since AI-611; bullseye before).
-            if [ "${DEBIAN_BASE}" = "resolute" ]; then
+            echo "${DOCKER_IMAGE}:${VERSION}-${BASE_OS}"
+            # The untagged <version> and latest aliases name the default base (resolute).
+            if [ "${BASE_OS}" = "resolute" ]; then
               echo "${DOCKER_IMAGE}:${VERSION}"
               echo "${DOCKER_IMAGE}:latest"
             fi
@@ -63,5 +62,5 @@ jobs:
           platforms: linux/amd64
           push: true
           build-args: |
-            DEBIAN_BASE=${{ env.DEBIAN_BASE }}
+            BASE_OS=${{ env.BASE_OS }}
           tags: ${{ steps.prep.outputs.tags }}
